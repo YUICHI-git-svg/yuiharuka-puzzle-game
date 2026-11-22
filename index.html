@@ -12,6 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="パズルゲーム">
 <link rel="apple-touch-icon" href="icon-192.png">
+
 <style>
   :root{
     color-scheme: dark;
@@ -160,6 +161,7 @@
     <div class="players">
       <button class="player-btn sel" data-player="yui">👧 ゆい</button>
       <button class="player-btn" data-player="haruka">👧 はるか</button>
+      <button class="player-btn" data-player="yuichi">👨 ゆういち</button>
     </div>
 
     <div class="sec-title">ステージを えらんでね</div>
@@ -283,7 +285,7 @@ const PARTY_HP = 150;
 
 /* ================= セーブ（メモリ内・プレイヤー別） ================= */
 function newSave(){ return { owned:["slime_fire","slime_water","slime_forest"], party:["slime_fire","slime_water","slime_forest"], cleared:[] }; }
-const saves = { yui:newSave(), haruka:newSave() };
+const saves = { yui:newSave(), haruka:newSave(), yuichi:newSave() };
 let player = "yui";
 const save = () => saves[player];
 
@@ -579,32 +581,15 @@ function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 renderHome();
 </script>
 <script>
+if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch(e) {} }
 try {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(function(){});
-  }
-} catch (e) {}
-try {
-  var SAVE_KEY = 'yuiharuka-puzzle-saves-v1';
-  try {
-    var raw = localStorage.getItem(SAVE_KEY);
-    if (raw) {
-      var parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && parsed.yui && parsed.haruka) {
-        saves.yui = parsed.yui;
-        saves.haruka = parsed.haruka;
-      }
-    }
-  } catch (e) {}
-  var persistSaves = function () {
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(saves)); } catch (e) {}
-  };
-  setInterval(persistSaves, 1000);
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden') persistSaves();
-  });
-  window.addEventListener('beforeunload', persistSaves);
-} catch (e) {}
+  var raw = localStorage.getItem('yuiharuka-puzzle-saves-v1');
+  if (raw) { var p = JSON.parse(raw); if (p) { if (p.yui) saves.yui = p.yui; if (p.haruka) saves.haruka = p.haruka; if (p.yuichi) saves.yuichi = p.yuichi; } }
+  var persist = function(){ try { localStorage.setItem('yuiharuka-puzzle-saves-v1', JSON.stringify(saves)); } catch(e) {} };
+  setInterval(persist, 1000);
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') persist(); });
+  addEventListener('beforeunload', persist);
+} catch(e) {}
 </script>
 </body>
 </html>
