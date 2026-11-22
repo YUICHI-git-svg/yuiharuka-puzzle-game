@@ -269,19 +269,17 @@ const CHARS = [
 function imgArt(src, filter){ return '<img src="'+src+'" alt=""'+(filter?' style="filter:'+filter+'"':"")+">"; }
 const charById = id => CHARS.find(c=>c.id===id);
 const STAGES = [
- {n:1, enemy:"slime_forest", hp:1100, atk:22, cd:3, recruit:.5},
- {n:2, enemy:"slime_water", hp:1500, atk:28, cd:3, recruit:.5},
- {n:3, enemy:"fairy_flower", hp:2300, atk:38, cd:3, recruit:.4},
- {n:4, enemy:"dragon_forest", hp:3200, atk:50, cd:3, recruit:.4},
- {n:5, enemy:"dragon_fire", hp:4600, atk:66, cd:2, recruit:.4, boss:true},
- {n:6, enemy:"fairy_star", hp:5400, atk:74, cd:3, recruit:.4},
- {n:7, enemy:"dragon_water", hp:6400, atk:86, cd:3, recruit:.35},
- {n:8, enemy:"phoenix", hp:7600, atk:100, cd:2, recruit:.35},
- {n:9, enemy:"dragon_sea", hp:9000, atk:112, cd:3, recruit:.35},
- {n:10, enemy:"phoenix", hp:11000, atk:130, cd:2, recruit:.3, boss:true},
- {n:11, enemy:"dragon_change_forest", hp:3800, atk:56, cd:3, recruit:.6, extra:true},
- {n:12, enemy:"fairy_change_water", hp:4200, atk:60, cd:3, recruit:.6, extra:true},
- {n:13, enemy:"dragon_change_fire", hp:4600, atk:64, cd:3, recruit:.6, extra:true},
+ {n:1, enemy:"fairy_flower", hp:2300, atk:38, cd:3, recruit:.4},
+ {n:2, enemy:"dragon_forest", hp:3200, atk:50, cd:3, recruit:.4},
+ {n:3, enemy:"dragon_fire", hp:4600, atk:66, cd:2, recruit:.4, boss:true},
+ {n:4, enemy:"fairy_star", hp:5400, atk:74, cd:3, recruit:.4},
+ {n:5, enemy:"dragon_water", hp:6400, atk:86, cd:3, recruit:.35},
+ {n:6, enemy:"phoenix", hp:7600, atk:100, cd:2, recruit:.35},
+ {n:7, enemy:"dragon_sea", hp:9000, atk:112, cd:3, recruit:.35},
+ {n:8, enemy:"phoenix", hp:11000, atk:130, cd:2, recruit:.3, boss:true},
+ {n:9, enemy:"dragon_change_forest", hp:3800, atk:56, cd:3, recruit:.6, extra:true},
+ {n:10, enemy:"fairy_change_water", hp:4200, atk:60, cd:3, recruit:.6, extra:true},
+ {n:11, enemy:"dragon_change_fire", hp:4600, atk:64, cd:3, recruit:.6, extra:true},
 ];
 const PARTY_HP = 150;
 
@@ -317,7 +315,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 
 /* ================= ホーム ================= */
 const $=id=>document.getElementById(id);
-function stageUnlocked(st){ if(st.extra) return save().cleared.includes(2); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
+function stageUnlocked(st){ if(st.extra) return save().cleared.includes(1); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
 function renderHome(){
   document.querySelectorAll(".player-btn").forEach(b=>b.classList.toggle("sel",b.dataset.player===player));
   $("stageGrid").innerHTML="";
@@ -590,7 +588,12 @@ if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.j
 try {
   var raw = localStorage.getItem('yuiharuka-puzzle-saves-v1');
   if (raw) { var p = JSON.parse(raw); if (p) { if (p.yui) saves.yui = p.yui; if (p.haruka) saves.haruka = p.haruka; if (p.yuichi) saves.yuichi = p.yuichi; } }
+  if (!localStorage.getItem('yuiharuka-puzzle-migrated-v2')) {
+    ['yui','haruka','yuichi'].forEach(function(k){ var s = saves[k]; if (s && Array.isArray(s.cleared)) { var m = s.cleared.map(function(n){ return n - 2; }).filter(function(n){ return n > 0; }); s.cleared = Array.from(new Set(m)); } });
+    localStorage.setItem('yuiharuka-puzzle-migrated-v2', '1');
+  }
   var persist = function(){ try { localStorage.setItem('yuiharuka-puzzle-saves-v1', JSON.stringify(saves)); } catch(e) {} };
+  persist();
   setInterval(persist, 1000);
   document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') persist(); });
   addEventListener('beforeunload', persist);
