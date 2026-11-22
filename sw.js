@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yuiharuka-puzzle-v5';
+const CACHE_NAME = 'yuiharuka-puzzle-v6';
 const ASSETS = [
   './',
   'index.html',
@@ -30,6 +30,19 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    // ページ本体はネットワーク優先：更新が次の起動で反映される
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put('index.html', copy));
+          return response;
+        })
+        .catch(() => caches.match('index.html'))
+    );
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
