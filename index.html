@@ -73,8 +73,8 @@
     radial-gradient(120% 60% at 50% 0%, #2a2560 0%, var(--bg) 62%);}
   .b-top{display:flex;align-items:center;justify-content:space-between;padding:.35rem .6rem 0;}
   .b-top .ttl{font-size:.8rem;color:var(--sub);font-weight:800;}
-  .enemy-zone{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;}
-  .enemy-stage{position:relative;flex:1 1 auto;min-height:0;display:flex;align-items:flex-end;justify-content:center;}
+  .enemy-zone{flex:0 0 auto;display:flex;flex-direction:column;justify-content:flex-start;}
+  .enemy-stage{position:relative;flex:0 0 auto;height:26dvh;min-height:104px;display:flex;align-items:flex-end;justify-content:center;}
   .enemy-stage svg{height:100%;max-height:100%;width:auto;max-width:72vw;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45));}
   .enemy-stage svg.boss{max-width:84vw;}
   #enemyArt{height:100%;display:flex;align-items:flex-end;justify-content:center;}
@@ -214,13 +214,15 @@
 "use strict";
 /* ================= キャラデータ ================= */
 const ATTR = {fire:{name:"ひ",color:"var(--fire)"},water:{name:"みず"},forest:{name:"もり"},heal:{name:"かいふく"}};
+let slimeUID=0;
 function slimeSVG(main, dark, deco){
+  const gid="sgx"+(++slimeUID);
   let d="";
   if(deco==="flame") d='<path d="M50 6 C58 18 66 22 62 36 C59 45 41 45 38 36 C34 22 42 18 50 6Z" fill="#ff8a3c"/><path d="M50 18 C55 25 57 28 55 34 C53 39 47 39 45 34 C43 28 45 25 50 18Z" fill="#ffd34d"/>';
   if(deco==="drop") d='<path d="M50 4 C56 14 62 20 62 28 C62 36 56 40 50 40 C44 40 38 36 38 28 C38 20 44 14 50 4Z" fill="#bfe6ff"/>';
   if(deco==="bud") d='<path d="M50 26 C50 16 54 8 62 4 C63 14 58 22 50 26Z" fill="#57d95e"/><path d="M50 26 C50 17 46 10 39 6 C38 15 42 23 50 26Z" fill="#8fe388"/><rect x="48" y="24" width="4" height="9" rx="2" fill="#7a5a2e"/>';
-  return '<svg viewBox="0 0 100 100"><defs><radialGradient id="sg'+main+'" cx="35%" cy="25%"><stop offset="0%" stop-color="#ffffff" stop-opacity=".55"/><stop offset="45%" stop-color="'+main+'"/><stop offset="100%" stop-color="'+dark+'"/></radialGradient></defs>'+d+
-  '<path d="M50 30 C74 30 88 52 88 72 C88 88 72 94 50 94 C28 94 12 88 12 72 C12 52 26 30 50 30Z" fill="url(#sg'+main+')"/>'+
+  return '<svg viewBox="0 0 100 100" width="100" height="100"><defs><radialGradient id="'+gid+'" cx="35%" cy="25%"><stop offset="0%" stop-color="#ffffff" stop-opacity=".55"/><stop offset="45%" stop-color="'+main+'"/><stop offset="100%" stop-color="'+dark+'"/></radialGradient></defs>'+d+
+  '<path d="M50 30 C74 30 88 52 88 72 C88 88 72 94 50 94 C28 94 12 88 12 72 C12 52 26 30 50 30Z" fill="url(#'+gid+')"/>'+
   '<ellipse cx="38" cy="62" rx="5" ry="7" fill="#20203a"/><ellipse cx="62" cy="62" rx="5" ry="7" fill="#20203a"/>'+
   '<ellipse cx="39.5" cy="59" rx="1.8" ry="2.4" fill="#fff"/><ellipse cx="63.5" cy="59" rx="1.8" ry="2.4" fill="#fff"/>'+
   '<path d="M42 76 Q50 82 58 76" stroke="#20203a" stroke-width="3" fill="none" stroke-linecap="round"/>'+
@@ -392,6 +394,7 @@ function startBattle(st){
   $("enemyName").textContent=enemy.name;
   const tag=$("enemyTag"); tag.textContent=ATTR[enemy.attr].name; tag.className="tag "+enemy.attr;
   buildPartyRow(); renderBattle(); fitBoard();
+  setTimeout(fitBoard, 80);
   if(bgmOn)startBGM();
 }
 function buildPartyRow(){
@@ -436,11 +439,13 @@ function renderBoard(changed){
 }
 function fitBoard(){
   requestAnimationFrame(()=>{
-    const bw=$("board"); if(!bw||$("battle").classList.contains("hidden"))return;
+    const bw=$("board"), battle=$("battle");
+    if(!bw||battle.classList.contains("hidden"))return;
+    let others=0;
+    for(const el of battle.children){ if(!el.classList.contains("board-wrap")) others+=el.offsetHeight; }
     const availW=Math.min(window.innerWidth-16, 560);
-    const battle=$("battle"); const others=battle.scrollHeight - bw.offsetHeight;
-    const availH=window.innerHeight - (others) - 14;
-    const size=Math.max(240, Math.min(availW, availH));
+    const availH=window.innerHeight - others - 18;
+    const size=Math.max(180, Math.floor(Math.min(availW, availH)));
     bw.style.width=size+"px"; bw.style.height=size+"px";
   });
 }
