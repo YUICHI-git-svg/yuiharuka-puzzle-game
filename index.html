@@ -43,8 +43,8 @@
 
   /* ステージ */
   .sec-title{font-size:.95rem;font-weight:800;color:var(--sub);margin:.9rem 0 .45rem;}
-  .stages{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;}
-  .stage-btn{position:relative;border-radius:14px;border:2px solid var(--line);background:var(--panel);
+  .stages{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;}
+  .stage-btn{position:relative;min-width:0;border-radius:14px;border:2px solid var(--line);background:var(--panel);
     color:var(--ink);padding:.5rem .05rem .45rem;font-weight:800;font-size:.9rem;line-height:1.25;overflow:visible;}
   .stage-btn small{display:block;font-size:.58rem;color:var(--sub);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .stage-btn.boss{border-color:#ff8a5c;}
@@ -108,12 +108,14 @@
     text-shadow:0 2px 4px rgba(0,0,0,.7);opacity:0;transition:opacity .2s;}
   .member .acc.show{opacity:1;}
   .acc.fire{color:#ff9a8f;} .acc.water{color:#8fd0ff;} .acc.forest{color:#93eda9;}
-  .combo-pop{position:absolute;left:50%;top:26%;transform:translate(-50%,-50%) scale(.6);
-    font-size:2rem;font-weight:900;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.35),0 0 18px rgba(255,211,77,.8);
-    opacity:0;pointer-events:none;z-index:5;}
-  .combo-pop.show{animation:pop .55s ease-out;}
-  @keyframes pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5);}25%{opacity:1;transform:translate(-50%,-50%) scale(1.15);}70%{opacity:1;}100%{opacity:0;transform:translate(-50%,-60%) scale(1);}}
-  .board-wrap{display:flex;justify-content:center;padding:.45rem .5rem .5rem;}
+  #comboLayer{position:absolute;pointer-events:none;z-index:6;}
+  .combo-tag{position:absolute;transform:translate(-50%,-50%);font-size:.82rem;font-weight:900;letter-spacing:.05em;
+    background:linear-gradient(90deg,#ff5a4e,#ffb35c,#ffd34d,#3ecf6e,#3fa9f5,#c07fe8,#ff5a4e);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.9)) drop-shadow(0 0 3px rgba(0,0,0,.65));
+    white-space:nowrap;pointer-events:none;animation:ctag .65s ease-out forwards;}
+  @keyframes ctag{0%{opacity:0;transform:translate(-50%,-50%) scale(.5);}25%{opacity:1;transform:translate(-50%,-50%) scale(1.15);}60%{opacity:1;}100%{opacity:0;transform:translate(-50%,-100%) scale(1);}}
+  .board-wrap{position:relative;display:flex;justify-content:center;padding:.45rem .5rem .5rem;}
   #board{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:#0d0b22;
     border:1px solid var(--line);border-radius:14px;padding:5px;}
   .orb{aspect-ratio:1;border-radius:50%;border:none;padding:0;position:relative;min-height:0;
@@ -186,7 +188,6 @@
   <div class="enemy-zone">
     <div class="enemy-stage" id="enemyStage">
       <div id="enemyArt"></div>
-      <div class="combo-pop" id="comboPop"></div>
       <div class="atk-badge" id="atkBadge">こうげきまで<span class="num" id="atkNum">3</span>ターン</div>
     </div>
     <div class="enemy-meta">
@@ -204,7 +205,7 @@
       <div class="hp-num" id="partyHpNum"></div>
     </div>
   </div>
-  <div class="board-wrap"><div id="board"></div></div>
+  <div class="board-wrap"><div id="board"></div><div id="comboLayer"></div></div>
 </div>
 
 <!-- ============ モーダル ============ -->
@@ -297,6 +298,15 @@ function tone(f,t0,d,type,g){ if(!seOn&&type!=="bgm")return; const c=ac(),o=c.cr
   const s=c.currentTime+t0; v.gain.setValueAtTime(0,s); v.gain.linearRampToValueAtTime(g||.12,s+.015); v.gain.exponentialRampToValueAtTime(.001,s+d);
   o.start(s); o.stop(s+d+.05); }
 function comboSE(combo){ const base=520*Math.pow(1.122,Math.min(combo-1,10)); tone(base,0,.14); tone(base*1.5,.05,.16); }
+function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.sampleRate*0.2);
+  const buf=c.createBuffer(1,len,c.sampleRate); const d=buf.getChannelData(0);
+  for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+  const src=c.createBufferSource(); src.buffer=buf;
+  const f=c.createBiquadFilter(); f.type="bandpass"; f.Q.value=1.1;
+  const t=c.currentTime; const f0=480+Math.min(combo-1,10)*90;
+  f.frequency.setValueAtTime(f0,t); f.frequency.exponentialRampToValueAtTime(f0*4.2,t+0.16);
+  const g=c.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.22,t+.03); g.gain.exponentialRampToValueAtTime(.001,t+.2);
+  src.connect(f); f.connect(g); g.connect(c.destination); src.start(t); src.stop(t+.22); }
 function swapSE(){ tone(660,0,.07); }
 function skillSE(){ [523,659,784,1046].forEach((f,i)=>tone(f,i*.06,.16)); }
 function winSE(){ [523,659,784,1046,1318].forEach((f,i)=>tone(f,i*.1,.25)); }
@@ -384,7 +394,7 @@ function startBattle(st){
   curStage=st.n;
   const enemy=charById(st.enemy);
   B={ stage:st, enemy, enemyHp:st.hp, partyHp:PARTY_HP, cd:st.cd, board:newBoard(),
-      charges:save().party.map(()=>0), acc:save().party.map(()=>0), sel:null, busy:false, over:false };
+      charges:save().party.map(()=>0), acc:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false };
   $("home").classList.add("hidden"); $("battle").classList.remove("hidden");
   $("stageTitle").textContent="ステージ "+st.n;
   $("enemyArt").innerHTML=enemy.art();
@@ -421,9 +431,17 @@ function renderBattle(){
   save().party.forEach((id,i)=>{
     const c=charById(id), el=$("chg"+i); if(el)el.style.width=Math.min(100,B.charges[i]/c.skill.turns*100)+"%";
     const m=document.querySelector('.member[data-i="'+i+'"]'); if(m)m.classList.toggle("ready",B.charges[i]>=c.skill.turns);
-    const acc=$("acc"+i); if(acc){ if(B.acc[i]>0){acc.textContent=Math.round(B.acc[i]);acc.className="acc show "+c.attr;} else acc.className="acc"; }
   });
+  updateAccLabels();
   renderBoard();
+}
+function updateAccLabels(){
+  if(!B)return;
+  save().party.forEach((id,i)=>{
+    const c=charById(id), acc=$("acc"+i); if(!acc)return;
+    const v=B.accDisp?B.accDisp[i]:B.acc[i];
+    if(v>0.5){acc.textContent=Math.round(v);acc.className="acc show "+c.attr;} else acc.className="acc";
+  });
 }
 function renderBoard(changed){
   const bd=$("board"); bd.innerHTML="";
@@ -445,6 +463,8 @@ function fitBoard(){
     const availH=window.innerHeight - others - 18;
     const size=Math.max(180, Math.floor(Math.min(availW, availH)));
     bw.style.width=size+"px"; bw.style.height=size+"px";
+    const layer=$("comboLayer");
+    if(layer){ layer.style.left=bw.offsetLeft+"px"; layer.style.top=bw.offsetTop+"px"; layer.style.width=size+"px"; layer.style.height=size+"px"; }
   });
 }
 window.addEventListener("resize",fitBoard);
@@ -469,17 +489,20 @@ async function resolveBoard(){
     for(const g of groups){
       combo++;
       comboSE(combo);
-      const pop=$("comboPop"); pop.textContent=combo+"コンボ！"; pop.classList.remove("show"); void pop.offsetWidth; pop.classList.add("show");
+      showComboTag(g, combo);
       // 攻撃の蓄積
       if(g.type==="heal"){
         const bonus=save().party.some(id=>{const c=charById(id);return c.passive.includes("かいふく");})?1.5:1;
         B.partyHp=Math.min(PARTY_HP, B.partyHp + g.cells.length*4*bonus*(1+0.25*(combo-1)));
       } else {
+        let gained=false;
         save().party.forEach((id,idx)=>{
           const c=charById(id); if(c.attr!==g.type)return;
           const pb=c.passive.includes("+35")?1.35:c.passive.includes("+25")?1.25:1.1;
           B.acc[idx]+= c.atk * g.cells.length * 0.34 * pb * (1+0.25*(combo-1));
+          gained=true;
         });
+        if(gained){ whooshSE(combo); countUpAcc(); }
       }
       renderBattle();
       const bd=$("board").children;
@@ -498,10 +521,31 @@ async function resolveBoard(){
     let dmg=0; save().party.forEach((id,idx)=>{ const c=charById(id); const m=(mult[c.attr]&&mult[c.attr][B.enemy.attr])||1; dmg+=B.acc[idx]*m; });
     B.enemyHp-=dmg;
     const ea=$("enemyArt"); ea.classList.remove("shake"); void ea.offsetWidth; ea.classList.add("shake");
-    B.acc=B.acc.map(()=>0); renderBattle();
+    B.acc=B.acc.map(()=>0); B.accDisp=B.accDisp.map(()=>0); renderBattle();
     await wait(300);
   }
   if(B.enemyHp<=0){ winBattle(); }
+}
+function showComboTag(g, combo){
+  const layer=$("comboLayer"); if(!layer)return;
+  let r=0,c=0; g.cells.forEach(ci=>{ r+=Math.floor(ci/N); c+=ci%N; });
+  r/=g.cells.length; c/=g.cells.length;
+  const el=document.createElement("div");
+  el.className="combo-tag"; el.textContent="COMBO "+combo;
+  el.style.left=((c+0.5)/N*100)+"%"; el.style.top=((r+0.5)/N*100)+"%";
+  layer.appendChild(el);
+  setTimeout(()=>el.remove(),700);
+}
+let accAnim=null;
+function countUpAcc(){
+  if(!B)return;
+  if(accAnim)cancelAnimationFrame(accAnim);
+  const from=B.accDisp.slice(), to=B.acc.slice(), t0=performance.now(), dur=280;
+  const step=t=>{ if(!B){accAnim=null;return;}
+    const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,2);
+    B.accDisp=from.map((f,i)=>f+(to[i]-f)*e); updateAccLabels();
+    if(k<1)accAnim=requestAnimationFrame(step); else { B.accDisp=to.slice(); updateAccLabels(); accAnim=null; } };
+  accAnim=requestAnimationFrame(step);
 }
 function dropOrbs(){
   for(let c=0;c<N;c++){
