@@ -310,10 +310,69 @@ function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.
 function swapSE(){ tone(660,0,.07); }
 function skillSE(){ [523,659,784,1046].forEach((f,i)=>tone(f,i*.06,.16)); }
 function winSE(){ [523,659,784,1046,1318].forEach((f,i)=>tone(f,i*.1,.25)); }
-function startBGM(){ stopBGM(); if(!bgmOn)return; const scales=[[262,294,330,392,440],[247,262,311,370,415],[220,262,330,392,494],[294,330,392,440,523]];
-  const sc=scales[(curStage-1)%scales.length];
-  bgmTimer=setInterval(()=>{ if(!bgmOn)return; const seq=[0,2,4,2,1,2,4,3]; const i=seq[bgmStep%seq.length];
-    tone(sc[i],0,.34,"bgm",.05); if(bgmStep%2===0)tone(sc[0]/2,0,.4,"bgm",.04); bgmStep++; },300); }
+/* ---- BGM: 神秘的で軽快なファンタジー・ループ（パズドラ風アレンジ） ----
+   138 BPM / 8分音符ステップ。Am–F–C–G のコード進行に
+   ハープ風アルペジオ＋ベル、柔らかいパッドとベース、
+   キック／スネア／ハイハットのドラムを重ねる。ステージで移調して変化をつける。 */
+function mtof(m){ return 440*Math.pow(2,(m-69)/12); }
+let _noiseBuf=null;
+function noiseBuf(c){ if(_noiseBuf)return _noiseBuf; const len=Math.floor(c.sampleRate*0.5);
+  const buf=c.createBuffer(1,len,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<len;i++)d[i]=Math.random()*2-1; _noiseBuf=buf; return buf; }
+function bgmOsc(freq,dur,vol,type,attack){ if(!bgmOn)return; const c=ac(),o=c.createOscillator(),v=c.createGain();
+  o.type=type||"triangle"; o.frequency.value=freq; o.connect(v); v.connect(c.destination);
+  const t=c.currentTime; v.gain.setValueAtTime(0,t);
+  v.gain.linearRampToValueAtTime(vol,t+(attack||0.012));
+  v.gain.exponentialRampToValueAtTime(.0008,t+dur); o.start(t); o.stop(t+dur+.05); }
+function drumKick(){ if(!bgmOn)return; const c=ac(),o=c.createOscillator(),v=c.createGain(),t=c.currentTime;
+  o.type="sine"; o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(46,t+.11);
+  v.gain.setValueAtTime(.26,t); v.gain.exponentialRampToValueAtTime(.001,t+.18);
+  o.connect(v); v.connect(c.destination); o.start(t); o.stop(t+.2); }
+function drumHat(open){ if(!bgmOn)return; const c=ac(),s=c.createBufferSource(),t=c.currentTime;
+  s.buffer=noiseBuf(c); const f=c.createBiquadFilter(); f.type="highpass"; f.frequency.value=7800;
+  const v=c.createGain(), dur=open?.14:.045;
+  v.gain.setValueAtTime(open?.05:.07,t); v.gain.exponentialRampToValueAtTime(.001,t+dur);
+  s.connect(f); f.connect(v); v.connect(c.destination); s.start(t); s.stop(t+dur+.02); }
+function drumSnare(){ if(!bgmOn)return; const c=ac(),t=c.currentTime;
+  const s=c.createBufferSource(); s.buffer=noiseBuf(c);
+  const f=c.createBiquadFilter(); f.type="bandpass"; f.frequency.value=1900; f.Q.value=.9;
+  const v=c.createGain(); v.gain.setValueAtTime(.12,t); v.gain.exponentialRampToValueAtTime(.001,t+.13);
+  s.connect(f); f.connect(v); v.connect(c.destination); s.start(t); s.stop(t+.15);
+  const o=c.createOscillator(),ov=c.createGain(); o.type="triangle"; o.frequency.value=196;
+  ov.gain.setValueAtTime(.06,t); ov.gain.exponentialRampToValueAtTime(.001,t+.08);
+  o.connect(ov); ov.connect(c.destination); o.start(t); o.stop(t+.09); }
+function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
+  const shifts=[0,3,-2,5], shift=shifts[(curStage-1)%shifts.length];
+  const isBoss=(curStage===3||curStage===8);
+  const chords=[
+    {bass:45,pad:[57,60,64],arp:[69,72,76,81,79]},
+    {bass:41,pad:[53,57,60],arp:[65,69,72,77,76]},
+    {bass:48,pad:[60,64,67],arp:[72,76,79,84,79]},
+    {bass:43,pad:[55,59,62],arp:[67,71,74,79,76]},
+  ];
+  const arpPat=[0,2,4,3,1,4,2,3];
+  const bellPat={0:4,6:3,14:4,22:2,30:3};
+  const stepMs=Math.round(60000/138/2);
+  bgmTimer=setInterval(()=>{ if(!bgmOn)return;
+    const bar=Math.floor(bgmStep/8)%4, s=bgmStep%8, ch=chords[bar];
+    /* ドラム：キックは1・3拍、スネアは2・4拍、ハットは毎ステップ（裏は軽く） */
+    if(s===0||s===4||(isBoss&&s===6)) drumKick();
+    if(s===2||s===6) drumSnare();
+    drumHat(s===7);
+    /* ベース：ルートを軽く刻む */
+    if(s===0||s===4) bgmOsc(mtof(ch.bass+shift),.38,.085,"sine");
+    if(s===6) bgmOsc(mtof(ch.bass+shift),.2,.04,"sine");
+    /* パッド：小節頭に柔らかい和音で神秘感 */
+    if(s===0) ch.pad.forEach(m=>bgmOsc(mtof(m+shift),1.65,.015,"triangle",.09));
+    /* ハープ風アルペジオ：毎ステップ、倍音でキラキラ感 */
+    const an=ch.arp[arpPat[s]%ch.arp.length]+shift;
+    bgmOsc(mtof(an),.32,.04,"triangle");
+    bgmOsc(mtof(an)*2,.16,.007,"sine");
+    /* ベルの旋律：ところどころに置いて軽快に */
+    const bp=bellPat[bgmStep%32];
+    if(bp!==undefined&&s!==0) bgmOsc(mtof(ch.arp[bp]+shift+12),.42,.028,"sine",.005);
+    bgmStep++;
+  },stepMs); }
 function stopBGM(){ if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;} }
 function setBGM(on){ bgmOn=on; document.getElementById("bgmBtn").textContent="🎵 おんがく "+(on?"ON":"OFF");
   document.getElementById("bgmBtn").classList.toggle("on",on);
