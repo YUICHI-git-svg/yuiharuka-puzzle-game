@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="data:," />
+<title>ゆいとはるかのパズルゲーム</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#14122b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="パズルゲーム">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#14122b; --bg2:#1d1a3d; --panel:#232048; --panel2:#2b2760;
+    --ink:#f4f2ff; --sub:#b9b4e6; --line:#3d3880;
+    --fire:#ff5a4e; --water:#3fa9f5; --forest:#3ecf6e; --heal:#ff7eb0;
+    --gold:#ffd34d;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;}
+  button{font-family:inherit; min-height:2.25rem; cursor:pointer;}
+  .hidden{display:none !important;}
+
+  /* ---------- 共通 ---------- */
+  .topbar{display:flex;align-items:center;gap:.5rem;padding:.55rem .8rem;}
+  .icon-btn{background:var(--panel);color:var(--ink);border:1px solid var(--line);
+    border-radius:999px;padding:.35rem .8rem;font-size:.85rem;font-weight:700;}
+  .icon-btn.on{background:var(--gold);color:#3a2c00;border-color:var(--gold);}
+  h1{font-size:1.25rem;margin:.2rem 0 .4rem;text-align:center;letter-spacing:.02em;}
+  .wrap{max-width:560px;margin:0 auto;padding:0 .8rem 1.2rem;}
+
+  /* プレイヤー選択 */
+  .players{display:flex;gap:.6rem;justify-content:center;margin:.4rem 0 .8rem;}
+  .player-btn{flex:1;max-width:220px;border-radius:16px;border:2px solid var(--line);
+    background:var(--panel);color:var(--ink);padding:.6rem .4rem;font-size:1.05rem;font-weight:800;}
+  .player-btn.sel{border-color:var(--gold);background:var(--panel2);box-shadow:0 0 0 2px rgba(255,211,77,.35);}
+
+  /* ステージ */
+  .sec-title{font-size:.95rem;font-weight:800;color:var(--sub);margin:.9rem 0 .45rem;}
+  .stages{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;}
+  .stage-btn{position:relative;border-radius:14px;border:2px solid var(--line);background:var(--panel);
+    color:var(--ink);padding:.5rem .05rem .45rem;font-weight:800;font-size:.9rem;line-height:1.25;overflow:visible;}
+  .stage-btn small{display:block;font-size:.58rem;color:var(--sub);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .stage-btn.boss{border-color:#ff8a5c;}
+  .stage-btn.cleared{border-color:var(--forest);}
+  .stage-btn.locked{opacity:.38;}
+  .stage-btn .crown{position:absolute;top:-7px;right:-2px;font-size:.68rem;color:var(--gold);}
+
+  /* キャラカード（編成・ずかん） */
+  .char-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;}
+  .char-card{background:var(--panel);border:2px solid var(--line);border-radius:16px;
+    padding:.45rem .3rem .55rem;text-align:center;color:var(--ink);}
+  .char-card.inparty{border-color:var(--gold);}
+  .char-card.notowned{opacity:.45;}
+  .char-card .art{height:74px;display:flex;align-items:flex-end;justify-content:center;}
+  .char-card .art svg{height:74px;width:auto;max-width:100%;}
+  .char-card .nm{font-size:.8rem;font-weight:800;margin-top:.2rem;line-height:1.2;}
+  .char-card .sk{font-size:.62rem;color:var(--sub);line-height:1.35;margin-top:.25rem;text-align:left;padding:0 .2rem;}
+  .char-card .sk b{color:var(--gold);font-weight:800;}
+  .tag{display:inline-block;font-size:.6rem;font-weight:800;border-radius:999px;padding:.08rem .45rem;color:#fff;}
+  .tag.fire{background:var(--fire);} .tag.water{background:var(--water);}
+  .tag.forest{background:var(--forest);} .tag.heal{background:var(--heal);}
+  .msg{min-height:1.4em;text-align:center;font-size:.85rem;font-weight:700;color:var(--gold);margin:.5rem 0 0;}
+
+  /* ---------- バトル ---------- */
+  #battle{height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:
+    radial-gradient(120% 60% at 50% 0%, #2a2560 0%, var(--bg) 62%);}
+  .b-top{display:flex;align-items:center;justify-content:space-between;padding:.35rem .6rem 0;}
+  .b-top .ttl{font-size:.8rem;color:var(--sub);font-weight:800;}
+  .enemy-zone{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;}
+  .enemy-stage{position:relative;flex:1 1 auto;min-height:0;display:flex;align-items:flex-end;justify-content:center;}
+  .enemy-stage svg{height:100%;max-height:100%;width:auto;max-width:72vw;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45));}
+  .enemy-stage svg.boss{max-width:84vw;}
+  #enemyArt{height:100%;display:flex;align-items:flex-end;justify-content:center;}
+  #enemyArt img{height:100%;max-height:100%;width:auto;max-width:72vw;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45));}
+  #enemyArt img.boss{max-width:86vw;}
+  .char-card .art img{height:74px;width:auto;max-width:100%;object-fit:contain;}
+  .member .art img{height:56px;width:auto;max-width:100%;object-fit:contain;}
+  .sheet .art img{height:110px;width:auto;max-width:100%;object-fit:contain;}
+  .atk-badge{position:absolute;right:.55rem;top:38%;transform:translateY(-50%);
+    background:var(--panel2);border:2px solid var(--line);border-radius:14px;
+    padding:.4rem .5rem;text-align:center;font-size:.68rem;font-weight:800;color:var(--sub);line-height:1.3;min-width:74px;}
+  .atk-badge .num{display:block;font-size:1.35rem;color:var(--ink);line-height:1.1;}
+  .atk-badge.danger{border-color:var(--fire);background:#4a1f2e;}
+  .atk-badge.danger .num{color:#ff8d84;}
+  .enemy-meta{padding:0 .8rem;}
+  .enemy-name{display:flex;align-items:center;justify-content:center;gap:.5rem;font-weight:800;font-size:1.05rem;margin:.1rem 0 .3rem;}
+  .hp-row{display:flex;align-items:center;gap:.55rem;}
+  .hp-bar{flex:1;height:14px;border-radius:999px;background:#0d0b22;border:1px solid var(--line);overflow:hidden;}
+  .hp-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#ff7a52,#ffb35c);transition:width .45s ease;}
+  .hp-num{font-size:.78rem;font-weight:800;white-space:nowrap;color:var(--ink);}
+  .party-hp .hp-fill{background:linear-gradient(90deg,#57d95e,#b6f09a);}
+  .party-row{display:flex;gap:.35rem;padding:.35rem .6rem 0;align-items:flex-end;}
+  .member{flex:1;position:relative;text-align:center;background:none;border:none;padding:0;min-height:0;}
+  .member .art{height:56px;display:flex;align-items:flex-end;justify-content:center;border-radius:12px;}
+  .member .art svg{height:56px;width:auto;max-width:100%;}
+  .member .charge{height:6px;border-radius:99px;background:#0d0b22;margin-top:.2rem;overflow:hidden;border:1px solid var(--line);}
+  .member .charge i{display:block;height:100%;background:var(--gold);transition:width .3s;}
+  .member.ready .art{animation:pulse 1s infinite alternate;}
+  @keyframes pulse{from{filter:drop-shadow(0 0 0 rgba(255,211,77,0));}to{filter:drop-shadow(0 0 7px rgba(255,211,77,.95));}}
+  .member .acc{position:absolute;top:-1.15rem;left:0;right:0;font-size:.85rem;font-weight:900;
+    text-shadow:0 2px 4px rgba(0,0,0,.7);opacity:0;transition:opacity .2s;}
+  .member .acc.show{opacity:1;}
+  .acc.fire{color:#ff9a8f;} .acc.water{color:#8fd0ff;} .acc.forest{color:#93eda9;}
+  .combo-pop{position:absolute;left:50%;top:26%;transform:translate(-50%,-50%) scale(.6);
+    font-size:2rem;font-weight:900;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.35),0 0 18px rgba(255,211,77,.8);
+    opacity:0;pointer-events:none;z-index:5;}
+  .combo-pop.show{animation:pop .55s ease-out;}
+  @keyframes pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5);}25%{opacity:1;transform:translate(-50%,-50%) scale(1.15);}70%{opacity:1;}100%{opacity:0;transform:translate(-50%,-60%) scale(1);}}
+  .board-wrap{display:flex;justify-content:center;padding:.45rem .5rem .5rem;}
+  #board{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:#0d0b22;
+    border:1px solid var(--line);border-radius:14px;padding:5px;}
+  .orb{aspect-ratio:1;border-radius:50%;border:none;padding:0;position:relative;min-height:0;
+    display:flex;align-items:center;justify-content:center;transition:transform .12s, box-shadow .12s;}
+  .orb svg{width:62%;height:62%;pointer-events:none;}
+  .orb.fire{background:radial-gradient(circle at 32% 28%,#ffb1a6,#ff5a4e 55%,#c22e24);}
+  .orb.water{background:radial-gradient(circle at 32% 28%,#bfe6ff,#3fa9f5 55%,#1668ad);}
+  .orb.forest{background:radial-gradient(circle at 32% 28%,#c2f7cf,#3ecf6e 55%,#1d8f43);}
+  .orb.heal{background:radial-gradient(circle at 32% 28%,#ffd3e6,#ff7eb0 55%,#d14d85);}
+  .orb.sel{box-shadow:0 0 0 3px #fff,0 0 14px rgba(255,255,255,.8);transform:scale(1.1);z-index:2;}
+  .orb.clearing{animation:clr .3s forwards;}
+  @keyframes clr{to{transform:scale(.2);opacity:0;}}
+  .orb.changed{animation:chg .4s;}
+  @keyframes chg{0%{transform:scale(.4) rotate(-30deg);}100%{transform:scale(1) rotate(0);}}
+  .shake{animation:shk .35s;}
+  @keyframes shk{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+  /* モーダル */
+  .overlay{position:fixed;inset:0;background:rgba(8,6,24,.72);display:flex;align-items:center;justify-content:center;z-index:20;padding:1rem;}
+  .sheet{background:var(--panel2);border:1px solid var(--line);border-radius:20px;max-width:420px;width:100%;
+    padding:1rem;text-align:center;max-height:88dvh;overflow:auto;}
+  .sheet .art{height:110px;display:flex;align-items:flex-end;justify-content:center;}
+  .sheet .art svg{height:110px;}
+  .sheet h2{margin:.3rem 0 .2rem;font-size:1.15rem;}
+  .sheet p{font-size:.88rem;line-height:1.55;color:var(--ink);margin:.35rem 0;}
+  .sheet .sub{color:var(--sub);font-size:.78rem;}
+  .btn{display:block;width:100%;border:none;border-radius:14px;padding:.7rem;font-size:1rem;font-weight:800;margin-top:.55rem;}
+  .btn.primary{background:var(--gold);color:#3a2c00;}
+  .btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);}
+  .btn:disabled{opacity:.4;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+</style>
+</head>
+<body>
+
+<!-- ============ ホーム ============ -->
+<div id="home">
+  <div class="topbar">
+    <span style="flex:1"></span>
+    <button class="icon-btn" id="bgmBtn">🎵 おんがく OFF</button>
+    <button class="icon-btn on" id="seBtn">🔔 おと ON</button>
+  </div>
+  <div class="wrap">
+    <h1>ゆいとはるかのパズルゲーム</h1>
+    <div class="players">
+      <button class="player-btn sel" data-player="yui">👧 ゆい</button>
+      <button class="player-btn" data-player="haruka">👧 はるか</button>
+    </div>
+
+    <div class="sec-title">ステージを えらんでね</div>
+    <div class="stages" id="stageGrid"></div>
+
+    <div class="sec-title">パーティ（5にんまで）― タップで 入れかえ</div>
+    <div class="char-grid" id="partyGrid"></div>
+    <p class="msg" id="homeMsg"></p>
+
+    <div class="sec-title">ずかん ― スキルいちらん</div>
+    <div class="char-grid" id="zukanGrid"></div>
+  </div>
+</div>
+
+<!-- ============ バトル ============ -->
+<div id="battle" class="hidden">
+  <div class="b-top">
+    <button class="icon-btn" id="quitBtn">← もどる</button>
+    <span class="ttl" id="stageTitle"></span>
+    <button class="icon-btn" id="bgmBtn2">🎵 OFF</button>
+  </div>
+  <div class="enemy-zone">
+    <div class="enemy-stage" id="enemyStage">
+      <div id="enemyArt"></div>
+      <div class="combo-pop" id="comboPop"></div>
+      <div class="atk-badge" id="atkBadge">こうげきまで<span class="num" id="atkNum">3</span>ターン</div>
+    </div>
+    <div class="enemy-meta">
+      <div class="enemy-name"><span id="enemyName"></span><span class="tag" id="enemyTag"></span></div>
+      <div class="hp-row">
+        <div class="hp-bar"><div class="hp-fill" id="enemyHpFill"></div></div>
+        <div class="hp-num" id="enemyHpNum"></div>
+      </div>
+    </div>
+  </div>
+  <div class="party-row" id="partyRow"></div>
+  <div class="enemy-meta party-hp" style="padding-top:.3rem;">
+    <div class="hp-row">
+      <div class="hp-bar"><div class="hp-fill" id="partyHpFill"></div></div>
+      <div class="hp-num" id="partyHpNum"></div>
+    </div>
+  </div>
+  <div class="board-wrap"><div id="board"></div></div>
+</div>
+
+<!-- ============ モーダル ============ -->
+<div class="overlay hidden" id="overlay"><div class="sheet" id="sheet"></div></div>
+
+<script>
+"use strict";
+/* ================= キャラデータ ================= */
+const ATTR = {fire:{name:"ひ",color:"var(--fire)"},water:{name:"みず"},forest:{name:"もり"},heal:{name:"かいふく"}};
+function slimeSVG(main, dark, deco){
+  let d="";
+  if(deco==="flame") d='<path d="M50 6 C58 18 66 22 62 36 C59 45 41 45 38 36 C34 22 42 18 50 6Z" fill="#ff8a3c"/><path d="M50 18 C55 25 57 28 55 34 C53 39 47 39 45 34 C43 28 45 25 50 18Z" fill="#ffd34d"/>';
+  if(deco==="drop") d='<path d="M50 4 C56 14 62 20 62 28 C62 36 56 40 50 40 C44 40 38 36 38 28 C38 20 44 14 50 4Z" fill="#bfe6ff"/>';
+  if(deco==="bud") d='<path d="M50 26 C50 16 54 8 62 4 C63 14 58 22 50 26Z" fill="#57d95e"/><path d="M50 26 C50 17 46 10 39 6 C38 15 42 23 50 26Z" fill="#8fe388"/><rect x="48" y="24" width="4" height="9" rx="2" fill="#7a5a2e"/>';
+  return '<svg viewBox="0 0 100 100"><defs><radialGradient id="sg'+main+'" cx="35%" cy="25%"><stop offset="0%" stop-color="#ffffff" stop-opacity=".55"/><stop offset="45%" stop-color="'+main+'"/><stop offset="100%" stop-color="'+dark+'"/></radialGradient></defs>'+d+
+  '<path d="M50 30 C74 30 88 52 88 72 C88 88 72 94 50 94 C28 94 12 88 12 72 C12 52 26 30 50 30Z" fill="url(#sg'+main+')"/>'+
+  '<ellipse cx="38" cy="62" rx="5" ry="7" fill="#20203a"/><ellipse cx="62" cy="62" rx="5" ry="7" fill="#20203a"/>'+
+  '<ellipse cx="39.5" cy="59" rx="1.8" ry="2.4" fill="#fff"/><ellipse cx="63.5" cy="59" rx="1.8" ry="2.4" fill="#fff"/>'+
+  '<path d="M42 76 Q50 82 58 76" stroke="#20203a" stroke-width="3" fill="none" stroke-linecap="round"/>'+
+  '<ellipse cx="28" cy="72" rx="5" ry="3" fill="#ff9db1" opacity=".7"/><ellipse cx="72" cy="72" rx="5" ry="3" fill="#ff9db1" opacity=".7"/></svg>';
+}
+function dragonSVG(main, dark, belly){
+  return '<svg viewBox="0 0 100 100"><path d="M18 38 C6 30 4 14 12 6 C20 14 26 16 30 26 C24 28 20 32 18 38Z" fill="'+dark+'"/><path d="M82 38 C94 30 96 14 88 6 C80 14 74 16 70 26 C76 28 80 32 82 38Z" fill="'+dark+'"/>'+
+  '<path d="M30 12 L36 2 L40 12 M60 12 L64 2 L70 12" stroke="#e8e4d8" stroke-width="3.4" fill="none" stroke-linecap="round"/>'+
+  '<path d="M50 14 C68 14 78 30 78 52 C78 76 66 94 50 94 C34 94 22 76 22 52 C22 30 32 14 50 14Z" fill="'+main+'"/>'+
+  '<path d="M50 34 C60 34 66 48 66 64 C66 80 59 90 50 90 C41 90 34 80 34 64 C34 48 40 34 50 34Z" fill="'+belly+'"/>'+
+  '<path d="M36 52 H64 M35 64 H65 M38 76 H62" stroke="'+dark+'" stroke-width="2" opacity=".45"/>'+
+  '<circle cx="39" cy="34" r="4.4" fill="#fff"/><circle cx="61" cy="34" r="4.4" fill="#fff"/>'+
+  '<circle cx="39" cy="35" r="2.6" fill="#20203a"/><circle cx="61" cy="35" r="2.6" fill="#20203a"/>'+
+  '<path d="M44 46 Q50 50 56 46" stroke="#20203a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+  '<path d="M46 50 L48 55 L52 50 L54 55" stroke="#fff" stroke-width="2" fill="none"/>'+
+  '<path d="M14 66 C6 72 8 84 16 88 M86 66 C94 72 92 84 84 88" stroke="'+dark+'" stroke-width="4" fill="none" stroke-linecap="round"/></svg>';
+}
+function fairySVG(dress, hair){
+  return '<svg viewBox="0 0 100 100"><path d="M26 34 C10 26 6 8 16 4 C24 12 28 20 28 30Z" fill="#cfeaff" opacity=".85"/><path d="M74 34 C90 26 94 8 84 4 C76 12 72 20 72 30Z" fill="#cfeaff" opacity=".85"/>'+
+  '<circle cx="20" cy="18" r="1.8" fill="#fff"/><circle cx="82" cy="12" r="1.8" fill="#fff"/><circle cx="88" cy="26" r="1.4" fill="#ffd34d"/><circle cx="12" cy="30" r="1.4" fill="#ffd34d"/>'+
+  '<path d="M50 30 C58 44 66 58 70 76 C58 82 42 82 30 76 C34 58 42 44 50 30Z" fill="'+dress+'"/>'+
+  '<path d="M34 66 L66 66 M37 74 L63 74" stroke="#ffffff" stroke-width="2" opacity=".55"/>'+
+  '<circle cx="50" cy="24" r="13" fill="#ffe3c9"/><path d="M37 22 C36 8 44 3 50 3 C56 3 64 8 63 22 C60 14 55 12 50 12 C45 12 40 14 37 22Z" fill="'+hair+'"/>'+
+  '<circle cx="45" cy="25" r="2.2" fill="#20203a"/><circle cx="55" cy="25" r="2.2" fill="#20203a"/>'+
+  '<circle cx="45.8" cy="24.2" r=".9" fill="#fff"/><circle cx="55.8" cy="24.2" r=".9" fill="#fff"/>'+
+  '<path d="M46 30 Q50 33 54 30" stroke="#c2547a" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="50" cy="6" r="2.6" fill="#ffd34d"/><path d="M42 88 L40 96 M58 88 L60 96" stroke="#e8b98d" stroke-width="3.4" stroke-linecap="round"/></svg>';
+}
+const CHARS = [
+ {id:"slime_fire", name:"ほのおスライム", attr:"fire", atk:9, art:()=>slimeSVG("#ff7a5c","#c22e24","flame"), passive:"コンボの いりょく +10%", skill:{name:"ちいさな かえん", desc:"ひの ダメージ 120", turns:4, type:"dmg", power:120}},
+ {id:"slime_water", name:"みずスライム", attr:"water", atk:9, art:()=>slimeSVG("#5cb8ff","#1668ad","drop"), passive:"コンボの いりょく +10%", skill:{name:"みずの しずく", desc:"HP 60 かいふく", turns:4, type:"heal", power:60}},
+ {id:"slime_forest", name:"もりスライム", attr:"forest", atk:9, art:()=>slimeSVG("#63dd7e","#1d8f43","bud"), passive:"コンボの いりょく +10%", skill:{name:"はっぱカッター", desc:"もりの ダメージ 120", turns:4, type:"dmg", power:120}},
+ {id:"dragon_fire", name:"ほのおドラゴン", attr:"fire", atk:34, art:()=>imgArt("dragon-fire.png"), passive:"コンボの いりょく +25%", skill:{name:"かえんブレス", desc:"ひの ダメージ 340", turns:5, type:"dmg", power:340}},
+ {id:"dragon_water", name:"うみドラゴン", attr:"water", atk:32, art:()=>imgArt("dragon-water.png"), passive:"コンボの いりょく +25%", skill:{name:"うずしお", desc:"みずの ダメージ 320 と HP 40 かいふく", turns:5, type:"dmgheal", power:320, heal:40}},
+ {id:"dragon_forest", name:"もりドラゴン", attr:"forest", atk:33, art:()=>imgArt("dragon-forest.png"), passive:"コンボの いりょく +25%", skill:{name:"もりの いぶき", desc:"HP 130 かいふく", turns:5, type:"heal", power:130}},
+ {id:"fairy_flower", name:"はなのようせい", attr:"forest", atk:26, art:()=>imgArt("fairy-flower.png"), passive:"かいふくオーブの こうか +50%", skill:{name:"はなびらヒール", desc:"HP 160 かいふく", turns:4, type:"heal", power:160}},
+ {id:"fairy_star", name:"ほしのようせい", attr:"water", atk:28, art:()=>imgArt("fairy-star.png"), passive:"かいふくオーブの こうか +50%", skill:{name:"ほしの ひかり", desc:"みずの ダメージ 300", turns:4, type:"dmg", power:300}},
+ {id:"phoenix", name:"ひのとり", attr:"fire", atk:48, art:()=>imgArt("phoenix.png"), passive:"コンボの いりょく +35%", skill:{name:"ほうおうの炎", desc:"ひの ダメージ 480 と HP 50 かいふく", turns:5, type:"dmgheal", power:480, heal:50}},
+ {id:"dragon_sea", name:"おおうみドラゴン", attr:"water", atk:52, art:()=>imgArt("dragon-water.png","hue-rotate(-28deg) saturate(1.35) brightness(.9)"), passive:"コンボの いりょく +35%", skill:{name:"おおなみ", desc:"みずの ダメージ 520", turns:6, type:"dmg", power:520}},
+ {id:"dragon_change_forest", name:"もりへんげドラゴン", attr:"forest", atk:38, art:()=>imgArt("dragon-forest.png","hue-rotate(16deg) saturate(1.3)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・もり", desc:"あかオーブ 全部 → みどり に かえる", turns:5, type:"change", from:"fire", to:"forest"}},
+ {id:"fairy_change_water", name:"みずへんげようせい", attr:"water", atk:36, art:()=>imgArt("fairy-star.png","hue-rotate(28deg) saturate(1.15)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの こな・みず", desc:"みどりオーブ 全部 → あお に かえる", turns:5, type:"change", from:"forest", to:"water"}},
+ {id:"dragon_change_fire", name:"ほのおへんげドラゴン", attr:"fire", atk:40, art:()=>imgArt("dragon-fire.png","hue-rotate(-14deg) saturate(1.35)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・ほのお", desc:"あおオーブ 全部 → あか に かえる", turns:5, type:"change", from:"water", to:"fire"}},
+];
+function imgArt(src, filter){ return '<img src="'+src+'" alt=""'+(filter?' style="filter:'+filter+'"':"")+">"; }
+const charById = id => CHARS.find(c=>c.id===id);
+const STAGES = [
+ {n:1, enemy:"slime_forest", hp:1100, atk:22, cd:3, recruit:.5},
+ {n:2, enemy:"slime_water", hp:1500, atk:28, cd:3, recruit:.5},
+ {n:3, enemy:"fairy_flower", hp:2300, atk:38, cd:3, recruit:.4},
+ {n:4, enemy:"dragon_forest", hp:3200, atk:50, cd:3, recruit:.4},
+ {n:5, enemy:"dragon_fire", hp:4600, atk:66, cd:2, recruit:.4, boss:true},
+ {n:6, enemy:"fairy_star", hp:5400, atk:74, cd:3, recruit:.4},
+ {n:7, enemy:"dragon_water", hp:6400, atk:86, cd:3, recruit:.35},
+ {n:8, enemy:"phoenix", hp:7600, atk:100, cd:2, recruit:.35},
+ {n:9, enemy:"dragon_sea", hp:9000, atk:112, cd:3, recruit:.35},
+ {n:10, enemy:"phoenix", hp:11000, atk:130, cd:2, recruit:.3, boss:true},
+ {n:11, enemy:"dragon_change_forest", hp:3800, atk:56, cd:3, recruit:.6, extra:true},
+ {n:12, enemy:"fairy_change_water", hp:4200, atk:60, cd:3, recruit:.6, extra:true},
+ {n:13, enemy:"dragon_change_fire", hp:4600, atk:64, cd:3, recruit:.6, extra:true},
+];
+const PARTY_HP = 150;
+
+/* ================= セーブ（メモリ内・プレイヤー別） ================= */
+function newSave(){ return { owned:["slime_fire","slime_water","slime_forest"], party:["slime_fire","slime_water","slime_forest"], cleared:[] }; }
+const saves = { yui:newSave(), haruka:newSave() };
+let player = "yui";
+const save = () => saves[player];
+
+/* ================= おと・おんがく ================= */
+let AC=null, seOn=true, bgmOn=false, bgmTimer=null, bgmStep=0, curStage=1;
+function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==="suspended")AC.resume(); return AC; }
+function tone(f,t0,d,type,g){ if(!seOn&&type!=="bgm")return; const c=ac(),o=c.createOscillator(),v=c.createGain();
+  o.type=type==="bgm"?"triangle":"sine"; o.frequency.value=f; o.connect(v); v.connect(c.destination);
+  const s=c.currentTime+t0; v.gain.setValueAtTime(0,s); v.gain.linearRampToValueAtTime(g||.12,s+.015); v.gain.exponentialRampToValueAtTime(.001,s+d);
+  o.start(s); o.stop(s+d+.05); }
+function comboSE(combo){ const base=520*Math.pow(1.122,Math.min(combo-1,10)); tone(base,0,.14); tone(base*1.5,.05,.16); }
+function swapSE(){ tone(660,0,.07); }
+function skillSE(){ [523,659,784,1046].forEach((f,i)=>tone(f,i*.06,.16)); }
+function winSE(){ [523,659,784,1046,1318].forEach((f,i)=>tone(f,i*.1,.25)); }
+function startBGM(){ stopBGM(); if(!bgmOn)return; const scales=[[262,294,330,392,440],[247,262,311,370,415],[220,262,330,392,494],[294,330,392,440,523]];
+  const sc=scales[(curStage-1)%scales.length];
+  bgmTimer=setInterval(()=>{ if(!bgmOn)return; const seq=[0,2,4,2,1,2,4,3]; const i=seq[bgmStep%seq.length];
+    tone(sc[i],0,.34,"bgm",.05); if(bgmStep%2===0)tone(sc[0]/2,0,.4,"bgm",.04); bgmStep++; },300); }
+function stopBGM(){ if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;} }
+function setBGM(on){ bgmOn=on; document.getElementById("bgmBtn").textContent="🎵 おんがく "+(on?"ON":"OFF");
+  document.getElementById("bgmBtn").classList.toggle("on",on);
+  document.getElementById("bgmBtn2").textContent="🎵 "+(on?"ON":"OFF");
+  if(on){ac();startBGM();} else stopBGM(); }
+document.getElementById("bgmBtn").onclick=()=>setBGM(!bgmOn);
+document.getElementById("bgmBtn2").onclick=()=>setBGM(!bgmOn);
+document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="🔔 おと "+(seOn?"ON":"OFF"); e.target.classList.toggle("on",seOn); if(seOn)ac(); };
+
+/* ================= ホーム ================= */
+const $=id=>document.getElementById(id);
+function stageUnlocked(st){ if(st.extra) return save().cleared.includes(2); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
+function renderHome(){
+  document.querySelectorAll(".player-btn").forEach(b=>b.classList.toggle("sel",b.dataset.player===player));
+  $("stageGrid").innerHTML="";
+  STAGES.forEach(st=>{
+    const e=charById(st.enemy), un=stageUnlocked(st), cl=save().cleared.includes(st.n);
+    const b=document.createElement("button");
+    b.className="stage-btn"+(st.boss?" boss":"")+(cl?" cleared":"")+(!un?" locked":"");
+    b.innerHTML=(st.boss?'<span class="crown">👑</span>':"")+st.n+"<small>"+(un?e.name:"？？？")+"</small>";
+    b.disabled=!un; b.onclick=()=>startBattle(st);
+    $("stageGrid").appendChild(b);
+  });
+  $("partyGrid").innerHTML="";
+  CHARS.filter(c=>save().owned.includes(c.id)).forEach(c=>{
+    const inP=save().party.includes(c.id);
+    const d=document.createElement("button");
+    d.className="char-card"+(inP?" inparty":"");
+    d.innerHTML='<div class="art">'+c.art()+'</div><div class="nm">'+c.name+'</div>'+
+      '<div class="sk"><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'<br><b>スキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'（'+c.skill.turns+'ターン）</div>';
+    d.onclick=()=>toggleParty(c.id);
+    $("partyGrid").appendChild(d);
+  });
+  $("zukanGrid").innerHTML="";
+  CHARS.forEach(c=>{
+    const owned=save().owned.includes(c.id);
+    const d=document.createElement("div");
+    d.className="char-card"+(owned?"":" notowned");
+    d.innerHTML='<div class="art">'+c.art()+'</div><div class="nm">'+(owned?c.name:"？？？")+'</div>'+
+      '<div class="sk"><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'<br>いつもスキル：'+c.passive+'<br><b>タップスキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'（'+c.skill.turns+'ターンで たまる）</div>';
+    $("zukanGrid").appendChild(d);
+  });
+}
+function toggleParty(id){
+  const s=save(), i=s.party.indexOf(id);
+  if(i>=0){ if(s.party.length<=1){ $("homeMsg").textContent="パーティは 1にんは 必要だよ"; return; } s.party.splice(i,1); }
+  else { if(s.party.length>=5){ $("homeMsg").textContent="パーティは 5にんまでだよ"; return; } s.party.push(id); }
+  $("homeMsg").textContent=""; renderHome();
+}
+document.querySelectorAll(".player-btn").forEach(b=>b.onclick=()=>{ player=b.dataset.player; renderHome(); });
+
+/* ================= バトル ================= */
+const N=8, TYPES=["fire","water","forest","heal"];
+const ORB_ICON={ fire:'<svg viewBox="0 0 24 24"><path d="M12 2 C15 7 19 9 17.5 15 C16.5 18.5 14 20 12 20 C10 20 7.5 18.5 6.5 15 C5 9 9 7 12 2Z" fill="#fff"/></svg>',
+ water:'<svg viewBox="0 0 24 24"><path d="M12 2 C15 6.5 19 10 19 14.5 C19 18.6 15.9 21.5 12 21.5 C8.1 21.5 5 18.6 5 14.5 C5 10 9 6.5 12 2Z" fill="#fff"/></svg>',
+ forest:'<svg viewBox="0 0 24 24"><path d="M20 4 C10 4 4 10 4 20 C14 20 20 14 20 4Z" fill="#fff"/><path d="M4 20 C8 14 12 10 18 6" stroke="#3ecf6e" stroke-width="1.6" fill="none"/></svg>',
+ heal:'<svg viewBox="0 0 24 24"><path d="M12 21 C5 15.5 3 11.5 3 8.3 C3 5.4 5.2 3.5 7.7 3.5 C9.6 3.5 11.2 4.6 12 6 C12.8 4.6 14.4 3.5 16.3 3.5 C18.8 3.5 21 5.4 21 8.3 C21 11.5 19 15.5 12 21Z" fill="#fff"/></svg>'};
+let B=null;
+function newBoard(){ let b; do{ b=Array.from({length:N*N},()=>TYPES[Math.floor(Math.random()*4)]); }while(findGroups(b).length); return b; }
+function findGroups(b){
+  const groups=[], seen=new Set();
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const t=b[r*N+c]; if(!t)continue;
+    for(const [dr,dc] of [[0,1],[1,0]]){
+      const cells=[[r,c]]; let rr=r+dr,cc=c+dc;
+      while(rr<N&&cc<N&&b[rr*N+cc]===t){cells.push([rr,cc]);rr+=dr;cc+=dc;}
+      if(cells.length>=3){ const key=cells.map(x=>x[0]*N+x[1]).sort().join(",");
+        if(!seen.has(key)){seen.add(key);groups.push({type:t,cells:cells.map(x=>x[0]*N+x[1])});} }
+    }
+  }
+  // 重なり合うグループを統合
+  const merged=[];
+  groups.forEach(g=>{ const hit=merged.find(m=>m.type===g.type&&m.cells.some(x=>g.cells.includes(x)));
+    if(hit){ g.cells.forEach(x=>{if(!hit.cells.includes(x))hit.cells.push(x);}); } else merged.push({type:g.type,cells:[...g.cells]}); });
+  return merged;
+}
+function startBattle(st){
+  curStage=st.n;
+  const enemy=charById(st.enemy);
+  B={ stage:st, enemy, enemyHp:st.hp, partyHp:PARTY_HP, cd:st.cd, board:newBoard(),
+      charges:save().party.map(()=>0), acc:save().party.map(()=>0), sel:null, busy:false, over:false };
+  $("home").classList.add("hidden"); $("battle").classList.remove("hidden");
+  $("stageTitle").textContent="ステージ "+st.n;
+  $("enemyArt").innerHTML=enemy.art();
+  $("enemyArt").firstChild.classList.toggle("boss",!!st.boss);
+  $("enemyName").textContent=enemy.name;
+  const tag=$("enemyTag"); tag.textContent=ATTR[enemy.attr].name; tag.className="tag "+enemy.attr;
+  buildPartyRow(); renderBattle(); fitBoard();
+  if(bgmOn)startBGM();
+}
+function buildPartyRow(){
+  $("partyRow").innerHTML="";
+  save().party.forEach((id,i)=>{
+    const c=charById(id);
+    const d=document.createElement("button");
+    d.className="member"; d.dataset.i=i;
+    d.innerHTML='<div class="acc" id="acc'+i+'"></div><div class="art">'+c.art()+'</div><div class="charge"><i id="chg'+i+'"></i></div>';
+    let timer=null, longed=false;
+    d.addEventListener("pointerdown",()=>{ longed=false; timer=setTimeout(()=>{ longed=true; showSkillPanel(i); },500); });
+    d.addEventListener("pointerup",()=>{ clearTimeout(timer); if(!longed) tapMember(i); });
+    d.addEventListener("pointerleave",()=>clearTimeout(timer));
+    $("partyRow").appendChild(d);
+  });
+}
+function renderBattle(){
+  if(!B)return;
+  const st=B.stage;
+  $("enemyHpFill").style.width=Math.max(0,B.enemyHp/st.hp*100)+"%";
+  $("enemyHpNum").textContent="HP "+Math.max(0,Math.ceil(B.enemyHp))+" / "+st.hp;
+  $("partyHpFill").style.width=Math.max(0,B.partyHp/PARTY_HP*100)+"%";
+  $("partyHpNum").textContent="パーティ HP "+Math.max(0,Math.ceil(B.partyHp))+" / "+PARTY_HP;
+  $("atkNum").textContent=B.cd;
+  $("atkBadge").classList.toggle("danger",B.cd<=1);
+  save().party.forEach((id,i)=>{
+    const c=charById(id), el=$("chg"+i); if(el)el.style.width=Math.min(100,B.charges[i]/c.skill.turns*100)+"%";
+    const m=document.querySelector('.member[data-i="'+i+'"]'); if(m)m.classList.toggle("ready",B.charges[i]>=c.skill.turns);
+    const acc=$("acc"+i); if(acc){ if(B.acc[i]>0){acc.textContent=Math.round(B.acc[i]);acc.className="acc show "+c.attr;} else acc.className="acc"; }
+  });
+  renderBoard();
+}
+function renderBoard(changed){
+  const bd=$("board"); bd.innerHTML="";
+  B.board.forEach((t,i)=>{
+    const o=document.createElement("button");
+    o.className="orb "+t+(B.sel===i?" sel":"")+((changed&&changed.includes(i))?" changed":"");
+    o.innerHTML=ORB_ICON[t];
+    o.onclick=()=>tapOrb(i);
+    bd.appendChild(o);
+  });
+}
+function fitBoard(){
+  requestAnimationFrame(()=>{
+    const bw=$("board"); if(!bw||$("battle").classList.contains("hidden"))return;
+    const availW=Math.min(window.innerWidth-16, 560);
+    const battle=$("battle"); const others=battle.scrollHeight - bw.offsetHeight;
+    const availH=window.innerHeight - (others) - 14;
+    const size=Math.max(240, Math.min(availW, availH));
+    bw.style.width=size+"px"; bw.style.height=size+"px";
+  });
+}
+window.addEventListener("resize",fitBoard);
+
+function tapOrb(i){
+  if(!B||B.busy||B.over)return;
+  ac();
+  if(B.sel===null){ B.sel=i; renderBoard(); return; }
+  if(B.sel===i){ B.sel=null; renderBoard(); return; }
+  const a=B.sel; B.sel=null;
+  [B.board[a],B.board[i]]=[B.board[i],B.board[a]];
+  if(!findGroups(B.board).length){ [B.board[a],B.board[i]]=[B.board[i],B.board[a]]; renderBoard();
+    const bd=$("board"); bd.classList.remove("shake"); void bd.offsetWidth; bd.classList.add("shake"); return; }
+  swapSE(); B.busy=true; renderBoard();
+  resolveBoard().then(()=>{ if(!B||B.over)return; endTurn(); });
+}
+async function resolveBoard(){
+  let combo=0;
+  while(true){
+    const groups=findGroups(B.board);
+    if(!groups.length)break;
+    for(const g of groups){
+      combo++;
+      comboSE(combo);
+      const pop=$("comboPop"); pop.textContent=combo+"コンボ！"; pop.classList.remove("show"); void pop.offsetWidth; pop.classList.add("show");
+      // 攻撃の蓄積
+      if(g.type==="heal"){
+        const bonus=save().party.some(id=>{const c=charById(id);return c.passive.includes("かいふく");})?1.5:1;
+        B.partyHp=Math.min(PARTY_HP, B.partyHp + g.cells.length*4*bonus*(1+0.25*(combo-1)));
+      } else {
+        save().party.forEach((id,idx)=>{
+          const c=charById(id); if(c.attr!==g.type)return;
+          const pb=c.passive.includes("+35")?1.35:c.passive.includes("+25")?1.25:1.1;
+          B.acc[idx]+= c.atk * g.cells.length * 0.34 * pb * (1+0.25*(combo-1));
+        });
+      }
+      renderBattle();
+      const bd=$("board").children;
+      g.cells.forEach(ci=>{ if(bd[ci])bd[ci].classList.add("clearing"); });
+      await wait(300);
+      g.cells.forEach(ci=>B.board[ci]=null);
+      dropOrbs(); renderBoard();
+      await wait(130);
+    }
+  }
+  // コンボ終了：蓄積した攻撃を一気に
+  const total=B.acc.reduce((a,b)=>a+b,0);
+  if(total>0){
+    await wait(250);
+    const mult={fire:{water:.6,forest:1.6},water:{forest:.6,fire:1.6},forest:{fire:.6,water:1.6}};
+    let dmg=0; save().party.forEach((id,idx)=>{ const c=charById(id); const m=(mult[c.attr]&&mult[c.attr][B.enemy.attr])||1; dmg+=B.acc[idx]*m; });
+    B.enemyHp-=dmg;
+    const ea=$("enemyArt"); ea.classList.remove("shake"); void ea.offsetWidth; ea.classList.add("shake");
+    B.acc=B.acc.map(()=>0); renderBattle();
+    await wait(300);
+  }
+  if(B.enemyHp<=0){ winBattle(); }
+}
+function dropOrbs(){
+  for(let c=0;c<N;c++){
+    const col=[];
+    for(let r=N-1;r>=0;r--) if(B.board[r*N+c])col.push(B.board[r*N+c]);
+    for(let r=N-1;r>=0;r--) B.board[r*N+c]=col[N-1-r]||TYPES[Math.floor(Math.random()*4)];
+  }
+}
+function endTurn(){
+  if(!B||B.over)return;
+  save().party.forEach((id,i)=>{ const c=charById(id); B.charges[i]=Math.min(c.skill.turns,B.charges[i]+1); });
+  B.cd--;
+  if(B.cd<=0){
+    B.partyHp-=B.stage.atk; B.cd=B.stage.cd;
+    const pr=$("partyRow"); pr.classList.remove("shake"); void pr.offsetWidth; pr.classList.add("shake");
+    if(B.partyHp<=0){ B.partyHp=0; renderBattle(); loseBattle(); B.busy=false; return; }
+  }
+  B.busy=false; renderBattle();
+}
+function tapMember(i){
+  if(!B||B.busy||B.over)return;
+  const c=charById(save().party[i]);
+  if(B.charges[i]<c.skill.turns)return;
+  useSkill(i);
+}
+function useSkill(i){
+  const c=charById(save().party[i]), sk=c.skill;
+  if(sk.type==="change"){
+    const count=B.board.filter(t=>t===sk.from).length;
+    if(count===0){ showSheet('<h2>つかえないよ</h2><p>'+(sk.from==="fire"?"あか":sk.from==="water"?"あお":"みどり")+'オーブが 盤面に ないよ。<br>スキルは そのまま たまっているよ。</p><button class="btn primary" onclick="closeSheet()">とじる</button>'); return; }
+    B.charges[i]=0; skillSE();
+    const changed=[];
+    B.board=B.board.map((t,idx)=>{ if(t===sk.from){changed.push(idx);return sk.to;} return t; });
+    renderBoard(changed); renderBattle();
+    showSheet('<h2>'+sk.name+'</h2><p>オーブの いろが かわったよ！<br>つぎの 入れかえで コンボが はじまるよ。</p><button class="btn primary" onclick="closeSheet()">とじる</button>');
+    return;
+  }
+  B.charges[i]=0; skillSE();
+  if(sk.type==="dmg"||sk.type==="dmgheal"){ B.enemyHp-=sk.power; }
+  if(sk.type==="heal"){ B.partyHp=Math.min(PARTY_HP,B.partyHp+sk.power); }
+  if(sk.type==="dmgheal"&&sk.heal){ B.partyHp=Math.min(PARTY_HP,B.partyHp+sk.heal); }
+  renderBattle();
+  if(B.enemyHp<=0) winBattle();
+}
+function showSkillPanel(i){
+  if(!B)return;
+  const c=charById(save().party[i]), ready=B.charges[i]>=c.skill.turns;
+  showSheet('<div class="art">'+c.art()+'</div><h2>'+c.name+'</h2>'+
+   '<p><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'</p>'+
+   '<p>いつもスキル：'+c.passive+'</p>'+
+   '<p><b>タップスキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'<br><span class="sub">'+c.skill.turns+'ターンで たまる（いま '+B.charges[i]+'）</span></p>'+
+   '<button class="btn primary" id="useSkillBtn" '+(ready?"":"disabled")+'>スキルを つかう</button>'+
+   '<button class="btn ghost" onclick="closeSheet()">とじる</button>');
+  const b=$("useSkillBtn"); if(b)b.onclick=()=>{ closeSheet(); if(!B.busy&&!B.over)useSkill(i); };
+}
+function winBattle(){
+  if(!B||B.over)return; B.over=true; winSE();
+  const s=save(), st=B.stage;
+  if(!s.cleared.includes(st.n))s.cleared.push(st.n);
+  const ec=charById(st.enemy);
+  let recruitMsg="";
+  if(!s.owned.includes(ec.id)){
+    if(Math.random()<st.recruit){ s.owned.push(ec.id); recruitMsg='<p>🎉 <b>'+ec.name+'</b> が なかまに なったよ！</p>'; }
+    else recruitMsg='<p class="sub">'+ec.name+' は なかまに ならなかった…また たたかってみよう。</p>';
+  }
+  showSheet('<h2>🎉 クリア！</h2><p>ステージ '+st.n+' の '+ec.name+' を たおしたよ！</p>'+recruitMsg+
+   '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
+}
+function loseBattle(){
+  if(!B||B.over)return; B.over=true;
+  showSheet('<h2>💦 まけちゃった…</h2><p>パーティを つよくして、もう一度 チャレンジしよう！<br>なかまを あつめると つよくなれるよ。</p><button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
+}
+function showSheet(html){ $("sheet").innerHTML=html; $("overlay").classList.remove("hidden"); }
+function closeSheet(){ $("overlay").classList.add("hidden"); }
+function backHome(){ closeSheet(); B=null; $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); renderHome(); }
+$("quitBtn").onclick=backHome;
+$("overlay").addEventListener("click",e=>{ if(e.target===$("overlay"))closeSheet(); });
+function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+renderHome();
+</script>
+<script>
+try {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  }
+} catch (e) {}
+try {
+  var SAVE_KEY = 'yuiharuka-puzzle-saves-v1';
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.yui && parsed.haruka) {
+        saves.yui = parsed.yui;
+        saves.haruka = parsed.haruka;
+      }
+    }
+  } catch (e) {}
+  var persistSaves = function () {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(saves)); } catch (e) {}
+  };
+  setInterval(persistSaves, 1000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') persistSaves();
+  });
+  window.addEventListener('beforeunload', persistSaves);
+} catch (e) {}
+</script>
+</body>
+</html>
