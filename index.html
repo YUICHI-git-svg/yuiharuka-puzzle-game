@@ -28,7 +28,7 @@
   .hidden{display:none !important;}
 
   /* ---------- 共通 ---------- */
-  .topbar{display:flex;align-items:center;gap:.5rem;padding:.55rem .8rem;}
+  .topbar{display:flex;align-items:center;gap:.5rem;padding:max(.55rem, env(safe-area-inset-top)) .8rem .55rem;}
   .icon-btn{background:var(--panel);color:var(--ink);border:1px solid var(--line);
     border-radius:999px;padding:.35rem .8rem;font-size:.85rem;font-weight:700;}
   .icon-btn.on{background:var(--gold);color:#3a2c00;border-color:var(--gold);}
@@ -71,15 +71,15 @@
   /* ---------- バトル ---------- */
   #battle{height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:
     radial-gradient(120% 60% at 50% 0%, #2a2560 0%, var(--bg) 62%);}
-  .b-top{display:flex;align-items:center;justify-content:space-between;padding:.35rem .6rem 0;}
+  .b-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:10;padding:max(.35rem, env(safe-area-inset-top)) .6rem 0;}
   .b-top .ttl{font-size:.8rem;color:var(--sub);font-weight:800;}
   .enemy-zone{flex:0 0 auto;display:flex;flex-direction:column;justify-content:flex-start;}
-  .enemy-stage{position:relative;flex:0 0 auto;height:26dvh;min-height:104px;display:flex;align-items:flex-end;justify-content:center;}
-  .enemy-stage svg{height:100%;max-height:100%;width:auto;max-width:72vw;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45));}
-  .enemy-stage svg.boss{max-width:84vw;}
+  .enemy-stage{position:relative;flex:0 0 auto;height:19dvh;min-height:88px;display:flex;align-items:flex-end;justify-content:center;}
+  .enemy-stage svg{height:100%;max-height:100%;width:auto;max-width:56vw;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45));}
+  .enemy-stage svg.boss{max-width:68vw;}
   #enemyArt{height:100%;display:flex;align-items:flex-end;justify-content:center;}
-  #enemyArt img{height:100%;max-height:100%;width:auto;max-width:72vw;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45));}
-  #enemyArt img.boss{max-width:86vw;}
+  #enemyArt img{height:100%;max-height:100%;width:auto;max-width:56vw;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45));}
+  #enemyArt img.boss{max-width:68vw;}
   .char-card .art img{height:74px;width:auto;max-width:100%;object-fit:contain;}
   .member .art img{height:56px;width:auto;max-width:100%;object-fit:contain;}
   .sheet .art img{height:110px;width:auto;max-width:100%;object-fit:contain;}
