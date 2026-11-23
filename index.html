@@ -322,12 +322,12 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.52</div>
+    <div class="ver-line">ver 1.0.53</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <p class="recruit-legend"><span class="recruit yes">✓ なかま</span><span>は もう なかまに なってるよ。</span></p>
     <div class="stages" id="stageGrid"></div>
-    <p class="hint">ぞくせいの さんすくみ：<b style="color:var(--fire)">ひ</b> は <b style="color:var(--forest)">もり</b>に、<b style="color:var(--forest)">もり</b> は <b style="color:var(--water)">みず</b>に、<b style="color:var(--water)">みず</b> は <b style="color:var(--fire)">ひ</b>に つよいよ。<br><b style="color:var(--light)">ひかり</b> と <b style="color:var(--dark)">やみ</b> は おたがいに つよいよ（ひかり↔やみ）。<br>ステージごとに <b>おちるオーブ</b> が 決まっているよ：ボタンの 色の丸が そのステージで おちるオーブ。<b style="color:var(--light)">きいろ＝ひかり</b> は <b>サタンのダンジョンでだけ</b> おちるよ。ゼウスは そこで オーブ攻撃できるよ！ <b>やみオーブは どこにも おちない</b>から、サタンは スキルで こうげきするよ。<br>限定ステージ12の <b style="color:var(--light)">スーパーでんきドラゴン</b> を なかまにすると、スキルで <b>どのステージでも オーブ全部を ひかりに</b> かえられるよ！</p>
+    <p class="hint">ぞくせいの さんすくみ：<b style="color:var(--fire)">ひ</b> は <b style="color:var(--forest)">もり</b>に、<b style="color:var(--forest)">もり</b> は <b style="color:var(--water)">みず</b>に、<b style="color:var(--water)">みず</b> は <b style="color:var(--fire)">ひ</b>に つよいよ。<br><b style="color:var(--light)">ひかり</b> と <b style="color:var(--dark)">やみ</b> は おたがいに つよいよ（ひかり↔やみ）。</p>
 
     <div class="sec-title">限定ステージ</div>
     <div class="stages" id="extraGrid"></div>
@@ -1284,7 +1284,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.52";
+const APP_VER="1.0.53";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
