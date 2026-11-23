@@ -159,16 +159,18 @@
   .orb{aspect-ratio:1;border-radius:50%;border:none;padding:0;position:relative;min-height:0;overflow:hidden;
     display:flex;align-items:center;justify-content:center;transition:transform .12s, box-shadow .12s;}
   .orb svg{width:60%;height:60%;pointer-events:none;position:relative;z-index:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.28));}
-  /* クリアな宝石玉：明るい芯＋下からの反射光で透明感を出す。暗い陰影は最小限 */
-  .orb::before{content:"";position:absolute;left:10%;top:4%;width:58%;height:40%;border-radius:50%;z-index:2;pointer-events:none;
-    background:radial-gradient(ellipse at center,rgba(255,255,255,1),rgba(255,255,255,.5) 52%,rgba(255,255,255,0) 74%);
-    transform:rotate(-16deg);}
+  /* クリアな宝石玉：本体の色そのものを濃く鮮やかにし、白い光は小さな
+     ハイライトだけに絞る（白く濁らせない）。縁で色が深まることで
+     色ガラスの厚みと透明感を出す */
+  .orb::before{content:"";position:absolute;left:17%;top:8%;width:34%;height:23%;border-radius:50%;z-index:2;pointer-events:none;
+    background:radial-gradient(ellipse at center,rgba(255,255,255,.95),rgba(255,255,255,.25) 55%,rgba(255,255,255,0) 78%);
+    transform:rotate(-18deg);}
   .orb::after{content:"";position:absolute;inset:0;border-radius:50%;z-index:1;pointer-events:none;
-    box-shadow:inset 0 -5px 9px rgba(0,0,0,.13),inset 0 9px 13px rgba(255,255,255,.75),inset 4px 0 10px rgba(255,255,255,.4),inset -4px 0 10px rgba(255,255,255,.18),inset 0 0 0 2px rgba(255,255,255,.5),inset 0 -13px 18px rgba(255,255,255,.28);}
-  .orb.fire{background:radial-gradient(circle at 50% 96%,rgba(255,222,190,.85),rgba(255,222,190,0) 52%),radial-gradient(circle at 34% 24%,#fff8f3 0%,#ffc9b0 20%,#ff9673 42%,#ff5f3d 68%,#f43a22 100%);}
-  .orb.water{background:radial-gradient(circle at 50% 96%,rgba(205,238,255,.9),rgba(205,238,255,0) 52%),radial-gradient(circle at 34% 24%,#f4fbff 0%,#c2e7ff 20%,#74c6ff 42%,#35a5f8 68%,#1286e6 100%);}
-  .orb.forest{background:radial-gradient(circle at 50% 96%,rgba(208,255,214,.9),rgba(208,255,214,0) 52%),radial-gradient(circle at 34% 24%,#f6fff7 0%,#c6f8cd 20%,#83ec96 42%,#3cdd63 68%,#17bd47 100%);}
-  .orb.heal{background:radial-gradient(circle at 50% 96%,rgba(255,216,238,.9),rgba(255,216,238,0) 52%),radial-gradient(circle at 34% 24%,#fff7fb 0%,#ffd6ea 20%,#ffa6cf 42%,#ff77b3 68%,#f8569c 100%);}
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.32),inset 0 6px 8px rgba(255,255,255,.35),inset 0 -8px 12px rgba(0,0,0,.30),inset 5px 0 9px rgba(255,255,255,.13),inset -6px 0 10px rgba(0,0,0,.16),inset 0 -15px 13px -9px rgba(255,255,255,.45);}
+  .orb.fire{background:radial-gradient(circle at 33% 26%,#ffc46b 0%,#ff8f4d 26%,#ff5f2e 55%,#f0331a 82%,#cd1f06 100%);}
+  .orb.water{background:radial-gradient(circle at 33% 26%,#a5e3ff 0%,#5cc0ff 26%,#2b9bf5 55%,#0f7fe0 82%,#0a63bd 100%);}
+  .orb.forest{background:radial-gradient(circle at 33% 26%,#b2ffc0 0%,#6df08c 26%,#2fd95c 55%,#12b845 82%,#0a9434 100%);}
+  .orb.heal{background:radial-gradient(circle at 33% 26%,#ffc7e3 0%,#ff96c6 26%,#ff6aab 55%,#f74c97 82%,#e0337f 100%);}
   .orb.sel{box-shadow:0 0 0 3px #fff,0 0 14px rgba(255,255,255,.8);transform:scale(1.1);z-index:2;}
   .orb.clearing{animation:clr .3s forwards;}
   @keyframes clr{to{transform:scale(.2);opacity:0;}}
@@ -355,15 +357,20 @@ function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.
 function swapSE(){ tone(660,0,.07); }
 function skillSE(){ [523,659,784,1046].forEach((f,i)=>tone(f,i*.06,.16)); }
 function winSE(){ [523,659,784,1046,1318].forEach((f,i)=>tone(f,i*.1,.25)); }
-/* ---- BGM: パズドラ系ダンジョンBGMの文法で書いたオリジナル・ループ ----
+/* ---- BGM: パズドラ系ダンジョンBGMの文法で書いたオリジナル曲 ----
    分析メモ（パズル＆ドラゴンズの探索系BGMに共通する特徴）:
    ・西洋管弦楽ファンタジー編成：金管の主旋律＋弦の速いオスティナート
      ＋ティンパニ＋行進感のあるドラムで「冒険・高揚」を作る
    ・和声的短音階（導音あり）を使い、属和音→主和音の解決で勇壮にする
    ・旋律は順次進行中心で跳躍は和音構成音へ、フレーズ末は導音→主音
-   逆に「中華っぽく」聞こえた原因は、五音階的な旋律＋ハープの
-   グリッサンド風アルペジオ＋ベルの装飾だったので、それらを外した。
-   152 BPM / 8分音符ステップ。Am–F–Dm–E、ステージで移調、ボスは厚め。 */
+   ・そして「曲」として成立する構成を持つ：Aメロ→Bメロ→サビと
+     セクションが進み、旋律の音域と編成の厚みが変わっていく
+   旧版が単調だった原因は、4小節（約6秒）の同じパターンを
+   そのまま繰り返していたこと。新版は Aメロ8小節→Bメロ8小節→
+   サビ8小節＝24小節（約38秒）を1周とし、Aメロは問い→答えの
+   フレーズ対、Bメロは音域を上げて助走、サビは高音域で大きく
+   歌う構成にした。音符は次の音まで伸ばして旋律らしくつなぐ。
+   152 BPM / 8分音符ステップ。ステージで移調、ボスは厚め。 */
 function mtof(m){ return 440*Math.pow(2,(m-69)/12); }
 let _noiseBuf=null;
 function noiseBuf(c){ if(_noiseBuf)return _noiseBuf; const len=Math.floor(c.sampleRate*0.5);
@@ -428,42 +435,82 @@ function bgmString(midi){ if(!bgmOn)return; const c=ac(),t=c.currentTime;
 function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
   const shifts=[0,2,-3,5,0,3,-2,5,0,2,-3], shift=shifts[(curStage-1)%shifts.length]||0;
   const isBoss=(curStage===3||curStage===8);
-  const chords=[
-    {bass:33,pad:[57,60,64],ost:[45,52,57,60,64]}, /* Am */
-    {bass:29,pad:[53,57,60],ost:[41,48,53,57,60]}, /* F */
-    {bass:26,pad:[50,53,57],ost:[38,45,50,53,57]}, /* Dm */
-    {bass:28,pad:[52,56,59],ost:[40,47,52,56,59]}, /* E（導音G#を含む属和音） */
+  const CH={
+    Am:{bass:33,pad:[57,60,64],ost:[45,52,57,60,64]},
+    F:{bass:29,pad:[53,57,60],ost:[41,48,53,57,60]},
+    C:{bass:36,pad:[55,60,64],ost:[43,48,55,60,64]},
+    G:{bass:31,pad:[55,59,62],ost:[43,47,55,59,62]},
+    Dm:{bass:26,pad:[50,53,57],ost:[38,45,50,53,57]},
+    E:{bass:28,pad:[52,56,59],ost:[40,47,52,56,59]}, /* 導音G#を含む属和音 */
+  };
+  /* 曲構成：Aメロ8小節 → Bメロ8小節 → サビ8小節 ＝ 24小節（192ステップ）
+     1周は約38秒。lv は編成の厚み（0=静か、1=通常、2=フル）。
+     mel/har の null は「前の音を伸ばす」で、旋律をつないで歌わせる */
+  const _=null;
+  const SONG=[
+    /* ---- Aメロ：問い（上行フレーズ）→ 答え（下降して落ち着く） ---- */
+    {ch:"Am",lv:0,mel:[76,_,81,_,84,_,83,_],har:[69,_,_,_,72,_,_,_]},
+    {ch:"F", lv:1,mel:[84,_,81,_,77,_,81,_],har:[72,_,_,_,69,_,_,_]},
+    {ch:"Dm",lv:1,mel:[86,_,81,_,77,_,81,_],har:[74,_,_,_,72,_,_,_]},
+    {ch:"E", lv:1,mel:[80,_,83,_,88,_,83,_],har:[76,_,_,_,71,_,_,_]},
+    {ch:"Am",lv:1,mel:[84,_,81,_,76,_,81,_],har:[72,_,_,_,69,_,_,_]},
+    {ch:"F", lv:1,mel:[77,_,81,_,84,_,81,_],har:[72,_,_,_,77,_,_,_]},
+    {ch:"Dm",lv:1,mel:[74,_,77,_,81,_,77,_],har:[69,_,_,_,74,_,_,_]},
+    {ch:"E", lv:1,mel:[76,_,80,_,83,_,80,_],har:[71,_,_,_,76,_,_,_],fill:1},
+    /* ---- Bメロ：少しずつ音域と厚みを上げてサビへの助走 ---- */
+    {ch:"F", lv:1,mel:[77,81,84,_,81,_,77,_],har:[72,_,_,_,69,_,_,_]},
+    {ch:"G", lv:1,mel:[79,83,86,_,83,_,79,_],har:[74,_,_,_,71,_,_,_]},
+    {ch:"Am",lv:1,mel:[81,_,84,88,84,_,81,_],har:[76,_,_,_,72,_,_,_]},
+    {ch:"Am",lv:1,mel:[76,81,_,84,_,81,_,_],har:[72,_,_,_,69,_,_,_]},
+    {ch:"F", lv:2,mel:[84,_,81,84,89,_,84,_],har:[77,_,_,_,81,_,_,_]},
+    {ch:"G", lv:2,mel:[86,_,83,86,83,_,79,_],har:[79,_,_,_,74,_,_,_]},
+    {ch:"Dm",lv:2,mel:[86,_,81,_,77,_,81,_],har:[81,_,_,_,77,_,_,_]},
+    {ch:"E", lv:2,mel:[80,83,88,_,83,80,76,_],har:[76,_,_,_,71,_,_,_],fill:1},
+    /* ---- サビ：高い音域で長く伸ばして大きく歌う ---- */
+    {ch:"Am",lv:2,mel:[81,_,_,84,_,_,88,_],har:[76,_,_,_,81,_,_,_],crash:1},
+    {ch:"F", lv:2,mel:[89,_,_,84,_,81,_,_],har:[84,_,_,_,77,_,_,_]},
+    {ch:"C", lv:2,mel:[84,_,_,79,_,84,_,_],har:[79,_,_,_,76,_,_,_]},
+    {ch:"G", lv:2,mel:[83,_,86,_,83,_,79,_],har:[79,_,_,_,74,_,_,_]},
+    {ch:"Am",lv:2,mel:[88,_,_,84,_,81,_,84],har:[81,_,_,_,76,_,_,_],crash:1},
+    {ch:"F", lv:2,mel:[89,_,84,_,81,_,_,_],har:[84,_,_,_,77,_,_,_]},
+    {ch:"Dm",lv:2,mel:[86,_,_,81,_,77,_,_],har:[81,_,_,_,74,_,_,_]},
+    {ch:"E", lv:2,mel:[88,_,83,_,80,_,83,_],har:[83,_,_,_,76,_,_,_],fill:1},
   ];
-  /* オリジナル主旋律（32ステップ＝4小節、nullは休符）
-     A和声的短音階。ミ→ラ→ドと和音を駆け上がり、シ→ソ#→ラの
-     導音解決で締める勇壮なフレーズ。五音階的な抜けは作らない */
-  const melody=[76,null,76,81, 84,null,83,80, 81,null,84,81, 77,null,81,84, 86,null,81,77, 74,null,77,81, 83,null,80,83, 88,null,83,80];
-  const harmony=[69,null,null,69, 72,null,null,null, 69,null,null,69, 72,null,null,null, 69,null,null,69, 65,null,null,null, 68,null,null,68, 71,null,null,null];
+  const MEL=[], HAR=[];
+  SONG.forEach(b=>{ for(let i=0;i<8;i++){ MEL.push(b.mel[i]); HAR.push(b.har[i]); } });
+  const TOTAL=SONG.length*8;
   const ostPat=[0,2,1,3, 0,2,4,3];
   const bassPat=[0,12,0,12, 0,12,7,12];
   const stepMs=Math.round(60000/152/2); /* 152 BPM、8分音符 */
+  const stepSec=stepMs/1000;
   bgmTimer=setInterval(()=>{ if(!bgmOn)return;
-    const pos=bgmStep%32, bar=Math.floor(pos/8)%4, s=pos%8, ch=chords[bar];
-    /* ドラム＋ティンパニ：行進感のある推進パターン */
-    if(pos===0) drumCrash();
-    if(s===0){ drumKick(); drumTom(36); }
-    if(s===3||s===4||(isBoss&&s===6)) drumKick();
-    if(s===2||s===6) drumSnare();
-    if(bar===3&&s===4) drumTom(40); if(bar===3&&s===6) drumTom(38); if(bar===3&&s===7) drumTom(36);
-    if(s%2===1) drumHat(false); drumHat(s===7);
+    const pos=bgmStep%TOTAL, bi=Math.floor(pos/8), s=pos%8, bar=SONG[bi], ch=CH[bar.ch], lv=bar.lv;
+    /* ドラム：セクションごとに厚みを変える（Aメロ頭は静かに入る） */
+    if(bar.crash&&s===0) drumCrash();
+    if(s===0){ drumKick(); if(lv>=1)drumTom(36); }
+    if(lv>=1&&s===4) drumKick();
+    if(lv>=2&&(s===3||s===6)) drumKick();
+    if(isBoss&&lv>=1&&s===6) drumKick();
+    if(lv>=1&&(s===2||s===6)) drumSnare();
+    if(bar.fill){ if(s===4)drumTom(40); if(s===6)drumTom(38); if(s===7)drumTom(36); }
+    if(lv===0){ if(s%2===0)drumHat(false); }
+    else{ if(s%2===1)drumHat(false); drumHat(s===7); }
     /* ベース：ルートとオクターブを交互に刻んで前へ進む */
     const bn=ch.bass+12+bassPat[s]+shift;
     bgmOsc(mtof(bn),.22,.12,"sine"); bgmOsc(mtof(bn),.18,.03,"triangle");
-    /* 弦パッド：小節頭に厚い和音、ボスは1オクターブ上も追加 */
+    /* 弦パッド：小節頭に厚い和音、サビとボスは1オクターブ上も追加 */
     if(s===0){ ch.pad.forEach(m=>{ bgmOsc(mtof(m+shift),1.7,.016,"triangle",.1); bgmOsc(mtof(m+shift),1.7,.007,"sawtooth",.12); });
-      if(isBoss) ch.pad.forEach(m=>bgmOsc(mtof(m+shift+12),1.4,.006,"triangle",.1)); }
-    /* 弦オスティナート：和音構成音を8分で刻み続ける（旧ハープ装飾の置き換え） */
+      if(isBoss||lv>=2) ch.pad.forEach(m=>bgmOsc(mtof(m+shift+12),1.4,.006,"triangle",.1)); }
+    /* 弦オスティナート：和音構成音を8分で刻み続ける */
     const on=ch.ost[ostPat[s]%ch.ost.length]+shift;
-    bgmString(on); if(isBoss&&s%2===0) bgmString(on+12);
-    /* 主旋律（金管）とハモリ */
-    const mel=melody[pos], har=harmony[pos];
-    if(mel!==null&&mel!==undefined) bgmLead(mel+shift,.38,.06);
-    if(har!==null&&har!==undefined) bgmOsc(mtof(har+shift),.34,.018,"triangle",.02);
+    bgmString(on); if((isBoss||lv>=2)&&s%2===0) bgmString(on+12);
+    /* 主旋律（金管）：次の音までの間隔ぶん音を伸ばしてレガートに歌わせる */
+    const mel=MEL[pos];
+    if(mel!==null&&mel!==undefined){ let hold=1; while(hold<8&&pos+hold<TOTAL&&MEL[pos+hold]===null)hold++;
+      bgmLead(mel+shift, Math.min(hold,6)*stepSec*0.94, lv>=2?.068:.06); }
+    /* ハモリ */
+    const har=HAR[pos];
+    if(har!==null&&har!==undefined) bgmOsc(mtof(har+shift),.34, lv>=2?.024:.018,"triangle",.02);
     bgmStep++;
   },stepMs); }
 function stopBGM(){ if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;} }
