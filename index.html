@@ -111,7 +111,14 @@
     text-shadow:0 0 0 #000,3px 0 0 rgba(0,0,0,.9),-3px 0 0 rgba(0,0,0,.9),0 3px 0 rgba(0,0,0,.9),0 -3px 0 rgba(0,0,0,.9),3px 3px 0 rgba(0,0,0,.9),-3px 3px 0 rgba(0,0,0,.9),3px -3px 0 rgba(0,0,0,.9),-3px -3px 0 rgba(0,0,0,.9),0 4px 10px rgba(0,0,0,.8);}
   .member .acc.show{opacity:1;}
   .acc.fire{color:#ff3b2f;} .acc.water{color:#29b6ff;} .acc.forest{color:#39e75f;}
-  .member .acc.counting{transform:translateX(-50%) scale(1.08);}
+  .member .acc.counting{animation:accbounce .3s ease-in-out infinite;}
+  @keyframes accbounce{
+    0%{transform:translateX(-50%) translateY(0) scale(1);}
+    30%{transform:translateX(-50%) translateY(-7px) scale(1.3);}
+    55%{transform:translateX(-50%) translateY(0) scale(.93);}
+    76%{transform:translateX(-50%) translateY(-3px) scale(1.15);}
+    100%{transform:translateX(-50%) translateY(0) scale(1);}
+  }
   #comboLayer{position:absolute;pointer-events:none;z-index:6;}
   .combo-tag{position:absolute;transform:translate(-50%,-50%);font-size:.82rem;font-weight:900;letter-spacing:.05em;
     background:linear-gradient(90deg,#ff5a4e,#ffb35c,#ffd34d,#3ecf6e,#3fa9f5,#c07fe8,#ff5a4e);
@@ -680,7 +687,7 @@ function showComboTag(g, combo){
   return el;
 }
 function bumpAccLabels(targets){
-  /* バウンドは廃止：数値は1ずつ高速カウントアップで見せる */
+  /* 数値は1ずつ高速カウントアップしながら、バウンドアニメーションで跳ねさせる */
   if(!B)return;
   targets.forEach((v,i)=>{
     const acc=$("acc"+i); if(acc) acc.classList.add("counting");
