@@ -72,6 +72,7 @@
   .rank-title{font-size:1rem;font-weight:900;color:var(--gold);margin:1rem 0 .45rem;letter-spacing:.06em;}
   .rank-title:first-child{margin-top:.2rem;}
   .msg{min-height:1.4em;text-align:center;font-size:.85rem;font-weight:700;color:var(--gold);margin:.5rem 0 0;}
+  .hint{font-size:.75rem;color:var(--sub);text-align:center;margin:.5rem 0 0;line-height:1.55;}
 
   /* ---------- バトル ---------- */
   #battle{height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative;background:#0d0b22;}
@@ -226,6 +227,7 @@
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
+    <p class="hint">ぞくせいの さんすくみ：<b style="color:var(--fire)">ひ</b> は <b style="color:var(--forest)">もり</b>に、<b style="color:var(--forest)">もり</b> は <b style="color:var(--water)">みず</b>に、<b style="color:var(--water)">みず</b> は <b style="color:var(--fire)">ひ</b>に つよいよ。<br>なかまにした キャラが つよく たたかえる ステージが、つぎに 待っているよ！</p>
 
     <div class="sec-title">パーティ（5にんまで）― タップで 入れかえ</div>
     <div class="char-grid" id="partyGrid"></div>
@@ -349,13 +351,19 @@ CHARS.forEach(c=>{ c.stars = STAR_RANK[c.id] || 1; });
 function starHTML(c){ let s='<span class="stars">'; for(let i=0;i<5;i++) s+='<span class="'+(i<c.stars?"on":"off")+'">'+(i<c.stars?"★":"☆")+'</span>'; return s+'</span>'; }
 /* 盤面を 7×7 にしたぶん 1ターンの火力が下がるので、敵HPは
    8×8時代の約0.8倍に下げて難易度をそろえた */
+/* ステージの敵は「みず→ひ→もり」の三すくみサイクル順に並べる。
+   属性相性は ひ→もり→みず→ひ（強い相手に×1.6）なので、
+   ステージ n の敵（＝仲間になるキャラ）の属性が、ステージ n+1 の
+   敵に必ず強くなる。仲間にしたキャラが次のステージでそのまま
+   主力になる構成。HP・攻撃力はステージ番号側の値のままなので
+   難易度の上がり方は従来どおり。 */
 const STAGES = [
- {n:1, enemy:"fairy_flower", hp:1840, atk:38, cd:3, recruit:.4},
- {n:2, enemy:"dragon_forest", hp:2560, atk:50, cd:3, recruit:.4},
- {n:3, enemy:"dragon_fire", hp:3680, atk:66, cd:2, recruit:.4, boss:true},
- {n:4, enemy:"fairy_star", hp:4320, atk:74, cd:3, recruit:.4},
- {n:5, enemy:"dragon_water", hp:5120, atk:86, cd:3, recruit:.35},
- {n:6, enemy:"phoenix", hp:6080, atk:100, cd:2, recruit:.35},
+ {n:1, enemy:"fairy_star", hp:1840, atk:38, cd:3, recruit:.4},
+ {n:2, enemy:"dragon_fire", hp:2560, atk:50, cd:3, recruit:.4},
+ {n:3, enemy:"dragon_forest", hp:3680, atk:66, cd:2, recruit:.4, boss:true},
+ {n:4, enemy:"dragon_water", hp:4320, atk:74, cd:3, recruit:.4},
+ {n:5, enemy:"phoenix", hp:5120, atk:86, cd:3, recruit:.35},
+ {n:6, enemy:"fairy_flower", hp:6080, atk:100, cd:2, recruit:.35},
  {n:7, enemy:"dragon_sea", hp:7200, atk:112, cd:3, recruit:.35},
  {n:8, enemy:"phoenix", hp:8800, atk:130, cd:2, recruit:.3, boss:true},
  {n:9, enemy:"dragon_change_forest", hp:3040, atk:56, cd:3, recruit:.6, extra:true},
@@ -377,7 +385,7 @@ const BG_SCENES = {
  sea:'<img src="bg-sea.jpg" alt="">',
  space:'<img src="bg-space.jpg" alt="">',
 };
-const STAGE_BG = {1:"temple",2:"wasteland",3:"volcano",4:"ice",5:"sea",6:"volcano",7:"sea",8:"space",9:"temple",10:"ice",11:"wasteland"};
+const STAGE_BG = {1:"ice",2:"volcano",3:"wasteland",4:"sea",5:"volcano",6:"temple",7:"sea",8:"space",9:"temple",10:"ice",11:"wasteland"};
 
 /* ================= セーブ（メモリ内・プレイヤー別） ================= */
 function newSave(){ return { owned:["slime_fire","slime_water","slime_forest"], party:["slime_fire","slime_water","slime_forest"], cleared:[] }; }
@@ -677,7 +685,7 @@ function renderHome(){
     const e=charById(st.enemy), un=stageUnlocked(st), cl=save().cleared.includes(st.n);
     const b=document.createElement("button");
     b.className="stage-btn"+(st.boss?" boss":"")+(cl?" cleared":"")+(!un?" locked":"");
-    b.innerHTML=(st.boss?'<span class="crown">👑</span>':"")+st.n+"<small>"+(un?e.name:"？？？")+"</small>";
+    b.innerHTML=(st.boss?'<span class="crown">👑</span>':"")+st.n+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>";
     b.disabled=!un; b.onclick=()=>startBattle(st);
     $("stageGrid").appendChild(b);
   });
@@ -898,8 +906,8 @@ async function resolveBoard(){
       if(tag){ tag.classList.add("vanish"); setTimeout(()=>tag.remove(),980); }
       const targets=B.accRaw.map((raw,i)=>raw + totalBonus[i]*(k/tags.length));
       bumpAccLabels(targets);
-      await tweenAcc(targets,500);
-      await wait(140);
+      await tweenAcc(targets,420);
+      await wait(120);
     }
     B.accDisp=B.acc.slice(); updateAccLabels();
   }
@@ -949,29 +957,29 @@ function tweenAcc(to, dur){
     if(accAnim)cancelAnimationFrame(accAnim);
     if(accTimer){clearInterval(accTimer);accTimer=null;}
     const target=to.map(v=>Math.round(v));
-    const cur=B.accDisp.map(v=>Math.round(v));
-    B.accDisp=cur.slice(); updateAccLabels();
-    if(cur.every((v,i)=>v>=target[i])){ document.querySelectorAll(".member .acc").forEach(el=>el.classList.remove("counting")); res(); return; }
-    /* パズドラ風カウントアップ：表示整数を1ずつ高速で増やす。
-       差が大きい場合は1ティックで複数回「1ずつ」進めて速度を保つが、
-       画面上は連続した整数列として上がっていく */
+    const start=B.accDisp.map(v=>Math.round(v));
+    B.accDisp=start.slice(); updateAccLabels();
+    if(start.every((v,i)=>v>=target[i])){ document.querySelectorAll(".member .acc").forEach(el=>el.classList.remove("counting")); res(); return; }
+    /* カウントアップは「値の大きさ」ではなく「時間」で終わらせる。
+       旧実装は1ずつ（最大でも毎秒約125）しか進まなかったため、
+       コンボ倍率で攻撃値が大きくなるほど1コンボ分の計算時間が
+       値に比例して伸びていた。ここでは dur ミリ秒で必ず目標値に
+       到達するよう、経過時間の割合（イーズアウト）で表示値を
+       決めるので、コンボ数や値の大きさによらず1回あたりの
+       時間は一定になる。表示は整数で高速に上がっていく。 */
+    const D=Math.max(120, dur||420), t0=performance.now();
     accTimer=setInterval(()=>{
       if(!B){clearInterval(accTimer);accTimer=null;res();return;}
-      let remaining=0;
-      for(let i=0;i<cur.length;i++) remaining=Math.max(remaining, target[i]-cur[i]);
-      const stepsPerTick = remaining>60?4 : remaining>30?3 : remaining>14?2 : 1;
-      for(let s=0;s<stepsPerTick;s++){
-        let any=false;
-        for(let i=0;i<cur.length;i++){ if(cur[i]<target[i]){ cur[i]++; any=true; } }
-        if(!any)break;
-      }
-      B.accDisp=cur.slice(); updateAccLabels();
-      if(cur.every((v,i)=>v>=target[i])){
+      const p=Math.min(1,(performance.now()-t0)/D);
+      const e=1-Math.pow(1-p,3); /* 最初は速く、着地はなめらかに */
+      const cur=start.map((s,i)=> s>=target[i] ? s : s+Math.round((target[i]-s)*e));
+      B.accDisp=cur; updateAccLabels();
+      if(p>=1){
         clearInterval(accTimer);accTimer=null;
         document.querySelectorAll(".member .acc").forEach(el=>el.classList.remove("counting"));
         res();
       }
-    }, 32);
+    }, 16);
   });
 }
 const FX_ICON={ fire:'<svg viewBox="0 0 24 24"><path d="M12 2 C15 7 19 9 17.5 15 C16.5 18.5 14 20 12 20 C10 20 7.5 18.5 6.5 15 C5 9 9 7 12 2Z" fill="#ff8a3c"/></svg>',
