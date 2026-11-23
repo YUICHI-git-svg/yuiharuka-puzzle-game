@@ -45,6 +45,16 @@
   .stage-btn.cleared{border-color:var(--forest);}
   .stage-btn.locked{opacity:.38;}
   .stage-btn .crown{position:absolute;top:-7px;right:-2px;font-size:.68rem;color:var(--gold);}
+  /* チャレンジステージ：ゼウス専用の大きな金枠ボタン */
+  .stages.challenge{grid-template-columns:1fr;}
+  .stage-btn.challenge{border-color:var(--gold);background:linear-gradient(180deg,#4a3a10,var(--panel) 78%);
+    font-size:1.05rem;padding:.65rem .05rem .55rem;box-shadow:0 0 14px rgba(255,211,77,.35);}
+  .stage-btn.challenge small{font-size:.66rem;}
+  .tag.light{background:var(--gold);color:#3a2c00;}
+  .acc.light{color:#ffd34d;}
+  /* チャレンジ戦では敵（ゼウス）を通常より大きく見せる */
+  #battle.challenge .enemy-stage{height:23vh;height:23dvh;max-height:208px;}
+  #battle.challenge #enemyArt img{max-height:23vh;max-height:23dvh;max-width:80vw;}
 
   /* キャラカード（編成・ずかん） */
   .char-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;}
@@ -281,7 +291,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.32</div>
+    <div class="ver-line">ver 1.0.33</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
@@ -290,6 +300,10 @@
     <div class="sec-title">限定ステージ</div>
     <div class="stages" id="extraGrid"></div>
     <p class="hint">オーブの いろを かえる とくべつな なかまが いるよ。いつでも あそべるよ！</p>
+
+    <div class="sec-title">⚡ チャレンジステージ ⚡</div>
+    <div class="stages challenge" id="challengeGrid"></div>
+    <p class="hint">ステージ8を クリアすると あらわれる、でんせつの 神さま ゼウス。<br>HP 18000・こうげき 140 の さいきょうの てき！ パーティを そろえて たたかおう。<br>たおすと かならず なかまに なるよ！</p>
 
     <div class="sec-title">パーティ（5にんまで）― タップで 入れかえ</div>
     <div class="char-grid" id="partyGrid"></div>
@@ -350,7 +364,7 @@
 <script>
 "use strict";
 /* ================= キャラデータ ================= */
-const ATTR = {fire:{name:"ひ",color:"var(--fire)"},water:{name:"みず"},forest:{name:"もり"},heal:{name:"かいふく"}};
+const ATTR = {fire:{name:"ひ",color:"var(--fire)"},water:{name:"みず"},forest:{name:"もり"},heal:{name:"かいふく"},light:{name:"ひかり"}};
 let slimeUID=0;
 function slimeSVG(main, dark, deco){
   const gid="sgx"+(++slimeUID);
@@ -402,6 +416,9 @@ const CHARS = [
  {id:"dragon_change_forest", name:"エメラルドドラゴン", attr:"forest", atk:38, art:()=>imgArt("dragon-forest.png","hue-rotate(-12deg) saturate(1.35)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・もり", desc:"あかオーブ 全部 → みどり に かえる", turns:5, type:"change", from:"fire", to:"forest"}},
  {id:"fairy_change_water", name:"サファイアフェアリー", attr:"water", atk:36, art:()=>imgArt("fairy-star.png","hue-rotate(-16deg) saturate(1.3)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの こな・みず", desc:"みどりオーブ 全部 → あお に かえる", turns:5, type:"change", from:"forest", to:"water"}},
  {id:"dragon_change_fire", name:"ルビードラゴン", attr:"fire", atk:40, art:()=>imgArt("dragon-fire.png","hue-rotate(14deg) saturate(1.3)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・ほのお", desc:"あおオーブ 全部 → あか に かえる", turns:5, type:"change", from:"water", to:"fire"}},
+ /* ゼウス：チャレンジステージの神。ひかり属性は三すくみの外（有利・不利なし）。
+    オーブには ひかりが無いので、なかま時はスキル「てんくうの らいめい」が主力 */
+ {id:"zeus", name:"ゼウス", attr:"light", atk:60, art:()=>imgArt("zeus.png"), passive:"コンボの いりょく +35%", skill:{name:"てんくうの らいめい", desc:"ひかりの ダメージ 800", turns:6, type:"dmg", power:800}},
 ];
 function imgArt(src, filter){ return '<img src="'+src+'" alt=""'+(filter?' style="filter:'+filter+'"':"")+">"; }
 const charById = id => CHARS.find(c=>c.id===id);
@@ -410,9 +427,9 @@ const STAR_RANK = { slime_fire:1, slime_water:1, slime_forest:1,
   fairy_flower:2, fairy_star:2,
   dragon_fire:3, dragon_water:3, dragon_forest:3,
   dragon_change_forest:4, fairy_change_water:4, dragon_change_fire:4,
-  phoenix:5, dragon_sea:5 };
+  phoenix:5, dragon_sea:5, zeus:6 };
 CHARS.forEach(c=>{ c.stars = STAR_RANK[c.id] || 1; });
-function starHTML(c){ let s='<span class="stars">'; for(let i=0;i<5;i++) s+='<span class="'+(i<c.stars?"on":"off")+'">'+(i<c.stars?"★":"☆")+'</span>'; return s+'</span>'; }
+function starHTML(c){ let s='<span class="stars">'; const slots=Math.max(5,c.stars); for(let i=0;i<slots;i++) s+='<span class="'+(i<c.stars?"on":"off")+'">'+(i<c.stars?"★":"☆")+'</span>'; return s+'</span>'; }
 /* 盤面を 7×7 にしたぶん 1ターンの火力が下がるので、敵HPは
    8×8時代の約0.8倍に下げて難易度をそろえた */
 /* ステージの敵は「みず→ひ→もり」の三すくみサイクル順に並べる。
@@ -433,6 +450,11 @@ const STAGES = [
  {n:9, enemy:"dragon_change_forest", hp:3040, atk:56, cd:3, recruit:.4, extra:true},
  {n:10, enemy:"fairy_change_water", hp:3360, atk:60, cd:3, recruit:.4, extra:true},
  {n:11, enemy:"dragon_change_fire", hp:3680, atk:64, cd:3, recruit:.4, extra:true},
+ /* チャレンジ：ゼウス。最終ボス（ステージ8：HP8800/攻130/2ターン）の
+    約2倍のHP 18000、攻撃140（パーティHP150なので一撃で残り10まで
+    追い込まれる）を3ターンごとに放つ。フル編成＋回復を回せば
+    いい勝負になる最終試練。撃破で必ず仲間になる（recruit:1） */
+ {n:12, enemy:"zeus", hp:18000, atk:140, cd:3, recruit:1, boss:true, challenge:true},
 ];
 const PARTY_HP = 150;
 
@@ -449,7 +471,7 @@ const BG_SCENES = {
  sea:'<img src="bg-sea.jpg" alt="">',
  space:'<img src="bg-space.jpg" alt="">',
 };
-const STAGE_BG = {1:"ice",2:"volcano",3:"wasteland",4:"sea",5:"volcano",6:"temple",7:"sea",8:"space",9:"temple",10:"ice",11:"wasteland"};
+const STAGE_BG = {1:"ice",2:"volcano",3:"wasteland",4:"sea",5:"volcano",6:"temple",7:"sea",8:"space",9:"temple",10:"ice",11:"wasteland",12:"space"};
 
 /* ================= セーブ（メモリ内・共通ひとつ） =================
    人ごとのデータ保持は不要になったため、記録は全員で共通のひとつだけ */
@@ -641,7 +663,7 @@ const TRACKS=[
 const curTrack=0; /* BGMは H「しっそうケルト」固定。曲えらびは無い */
 function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
   const shifts=[0,2,-3,5,0,3,-2,5,0,2,-3], shift=shifts[(curStage-1)%shifts.length]||0;
-  const isBoss=(curStage===3||curStage===8);
+  const isBoss=(curStage===3||curStage===8||curStage===12);
   let CHD={
     Am:{bass:33,pad:[57,60,64],ost:[45,52,57,60,64]},
     F:{bass:29,pad:[53,57,60],ost:[41,48,53,57,60]},
@@ -755,19 +777,25 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.32";
-/* 限定ステージ（extra）は解放条件なしで最初から選べる */
-function stageUnlocked(st){ if(st.extra) return true; if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
+const APP_VER="1.0.33";
+/* 限定ステージ（extra）は解放条件なしで最初から選べる。
+   チャレンジステージは最終ボス（ステージ8）クリアで出現する */
+function stageUnlocked(st){ if(st.extra) return true; if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
 function renderHome(){
   $("stageGrid").innerHTML="";
   $("extraGrid").innerHTML="";
+  $("challengeGrid").innerHTML="";
   STAGES.forEach(st=>{
     const e=charById(st.enemy), un=stageUnlocked(st), cl=save().cleared.includes(st.n);
     const b=document.createElement("button");
-    b.className="stage-btn"+(st.boss?" boss":"")+(cl?" cleared":"")+(!un?" locked":"");
-    b.innerHTML=(st.boss?'<span class="crown">👑</span>':"")+st.n+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>";
+    b.className="stage-btn"+(st.boss?" boss":"")+(st.challenge?" challenge":"")+(cl?" cleared":"")+(!un?" locked":"");
+    if(st.challenge){
+      b.innerHTML='<span class="crown">⚡</span>'+(un?"ゼウス":"？？？")+"<small>"+(un?"ひかり・HP 18000・さいきょうの神":"ステージ8 クリアで 出現")+"</small>";
+    } else {
+      b.innerHTML=(st.boss?'<span class="crown">👑</span>':"")+st.n+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>";
+    }
     b.disabled=!un; b.onclick=()=>startBattle(st);
-    $(st.extra?"extraGrid":"stageGrid").appendChild(b);
+    $(st.extra?"extraGrid":st.challenge?"challengeGrid":"stageGrid").appendChild(b);
   });
   $("partyGrid").innerHTML="";
   CHARS.filter(c=>save().owned.includes(c.id)).forEach(c=>{
@@ -783,7 +811,7 @@ function renderHome(){
 /* ずかんは別ページ：☆ランクごとにグループ分けして表示する */
 function renderZukan(){
   const body=$("zukanBody"); body.innerHTML="";
-  [5,4,3,2,1].forEach(rank=>{
+  [6,5,4,3,2,1].forEach(rank=>{
     const list=CHARS.filter(c=>c.stars===rank);
     if(!list.length)return;
     const t=document.createElement("div");
@@ -863,7 +891,8 @@ function startBattle(st){
   $("comboLayer").innerHTML="";
   $("bgLayer").innerHTML=BG_SCENES[STAGE_BG[st.n]||"temple"];
   $("home").classList.add("hidden"); $("battle").classList.remove("hidden");
-  $("stageTitle").textContent="ステージ "+st.n;
+  $("battle").classList.toggle("challenge",!!st.challenge);
+  $("stageTitle").textContent=st.challenge?"⚡ チャレンジステージ":"ステージ "+st.n;
   $("enemyArt").innerHTML=enemy.art();
   $("enemyArt").firstChild.classList.toggle("boss",!!st.boss);
   $("enemyName").textContent=enemy.name;
@@ -876,7 +905,7 @@ function startBattle(st){
 /* バトル画面に最初から出すスキルの簡易表記（例：HP60 かいふく）。
    詳しい説明はホームの編成カードと図鑑に残してある */
 function shortSkill(c){
-  const sk=c.skill, an={fire:"ひ",water:"みず",forest:"もり"}[c.attr];
+  const sk=c.skill, an={fire:"ひ",water:"みず",forest:"もり",light:"ひかり"}[c.attr];
   if(sk.type==="heal") return "HP"+sk.power+" かいふく";
   if(sk.type==="dmg") return an+" ダメージ"+sk.power;
   if(sk.type==="dmgheal") return an+"ダメ"+sk.power+"+HP"+sk.heal;
@@ -1142,8 +1171,9 @@ function tweenAcc(to, dur){
 }
 const FX_ICON={ fire:'<svg viewBox="0 0 24 24"><path d="M12 2 C15 7 19 9 17.5 15 C16.5 18.5 14 20 12 20 C10 20 7.5 18.5 6.5 15 C5 9 9 7 12 2Z" fill="#ff8a3c"/></svg>',
  water:'<svg viewBox="0 0 24 24"><path d="M12 2 C15 6.5 19 10 19 14.5 C19 18.6 15.9 21.5 12 21.5 C8.1 21.5 5 18.6 5 14.5 C5 10 9 6.5 12 2Z" fill="#5cb8ff"/></svg>',
- forest:'<svg viewBox="0 0 24 24"><path d="M20 4 C10 4 4 10 4 20 C14 20 20 14 20 4Z" fill="#57d95e"/></svg>'};
-const FX_COLOR={fire:"#ff7a52",water:"#5cb8ff",forest:"#57d95e"};
+ forest:'<svg viewBox="0 0 24 24"><path d="M20 4 C10 4 4 10 4 20 C14 20 20 14 20 4Z" fill="#57d95e"/></svg>',
+ light:'<svg viewBox="0 0 24 24"><path d="M13 1 L4.5 14 H10.8 L8.8 23 L19.5 9.5 H13.4 Z" fill="#ffd34d" stroke="#fff3a0" stroke-width=".8"/></svg>'};
+const FX_COLOR={fire:"#ff7a52",water:"#5cb8ff",forest:"#57d95e",light:"#ffd34d"};
 function boomSE(attr){
   if(!seOn)return;
   try{
@@ -1171,10 +1201,12 @@ function boomSE(attr){
 }
 const FX_GRAD={fire:"radial-gradient(circle,#fff7ae 0%,#ffd34d 22%,#ff8a3c 48%,#ff3b2f 72%,rgba(255,40,20,0) 100%)",
  water:"radial-gradient(circle,#ffffff 0%,#bfe6ff 24%,#3fa9f5 52%,#1668ad 74%,rgba(20,100,200,0) 100%)",
- forest:"radial-gradient(circle,#ffffff 0%,#d6ffd0 24%,#57d95e 52%,#1d8f43 74%,rgba(20,140,60,0) 100%)"};
+ forest:"radial-gradient(circle,#ffffff 0%,#d6ffd0 24%,#57d95e 52%,#1d8f43 74%,rgba(20,140,60,0) 100%)",
+ light:"radial-gradient(circle,#ffffff 0%,#fff3a0 24%,#ffd34d 52%,#f5a623 74%,rgba(245,166,35,0) 100%)"};
 const FX_FLASH={fire:"radial-gradient(circle,rgba(255,190,60,.95),rgba(255,80,20,.55) 45%,transparent 72%)",
  water:"radial-gradient(circle,rgba(160,220,255,.95),rgba(50,150,255,.5) 45%,transparent 72%)",
- forest:"radial-gradient(circle,rgba(170,255,170,.95),rgba(50,200,90,.5) 45%,transparent 72%)"};
+ forest:"radial-gradient(circle,rgba(170,255,170,.95),rgba(50,200,90,.5) 45%,transparent 72%)",
+ light:"radial-gradient(circle,rgba(255,244,180,.95),rgba(255,205,60,.5) 45%,transparent 72%)"};
 function attackEffect(attr){
   const stage=$("enemyStage"); if(!stage)return;
   boomSE(attr);
@@ -1192,6 +1224,10 @@ function attackEffect(attr){
   }
   if(attr==="forest"){
     html+='<span class="pillar" style="background:linear-gradient(to top,#1d8f43,#57d95e 55%,#d6ffd0);width:64px;margin-left:-32px"></span>';
+  }
+  if(attr==="light"){
+    /* ひかり：天から落ちる雷の柱 */
+    html+='<span class="pillar" style="background:linear-gradient(to top,#f5a623,#ffd34d 55%,#fff6b0);width:60px;margin-left:-30px"></span>';
   }
   const Np=7; /* 粒の数は古いiPhoneでも重くならない量に抑える */
   for(let i=0;i<Np;i++){
