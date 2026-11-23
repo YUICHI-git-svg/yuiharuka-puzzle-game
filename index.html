@@ -39,7 +39,14 @@
   .sec-title{font-size:.95rem;font-weight:800;color:var(--sub);margin:.9rem 0 .45rem;}
   .stages{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;}
   .stage-btn{position:relative;min-width:0;border-radius:14px;border:2px solid var(--line);background:var(--panel);
-    color:var(--ink);padding:.5rem .05rem .45rem;font-weight:800;font-size:.9rem;line-height:1.25;overflow:visible;}
+    color:var(--ink);padding:.5rem .05rem .45rem;font-weight:800;font-size:.9rem;line-height:1.25;overflow:visible;
+    text-shadow:0 1px 3px rgba(0,0,0,.85);}
+  /* ステージボタンの背景サムネイル：ボタン上部に帯状の画像として必ず表示する
+     （以前はボタンの地に薄く敷くだけで、暗いグラデーションに埋もれて
+     「サムネイルが無い」ように見えた） */
+  .stage-btn .stage-thumb{display:block;height:34px;margin:-.5rem -.05rem .28rem;border-radius:12px 12px 0 0;overflow:hidden;}
+  .stage-btn .stage-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .stage-btn.challenge .stage-thumb,.stage-btn.satan .stage-thumb{height:58px;margin-top:-.65rem;}
   .stage-btn small{display:block;font-size:.58rem;color:var(--sub);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .stage-btn.boss{border-color:#ff8a5c;}
   .stage-btn.cleared{border-color:var(--forest);}
@@ -453,7 +460,7 @@ const CHARS = [
     使えば どのステージでも盤面を ひかりだらけにして、ひかり属性の
     仲間（スーパーでんきドラゴン自身とゼウス）の大コンボにつなげられる。
     盤面全部を変える分、たまるまでのターンは長め（7）にした */
- {id:"dragon_light", name:"スーパーでんきドラゴン", attr:"light", atk:46, art:()=>imgArt("dragon-light.png"), passive:"コンボの いりょく +35%", skill:{name:"ぜんぶ ひかりへんげ", desc:"オーブ 全部 → きいろ（ひかり）に かえる", turns:7, type:"changeAll", to:"light"}},
+ {id:"dragon_light", name:"スーパーでんきドラゴン", attr:"light", atk:60, art:()=>imgArt("dragon-light.png"), passive:"コンボの いりょく +35%", skill:{name:"ぜんぶ ひかりへんげ", desc:"オーブ 全部 → きいろ（ひかり）に かえる", turns:7, type:"changeAll", to:"light"}},
  /* ゼウス：チャレンジステージの神。ひかり属性は三すくみの外で、
     対抗の「やみ」属性にだけ強い（やみも ひかりに強い）。
     ひかりオーブはサタンのダンジョンでだけ落ちるので、そこで
@@ -472,7 +479,7 @@ const STAR_RANK = { slime_fire:1, slime_water:1, slime_forest:1,
   fairy_flower:2, fairy_star:2,
   dragon_fire:3, dragon_water:3, dragon_forest:3,
   dragon_change_forest:4, fairy_change_water:4, dragon_change_fire:4,
-  phoenix:5, dragon_sea:5, dragon_light:5, zeus:6, satan:6 };
+  phoenix:5, dragon_sea:5, dragon_light:6, zeus:6, satan:6 };
 CHARS.forEach(c=>{ c.stars = STAR_RANK[c.id] || 1; });
 function starHTML(c){ let s='<span class="stars">'; const slots=Math.max(5,c.stars); for(let i=0;i<slots;i++) s+='<span class="'+(i<c.stars?"on":"off")+'">'+(i<c.stars?"★":"☆")+'</span>'; return s+'</span>'; }
 /* 盤面を 7×7 にしたぶん 1ターンの火力が下がるので、敵HPは
@@ -1265,7 +1272,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.43";
+const APP_VER="1.0.45";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1281,13 +1288,14 @@ function renderHome(){
     /* ボタンの地にも、そのステージの背景イラストを薄く敷いて、
        入る前から「どんな場所で・誰と戦うか」が合うように見せる */
     const scFile=SCENE_FILE[STAGE_BG[st.n]];
-    if(scFile) b.style.background="linear-gradient(rgba(18,15,44,.64),rgba(18,15,44,.85)),url(assets/"+scFile+") center/cover";
+    if(scFile) b.style.background="linear-gradient(rgba(18,15,44,.34),rgba(18,15,44,.58)),url("+scFile+") center/cover";
+    const thumbHtml=scFile?'<span class="stage-thumb"><img src="'+scFile+'" alt=""></span>':"";
     if(st.satan){
-      b.innerHTML='<span class="crown">👿</span>'+(un?"サタン":"？？？")+"<small>"+(un?"やみ・HP 22000・第1章 最終ボス":"ゼウスを なかまにすると 追加される")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
+      b.innerHTML=thumbHtml+'<span class="crown">👿</span>'+(un?"サタン":"？？？")+"<small>"+(un?"やみ・HP 22000・第1章 最終ボス":"ゼウスを なかまにすると 追加される")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
     } else if(st.challenge){
-      b.innerHTML='<span class="crown">⚡</span>'+(un?"ゼウス":"？？？")+"<small>"+(un?"ひかり・HP 18000・さいきょうの神":"ステージ8 クリアで 出現")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
+      b.innerHTML=thumbHtml+'<span class="crown">⚡</span>'+(un?"ゼウス":"？？？")+"<small>"+(un?"ひかり・HP 18000・さいきょうの神":"ステージ8 クリアで 出現")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
     } else {
-      b.innerHTML=(st.boss?'<span class="crown">👑</span>':"")+(st.disp||st.n)+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
+      b.innerHTML=thumbHtml+(st.boss?'<span class="crown">👑</span>':"")+(st.disp||st.n)+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
     }
     b.disabled=!un; b.onclick=()=>startBattle(st);
     $(st.extra?"extraGrid":st.satan?"satanGrid":st.challenge?"challengeGrid":"stageGrid").appendChild(b);
