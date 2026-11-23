@@ -398,7 +398,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.57</div>
+    <div class="ver-line">ver 1.0.58</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <p class="recruit-legend"><span class="recruit yes">✓ なかま</span><span>は もう なかまに なってるよ。</span></p>
@@ -1576,6 +1576,9 @@ function startBattle(st){
   const tag=$("enemyTag"); tag.textContent=ATTR[enemy.attr].name; tag.className="tag "+enemy.attr;
   buildPartyRow(); renderBattle(); fitBoard();
   setTimeout(fitBoard, 80);
+  /* 画像やフォントの読み込みで後からレイアウトが伸びた場合に、
+     盤面が入れ物からはみ出していたら縮めて切れを防ぐ（大きくはしない） */
+  setTimeout(fitBoard, 450);
   /* スコアアタック開始時：大きく待ち構えるルシファーの開幕セリフ */
   if(st.score)setTimeout(()=>{ if(B&&B.scoreMode)showLuciComment("10ターン、すきなだけ かかってこい"); },550);
   if(bgmOn)startBGM();
@@ -1726,10 +1729,9 @@ function applyFallAnim(){
    ・html/body に .battle-lock を付けてスクロールを止める
      （body の position:fixed は iOS のゴム引き対策。top には
      開始直前のスクロール位置を入れて、見た目が飛ばないようにする）
-   ・バトル開始時点の画面サイズ（lockedVW/lockedVH）を覚えておき、
-     アドレスバーの出入りなど「幅が同じで高さだけ」の変化では
-     盤面サイズを計算し直さない（途中で盤面がズレる・縮むのを防ぐ）。
-     幅が変わったとき（＝回転したとき）だけサイズを取り直す
+   ・盤面サイズは fitBoard が入れ物（.board-wrap）の実寸から決め、
+     同じ画面幅の間は大きくし直さない（アドレスバーの出入りで
+     盤面がズレるのを防ぐ）。詳しくは fitBoard 側のコメント参照
    ・対応環境（ホーム画面から全画面で起動した PWA 等）では
      screen.orientation.lock("portrait") も試みる。iframe 内など
      効かない環境では失敗を握りつぶし、横向き案内（#rotateNotice）
@@ -1747,6 +1749,8 @@ function lockBattleScreen(){
   document.body.style.top="0px";
   window.scrollTo(0,0);
   lockedVW=window.innerWidth; lockedVH=window.innerHeight;
+  /* 盤面サイズのキャッシュはバトルごとに測り直す */
+  fitVw=0; fitSize=0;
   try{
     if(screen.orientation&&screen.orientation.lock){
       const p=screen.orientation.lock("portrait");
@@ -1773,20 +1777,35 @@ document.addEventListener("touchmove",function(e){
 document.addEventListener("gesturestart",function(e){
   if(document.body.classList.contains("battle-lock"))e.preventDefault();
 });
+/* 盤面サイズの決定：空きスペースは「兄弟要素の offsetHeight 合計」
+   から推測せず、盤面の入れ物（.board-wrap）そのものの実寸で測る。
+   #battle は 100dvh の flex 縦並びで .board-wrap が flex:1 のため、
+   wrap の clientHeight がそのまま「盤面に使える本当の残り高さ」に
+   なる。合計方式はマージン（offsetHeight に含まれない）や計測後に
+   伸びる要素を取りこぼし、縦に長いスコアアタック（ルシファー戦：
+   スコアHUD表示）では背の低い端末で余裕が数pxしかなく、わずかな
+   漏れで盤面の下端が画面外に切れていた（実機報告）。
+   バトル中のサイズ変更ルールは従来どおり：同じ画面幅の間は
+   大きくし直さない（アドレスバーの出入りで盤面がズレないように）。
+   ただし今の入れ物に収まらない場合は、切れないよう小さくする */
+let fitVw=0, fitSize=0;
 function fitBoard(){
   requestAnimationFrame(()=>{
     const bw=$("board"), battle=$("battle");
     if(!bw||battle.classList.contains("hidden"))return;
-    let others=0;
-    for(const el of battle.children){ if(!el.classList.contains("board-wrap")&&el.id!=="bgLayer") others+=el.offsetHeight; }
-    let vw=window.innerWidth, vh=window.innerHeight;
-    if(lockedVW&&lockedVH){
-      if(vw===lockedVW){ vh=lockedVH; }
-      else { lockedVW=vw; lockedVH=vh; }
+    const wrap=bw.parentElement;
+    if(!wrap||!wrap.clientHeight)return;
+    const availW=Math.min(wrap.clientWidth-8, 620);
+    const availH=wrap.clientHeight-8;
+    const raw=Math.floor(Math.min(availW, availH));
+    let size;
+    if(fitSize&&window.innerWidth===fitVw){
+      size=Math.min(raw, fitSize);
+    }else{
+      fitVw=window.innerWidth; size=raw;
     }
-    const availW=Math.min(vw-6, 620);
-    const availH=vh - others - 6;
-    const size=Math.max(180, Math.floor(Math.min(availW, availH)));
+    size=Math.max(180, size);
+    fitSize=size;
     bw.style.width=size+"px"; bw.style.height=size+"px";
     const layer=$("comboLayer");
     if(layer){ layer.style.left=bw.offsetLeft+"px"; layer.style.top=bw.offsetTop+"px"; layer.style.width=size+"px"; layer.style.height=size+"px"; }
