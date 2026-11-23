@@ -22,7 +22,7 @@
     --gold:#ffd34d;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  html,body{margin:0;padding:0;background:radial-gradient(130% 55% at 50% 0%, #2c2563 0%, var(--bg) 62%) fixed, var(--bg);color:var(--ink);
     font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;}
   button{font-family:inherit; min-height:2.25rem; cursor:pointer;}
   .hidden{display:none !important;}
@@ -40,19 +40,6 @@
   .player-btn{flex:1;max-width:220px;border-radius:16px;border:2px solid var(--line);
     background:var(--panel);color:var(--ink);padding:.6rem .4rem;font-size:1.05rem;font-weight:800;}
   .player-btn.sel{border-color:var(--gold);background:var(--panel2);box-shadow:0 0 0 2px rgba(255,211,77,.35);}
-
-  /* BGM 曲えらび（試聴つき） */
-  .track-list{display:flex;flex-direction:column;gap:.5rem;}
-  .track-btn{display:flex;align-items:center;gap:.55rem;width:100%;text-align:left;border-radius:14px;
-    border:2px solid var(--line);background:var(--panel);color:var(--ink);
-    padding:.6rem .7rem;font-size:.98rem;font-weight:800;}
-  .track-btn .t-play{font-size:1.05rem;}
-  .track-btn .t-name{flex:1;line-height:1.3;}
-  .track-btn .t-name small{display:block;font-size:.68rem;color:var(--sub);font-weight:700;}
-  .track-btn .t-check{color:var(--gold);font-size:1.05rem;visibility:hidden;}
-  .track-btn.sel{border-color:var(--gold);background:var(--panel2);box-shadow:0 0 0 2px rgba(255,211,77,.35);}
-  .track-btn.sel .t-check{visibility:visible;}
-  .track-btn.playing{border-color:var(--forest);}
 
   /* ステージ */
   .sec-title{font-size:.95rem;font-weight:800;color:var(--sub);margin:.9rem 0 .45rem;}
@@ -82,8 +69,11 @@
   .msg{min-height:1.4em;text-align:center;font-size:.85rem;font-weight:700;color:var(--gold);margin:.5rem 0 0;}
 
   /* ---------- バトル ---------- */
-  #battle{height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:
-    radial-gradient(120% 60% at 50% 0%, #2a2560 0%, var(--bg) 62%);}
+  #battle{height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative;background:#0d0b22;}
+  /* ステージごとの壮大な背景（神殿・荒野・宇宙など）を全面に敷く */
+  #bgLayer{position:absolute;inset:0;z-index:0;overflow:hidden;}
+  #bgLayer svg{width:100%;height:100%;display:block;}
+  #battle>*:not(#bgLayer){position:relative;z-index:1;}
   .b-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:10;padding:max(.35rem, env(safe-area-inset-top)) .6rem 0;}
   .b-top .ttl{font-size:.8rem;color:var(--sub);font-weight:800;}
   .enemy-zone{flex:0 0 auto;display:flex;flex-direction:column;justify-content:flex-start;}
@@ -103,11 +93,11 @@
   .atk-badge.danger{border-color:var(--fire);background:#4a1f2e;}
   .atk-badge.danger .num{color:#ff8d84;}
   .enemy-meta{padding:0 .8rem;}
-  .enemy-name{display:flex;align-items:center;justify-content:center;gap:.5rem;font-weight:800;font-size:1.05rem;margin:.1rem 0 .3rem;}
+  .enemy-name{display:flex;align-items:center;justify-content:center;gap:.5rem;font-weight:800;font-size:1.05rem;margin:.1rem 0 .3rem;text-shadow:0 2px 8px rgba(0,0,0,.85),0 0 2px rgba(0,0,0,.9);}
   .hp-row{display:flex;align-items:center;gap:.55rem;}
   .hp-bar{flex:1;height:14px;border-radius:999px;background:#0d0b22;border:1px solid var(--line);overflow:hidden;}
   .hp-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#ff7a52,#ffb35c);transition:width .45s ease;}
-  .hp-num{font-size:.78rem;font-weight:800;white-space:nowrap;color:var(--ink);}
+  .hp-num{font-size:.78rem;font-weight:800;white-space:nowrap;color:var(--ink);text-shadow:0 1px 5px rgba(0,0,0,.9);}
   .party-hp .hp-fill{background:linear-gradient(90deg,#57d95e,#b6f09a);}
   .party-row{display:flex;gap:.35rem;padding:2.15rem .6rem 0;align-items:flex-end;}
   .member{flex:1;position:relative;text-align:center;background:none;border:none;padding:0;min-height:0;}
@@ -167,7 +157,7 @@
     -webkit-text-stroke:2px #200a00;text-shadow:0 0 14px rgba(255,90,20,.95),0 0 28px rgba(255,60,0,.7),3px 3px 0 #000,-2px 2px 0 #000,0 5px 0 rgba(0,0,0,.85);pointer-events:none;z-index:10;animation:dmgpop .95s ease-out forwards;}
   @keyframes dmgpop{0%{opacity:0;transform:translate(-50%,-20%) scale(.4) rotate(-3deg);}22%{opacity:1;transform:translate(-50%,-58%) scale(1.35) rotate(2deg);}42%{transform:translate(-50%,-62%) scale(1);}100%{opacity:0;transform:translate(-50%,-125%) scale(1.05);}}
   .board-wrap{position:relative;display:flex;justify-content:center;padding:.45rem .5rem .5rem;}
-  #board{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:#0d0b22;
+  #board{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;background:rgba(13,11,34,.88);
     border:1px solid var(--line);border-radius:14px;padding:5px;}
   .orb{aspect-ratio:1;border-radius:50%;border:none;padding:0;position:relative;min-height:0;overflow:hidden;
     display:flex;align-items:center;justify-content:center;transition:transform .12s, box-shadow .12s;}
@@ -225,9 +215,6 @@
       <button class="player-btn" data-player="yuichi">👨 ゆういち</button>
     </div>
 
-    <div class="sec-title">おんがく ― タップで ためし聞きして えらんでね</div>
-    <div class="track-list" id="trackList"></div>
-
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
 
@@ -242,6 +229,7 @@
 
 <!-- ============ バトル ============ -->
 <div id="battle" class="hidden">
+  <div id="bgLayer"></div>
   <div class="b-top">
     <button class="icon-btn" id="quitBtn">← もどる</button>
     <span class="ttl" id="stageTitle"></span>
@@ -315,36 +303,51 @@ function fairySVG(dress, hair){
   '<circle cx="50" cy="6" r="2.6" fill="#ffd34d"/><path d="M42 88 L40 96 M58 88 L60 96" stroke="#e8b98d" stroke-width="3.4" stroke-linecap="round"/></svg>';
 }
 const CHARS = [
- {id:"slime_fire", name:"ほのおスライム", attr:"fire", atk:9, art:()=>slimeSVG("#ff7a5c","#c22e24","flame"), passive:"コンボの いりょく +10%", skill:{name:"ちいさな かえん", desc:"ひの ダメージ 120", turns:4, type:"dmg", power:120}},
- {id:"slime_water", name:"みずスライム", attr:"water", atk:9, art:()=>slimeSVG("#5cb8ff","#1668ad","drop"), passive:"コンボの いりょく +10%", skill:{name:"みずの しずく", desc:"HP 60 かいふく", turns:4, type:"heal", power:60}},
- {id:"slime_forest", name:"もりスライム", attr:"forest", atk:9, art:()=>slimeSVG("#63dd7e","#1d8f43","bud"), passive:"コンボの いりょく +10%", skill:{name:"はっぱカッター", desc:"もりの ダメージ 120", turns:4, type:"dmg", power:120}},
- {id:"dragon_fire", name:"ほのおドラゴン", attr:"fire", atk:34, art:()=>imgArt("dragon-fire.png"), passive:"コンボの いりょく +25%", skill:{name:"かえんブレス", desc:"ひの ダメージ 340", turns:5, type:"dmg", power:340}},
- {id:"dragon_water", name:"うみドラゴン", attr:"water", atk:32, art:()=>imgArt("dragon-water.png"), passive:"コンボの いりょく +25%", skill:{name:"うずしお", desc:"みずの ダメージ 320 と HP 40 かいふく", turns:5, type:"dmgheal", power:320, heal:40}},
- {id:"dragon_forest", name:"もりドラゴン", attr:"forest", atk:33, art:()=>imgArt("dragon-forest.png"), passive:"コンボの いりょく +25%", skill:{name:"もりの いぶき", desc:"HP 130 かいふく", turns:5, type:"heal", power:130}},
- {id:"fairy_flower", name:"はなのようせい", attr:"forest", atk:26, art:()=>imgArt("fairy-flower.png"), passive:"かいふくオーブの こうか +50%", skill:{name:"はなびらヒール", desc:"HP 160 かいふく", turns:4, type:"heal", power:160}},
- {id:"fairy_star", name:"ほしのようせい", attr:"water", atk:28, art:()=>imgArt("fairy-star.png"), passive:"かいふくオーブの こうか +50%", skill:{name:"ほしの ひかり", desc:"みずの ダメージ 300", turns:4, type:"dmg", power:300}},
- {id:"phoenix", name:"ひのとり", attr:"fire", atk:48, art:()=>imgArt("phoenix.png"), passive:"コンボの いりょく +35%", skill:{name:"ほうおうの炎", desc:"ひの ダメージ 480 と HP 50 かいふく", turns:5, type:"dmgheal", power:480, heal:50}},
- {id:"dragon_sea", name:"おおうみドラゴン", attr:"water", atk:52, art:()=>imgArt("dragon-water.png","hue-rotate(-28deg) saturate(1.35) brightness(.9)"), passive:"コンボの いりょく +35%", skill:{name:"おおなみ", desc:"みずの ダメージ 520", turns:6, type:"dmg", power:520}},
- {id:"dragon_change_forest", name:"もりへんげドラゴン", attr:"forest", atk:38, art:()=>imgArt("dragon-forest.png","hue-rotate(16deg) saturate(1.3)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・もり", desc:"あかオーブ 全部 → みどり に かえる", turns:5, type:"change", from:"fire", to:"forest"}},
- {id:"fairy_change_water", name:"みずへんげようせい", attr:"water", atk:36, art:()=>imgArt("fairy-star.png","hue-rotate(28deg) saturate(1.15)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの こな・みず", desc:"みどりオーブ 全部 → あお に かえる", turns:5, type:"change", from:"forest", to:"water"}},
- {id:"dragon_change_fire", name:"ほのおへんげドラゴン", attr:"fire", atk:40, art:()=>imgArt("dragon-fire.png","hue-rotate(-14deg) saturate(1.35)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・ほのお", desc:"あおオーブ 全部 → あか に かえる", turns:5, type:"change", from:"water", to:"fire"}},
+ {id:"slime_fire", name:"フレイムスライム", attr:"fire", atk:9, art:()=>slimeSVG("#ff7a5c","#c22e24","flame"), passive:"コンボの いりょく +10%", skill:{name:"ちいさな かえん", desc:"ひの ダメージ 120", turns:4, type:"dmg", power:120}},
+ {id:"slime_water", name:"アクアスライム", attr:"water", atk:9, art:()=>slimeSVG("#5cb8ff","#1668ad","drop"), passive:"コンボの いりょく +10%", skill:{name:"みずの しずく", desc:"HP 60 かいふく", turns:4, type:"heal", power:60}},
+ {id:"slime_forest", name:"リーフスライム", attr:"forest", atk:9, art:()=>slimeSVG("#63dd7e","#1d8f43","bud"), passive:"コンボの いりょく +10%", skill:{name:"はっぱカッター", desc:"もりの ダメージ 120", turns:4, type:"dmg", power:120}},
+ {id:"dragon_fire", name:"インフェルノドラゴン", attr:"fire", atk:34, art:()=>imgArt("dragon-fire.png"), passive:"コンボの いりょく +25%", skill:{name:"かえんブレス", desc:"ひの ダメージ 340", turns:5, type:"dmg", power:340}},
+ {id:"dragon_water", name:"アビスドラゴン", attr:"water", atk:32, art:()=>imgArt("dragon-water.png"), passive:"コンボの いりょく +25%", skill:{name:"うずしお", desc:"みずの ダメージ 320 と HP 40 かいふく", turns:5, type:"dmgheal", power:320, heal:40}},
+ {id:"dragon_forest", name:"グリーンドラゴン", attr:"forest", atk:33, art:()=>imgArt("dragon-forest.png"), passive:"コンボの いりょく +25%", skill:{name:"もりの いぶき", desc:"HP 130 かいふく", turns:5, type:"heal", power:130}},
+ {id:"fairy_flower", name:"フラワーフェアリー", attr:"forest", atk:26, art:()=>imgArt("fairy-flower.png"), passive:"かいふくオーブの こうか +50%", skill:{name:"はなびらヒール", desc:"HP 160 かいふく", turns:4, type:"heal", power:160}},
+ {id:"fairy_star", name:"スターフェアリー", attr:"water", atk:28, art:()=>imgArt("fairy-star.png"), passive:"かいふくオーブの こうか +50%", skill:{name:"ほしの ひかり", desc:"みずの ダメージ 300", turns:4, type:"dmg", power:300}},
+ {id:"phoenix", name:"フェニックス", attr:"fire", atk:48, art:()=>imgArt("phoenix.png"), passive:"コンボの いりょく +35%", skill:{name:"ほうおうの炎", desc:"ひの ダメージ 480 と HP 50 かいふく", turns:5, type:"dmgheal", power:480, heal:50}},
+ {id:"dragon_sea", name:"エンシェントドラゴン", attr:"water", atk:52, art:()=>imgArt("dragon-water.png","hue-rotate(-28deg) saturate(1.35) brightness(.9)"), passive:"コンボの いりょく +35%", skill:{name:"おおなみ", desc:"みずの ダメージ 520", turns:6, type:"dmg", power:520}},
+ {id:"dragon_change_forest", name:"エメラルドドラゴン", attr:"forest", atk:38, art:()=>imgArt("dragon-forest.png","hue-rotate(16deg) saturate(1.3)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・もり", desc:"あかオーブ 全部 → みどり に かえる", turns:5, type:"change", from:"fire", to:"forest"}},
+ {id:"fairy_change_water", name:"サファイアフェアリー", attr:"water", atk:36, art:()=>imgArt("fairy-star.png","hue-rotate(28deg) saturate(1.15)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの こな・みず", desc:"みどりオーブ 全部 → あお に かえる", turns:5, type:"change", from:"forest", to:"water"}},
+ {id:"dragon_change_fire", name:"ルビードラゴン", attr:"fire", atk:40, art:()=>imgArt("dragon-fire.png","hue-rotate(-14deg) saturate(1.35)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・ほのお", desc:"あおオーブ 全部 → あか に かえる", turns:5, type:"change", from:"water", to:"fire"}},
 ];
 function imgArt(src, filter){ return '<img src="'+src+'" alt=""'+(filter?' style="filter:'+filter+'"':"")+">"; }
 const charById = id => CHARS.find(c=>c.id===id);
+/* 盤面を 7×7 にしたぶん 1ターンの火力が下がるので、敵HPは
+   8×8時代の約0.8倍に下げて難易度をそろえた */
 const STAGES = [
- {n:1, enemy:"fairy_flower", hp:2300, atk:38, cd:3, recruit:.4},
- {n:2, enemy:"dragon_forest", hp:3200, atk:50, cd:3, recruit:.4},
- {n:3, enemy:"dragon_fire", hp:4600, atk:66, cd:2, recruit:.4, boss:true},
- {n:4, enemy:"fairy_star", hp:5400, atk:74, cd:3, recruit:.4},
- {n:5, enemy:"dragon_water", hp:6400, atk:86, cd:3, recruit:.35},
- {n:6, enemy:"phoenix", hp:7600, atk:100, cd:2, recruit:.35},
- {n:7, enemy:"dragon_sea", hp:9000, atk:112, cd:3, recruit:.35},
- {n:8, enemy:"phoenix", hp:11000, atk:130, cd:2, recruit:.3, boss:true},
- {n:9, enemy:"dragon_change_forest", hp:3800, atk:56, cd:3, recruit:.6, extra:true},
- {n:10, enemy:"fairy_change_water", hp:4200, atk:60, cd:3, recruit:.6, extra:true},
- {n:11, enemy:"dragon_change_fire", hp:4600, atk:64, cd:3, recruit:.6, extra:true},
+ {n:1, enemy:"fairy_flower", hp:1840, atk:38, cd:3, recruit:.4},
+ {n:2, enemy:"dragon_forest", hp:2560, atk:50, cd:3, recruit:.4},
+ {n:3, enemy:"dragon_fire", hp:3680, atk:66, cd:2, recruit:.4, boss:true},
+ {n:4, enemy:"fairy_star", hp:4320, atk:74, cd:3, recruit:.4},
+ {n:5, enemy:"dragon_water", hp:5120, atk:86, cd:3, recruit:.35},
+ {n:6, enemy:"phoenix", hp:6080, atk:100, cd:2, recruit:.35},
+ {n:7, enemy:"dragon_sea", hp:7200, atk:112, cd:3, recruit:.35},
+ {n:8, enemy:"phoenix", hp:8800, atk:130, cd:2, recruit:.3, boss:true},
+ {n:9, enemy:"dragon_change_forest", hp:3040, atk:56, cd:3, recruit:.6, extra:true},
+ {n:10, enemy:"fairy_change_water", hp:3360, atk:60, cd:3, recruit:.6, extra:true},
+ {n:11, enemy:"dragon_change_fire", hp:3680, atk:64, cd:3, recruit:.6, extra:true},
 ];
 const PARTY_HP = 150;
+
+/* ================= ステージ背景 =================
+   ステージごとに神殿・荒野・火山・氷・深海・宇宙の壮大な風景を
+   SVGシルエットで描く（外部画像なし）。バトル画面の全面に敷く。 */
+const BG_SCENES = {
+ temple:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#120b36"/><stop offset=".5" stop-color="#3a2160"/><stop offset=".78" stop-color="#7c4470"/><stop offset="1" stop-color="#c97a5e"/></linearGradient></defs><rect width="400" height="800" fill="url(#bgT)"/><circle cx="200" cy="300" r="88" fill="#ffd9a0" opacity=".16"/><circle cx="200" cy="300" r="54" fill="#ffe9bb" opacity=".85"/><g fill="#1d1242"><path d="M-10 330 L200 218 L410 330 L410 356 L-10 356 Z"/><rect x="8" y="356" width="384" height="14"/></g><g fill="#241650"><rect x="26" y="384" width="30" height="276"/><rect x="102" y="384" width="30" height="276"/><rect x="178" y="384" width="30" height="276"/><rect x="254" y="384" width="30" height="276"/><rect x="330" y="384" width="30" height="276"/></g><g fill="#2e1c5e"><rect x="20" y="370" width="42" height="14"/><rect x="96" y="370" width="42" height="14"/><rect x="172" y="370" width="42" height="14"/><rect x="248" y="370" width="42" height="14"/><rect x="324" y="370" width="42" height="14"/></g><rect y="660" width="400" height="140" fill="#160d33"/><rect y="660" width="400" height="10" fill="#3a2566"/><path d="M0 706 H400 M0 748 H400" stroke="#241650" stroke-width="6"/></svg>',
+ wasteland:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a0e2e"/><stop offset=".45" stop-color="#8a2f2a"/><stop offset=".75" stop-color="#e06a35"/><stop offset="1" stop-color="#ffb35c"/></linearGradient></defs><rect width="400" height="800" fill="url(#bgW)"/><circle cx="200" cy="470" r="122" fill="#ffcf7d" opacity=".25"/><circle cx="200" cy="470" r="78" fill="#ffd98f"/><path d="M0 520 Q110 470 220 512 T400 505 V800 H0 Z" fill="#7a2c22"/><path d="M0 610 Q130 560 250 600 T400 596 V800 H0 Z" fill="#4a1a20"/><path d="M330 610 C326 560 330 520 318 486 M330 548 C312 536 300 538 288 528 M329 522 C344 508 356 506 368 494" stroke="#2a0d16" stroke-width="7" fill="none" stroke-linecap="round"/><g fill="#33101c"><path d="M40 640 l18 -14 l14 14 Z"/><path d="M70 652 l12 -9 l10 9 Z"/><path d="M96 646 l9 -7 l8 7 Z"/></g></svg>',
+ volcano:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#160404"/><stop offset=".5" stop-color="#4a1408"/><stop offset="1" stop-color="#8a2f10"/></linearGradient></defs><rect width="400" height="800" fill="url(#bgV)"/><g fill="#5a5a66" opacity=".22"><circle cx="200" cy="300" r="34"/><circle cx="238" cy="262" r="26"/><circle cx="168" cy="258" r="20"/><circle cx="206" cy="216" r="15"/></g><path d="M52 800 L200 380 L348 800 Z" fill="#200a08"/><ellipse cx="200" cy="384" rx="48" ry="11" fill="#ff7a2e"/><ellipse cx="200" cy="384" rx="30" ry="7" fill="#ffc46b"/><path d="M192 392 C200 460 188 520 198 592 C204 642 196 706 202 800 L226 800 C216 692 228 620 217 546 C209 482 221 442 211 392 Z" fill="#ff5a1e" opacity=".92"/><path d="M160 470 C150 540 162 610 154 690 L168 690 C172 612 162 545 172 478 Z" fill="#ff7a2e" opacity=".55"/><g fill="#ffb35c"><circle cx="86" cy="300" r="3"/><circle cx="140" cy="210" r="2.4"/><circle cx="300" cy="250" r="2.8"/><circle cx="330" cy="360" r="2.2"/><circle cx="70" cy="430" r="2.4"/><circle cx="262" cy="150" r="2"/><circle cx="110" cy="120" r="2.2"/></g><rect y="770" width="400" height="30" fill="#170605"/></svg>',
+ ice:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgI" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06182e"/><stop offset=".55" stop-color="#144a74"/><stop offset="1" stop-color="#7fc4e8"/></linearGradient></defs><rect width="400" height="800" fill="url(#bgI)"/><path d="M-20 150 C100 90 240 190 420 110" stroke="#57ffb0" stroke-width="26" fill="none" opacity=".30" stroke-linecap="round"/><path d="M-20 210 C110 150 250 240 420 170" stroke="#4ad8ff" stroke-width="18" fill="none" opacity=".22" stroke-linecap="round"/><path d="M0 800 V716 Q120 688 230 712 T400 704 V800 Z" fill="#dff4ff" opacity=".92"/><g fill="#bfeaff"><polygon points="36,800 78,596 118,800" opacity=".9"/><polygon points="238,800 296,548 352,800" opacity=".9"/><polygon points="318,800 356,648 392,800" opacity=".8"/></g><g fill="#7fc4e8"><polygon points="104,800 148,636 192,800" opacity=".75"/><polygon points="150,800 176,690 202,800" opacity=".7"/></g><g fill="#ffffff"><circle cx="52" cy="120" r="2.2"/><circle cx="150" cy="70" r="1.8"/><circle cx="250" cy="130" r="2.2"/><circle cx="340" cy="80" r="1.8"/><circle cx="90" cy="300" r="1.6"/><circle cx="310" cy="330" r="1.6"/><circle cx="200" cy="240" r="1.5"/><circle cx="30" cy="430" r="1.6"/><circle cx="370" cy="460" r="1.6"/></g></svg>',
+ sea:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a5a7a"/><stop offset=".45" stop-color="#063a5e"/><stop offset="1" stop-color="#02101f"/></linearGradient></defs><rect width="400" height="800" fill="url(#bgSea)"/><g fill="#bfeaff" opacity=".10"><polygon points="56,0 104,0 168,800 92,800"/><polygon points="176,0 206,0 236,800 196,800"/><polygon points="292,0 336,0 316,800 268,800"/></g><path d="M0 800 V730 Q80 700 150 728 T400 720 V800 Z" fill="#02141f"/><path d="M28 742 C24 716 30 700 22 682 M52 748 C56 724 50 708 60 692 M344 740 C340 716 348 702 340 686" stroke="#04263c" stroke-width="7" fill="none" stroke-linecap="round"/><g fill="none" stroke="#bfeaff" opacity=".5"><circle cx="90" cy="560" r="5"/><circle cx="112" cy="500" r="3.6"/><circle cx="300" cy="600" r="4.4"/><circle cx="322" cy="540" r="3"/><circle cx="200" cy="640" r="3.2"/></g><g fill="#7ffce8"><circle cx="60" cy="430" r="1.8" opacity=".8"/><circle cx="150" cy="380" r="1.5" opacity=".7"/><circle cx="250" cy="450" r="1.8" opacity=".8"/><circle cx="340" cy="380" r="1.5" opacity=".7"/><circle cx="120" cy="250" r="1.4" opacity=".6"/><circle cx="290" cy="230" r="1.4" opacity=".6"/></g></svg>',
+ space:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#04061a"/><stop offset=".6" stop-color="#0b1030"/><stop offset="1" stop-color="#1c1440"/></linearGradient><radialGradient id="bgP" cx=".35" cy=".3" r="1.1"><stop offset="0" stop-color="#9fd8ff"/><stop offset=".55" stop-color="#4a6fd4"/><stop offset="1" stop-color="#1d2a6e"/></radialGradient></defs><rect width="400" height="800" fill="url(#bgS)"/><ellipse cx="90" cy="570" rx="150" ry="92" fill="#7a3fd4" opacity=".14"/><ellipse cx="330" cy="110" rx="130" ry="70" fill="#2a7fd4" opacity=".12"/><g fill="#ffffff"><circle cx="30" cy="80" r="2"/><circle cx="90" cy="180" r="1.5"/><circle cx="150" cy="60" r="2.2"/><circle cx="210" cy="140" r="1.4"/><circle cx="60" cy="300" r="1.6"/><circle cx="120" cy="380" r="2"/><circle cx="30" cy="480" r="1.4"/><circle cx="180" cy="300" r="1.3"/><circle cx="240" cy="420" r="1.7"/><circle cx="360" cy="330" r="1.5"/><circle cx="330" cy="470" r="2"/><circle cx="270" cy="560" r="1.4"/><circle cx="150" cy="540" r="1.6"/><circle cx="80" cy="640" r="1.4"/><circle cx="370" cy="620" r="1.6"/><circle cx="220" cy="660" r="1.3"/><circle cx="105" cy="95" r="1.2"/><circle cx="255" cy="55" r="1.6"/><circle cx="345" cy="230" r="1.3"/><circle cx="45" cy="205" r="1.2"/></g><path d="M150 96 l2.4 6.6 6.6 2.4 -6.6 2.4 -2.4 6.6 -2.4 -6.6 -6.6 -2.4 6.6 -2.4 Z" fill="#ffffff" opacity=".9"/><path d="M52 372 l1.8 5 5 1.8 -5 1.8 -1.8 5 -1.8 -5 -5 -1.8 5 -1.8 Z" fill="#ffffff" opacity=".8"/><circle cx="312" cy="180" r="56" fill="url(#bgP)"/><ellipse cx="312" cy="190" rx="98" ry="19" fill="none" stroke="#a8c8ff" stroke-width="6" opacity=".55" transform="rotate(-14 312 190)"/><path d="M0 800 V722 Q120 692 220 716 T400 706 V800 Z" fill="#070a24"/></svg>',
+};
+const STAGE_BG = {1:"temple",2:"wasteland",3:"volcano",4:"ice",5:"sea",6:"volcano",7:"sea",8:"space",9:"temple",10:"ice",11:"wasteland"};
 
 /* ================= セーブ（メモリ内・プレイヤー別） ================= */
 function newSave(){ return { owned:["slime_fire","slime_water","slime_forest"], party:["slime_fire","slime_water","slime_forest"], cleared:[] }; }
@@ -357,7 +360,7 @@ let AC=null, seOn=true, bgmOn=false, bgmTimer=null, bgmStep=0, curStage=1;
 function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==="suspended")AC.resume(); return AC; }
 function tone(f,t0,d,type,g){ if(!seOn&&type!=="bgm")return; const c=ac(),o=c.createOscillator(),v=c.createGain();
   o.type=type==="bgm"?"triangle":"sine"; o.frequency.value=f; o.connect(v); v.connect(c.destination);
-  const s=c.currentTime+t0; v.gain.setValueAtTime(0,s); v.gain.linearRampToValueAtTime(g||.24,s+.015); v.gain.exponentialRampToValueAtTime(.001,s+d);
+  const s=c.currentTime+t0; v.gain.setValueAtTime(0,s); v.gain.linearRampToValueAtTime(g||.42,s+.015); v.gain.exponentialRampToValueAtTime(.001,s+d);
   o.start(s); o.stop(s+d+.05); }
 function comboSE(combo){ const base=520*Math.pow(1.122,Math.min(combo-1,10)); tone(base,0,.14); tone(base*1.5,.05,.16); }
 function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.sampleRate*0.52);
@@ -368,7 +371,7 @@ function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.
   const t=c.currentTime; const f0=480+Math.min(combo-1,10)*90;
   /* パラメータが上がっていく感じの、ゆっくりした上昇スイープ */
   f.frequency.setValueAtTime(f0,t); f.frequency.exponentialRampToValueAtTime(f0*4.2,t+0.44);
-  const g=c.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.42,t+.07); g.gain.exponentialRampToValueAtTime(.001,t+.52);
+  const g=c.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.68,t+.07); g.gain.exponentialRampToValueAtTime(.001,t+.52);
   src.connect(f); f.connect(g); g.connect(c.destination); src.start(t); src.stop(t+.54); }
 function swapSE(){ tone(660,0,.07); }
 function skillSE(){ [523,659,784,1046].forEach((f,i)=>tone(f,i*.06,.16)); }
@@ -472,132 +475,17 @@ function bgmString(midi){ if(!bgmOn)return; const c=ac(),t=c.currentTime;
   v.gain.exponentialRampToValueAtTime(.0008,t+.13);
   o.connect(fl); fl.connect(v); v.connect(c.destination);
   o.start(t); o.stop(t+.16); }
-/* ---- BGM候補曲：D（ケルト風ダンス）を元にした3バリエーション ----
-   ユーザーが選んだD「ケルト風ダンス（フィドルっぽい速い旋律と
-   ハープ、ダンジョンを駆ける感じ）」の文法で3曲とも作り直した。
-   共通の作り：Dドリアン／Dメジャーの速い8分・16分のフィドル旋律、
-   サビでは弦のアルペジオがハープのように流れる。リードは
-   bgmFiddle（速いアタックの明るい弦）で鳴らす。選択は localStorage。 */
+/* ---- BGM：H「しっそうケルト」の1曲に固定（曲えらびは無し） ----
+   ユーザーが候補の中から選んだHだけを残した。D「ケルト風ダンス」
+   の文法（Dドリアン／Dメジャーの速い8分・16分のフィドル旋律、
+   サビでは弦のアルペジオがハープのように流れる）で書かれ、
+   リードは bgmFiddle（速いアタックの明るい弦）で鳴らす。 */
 const _=null;
 const TRACKS=[
- {name:"♪ D1 ケルトダンス", desc:"Dの曲そのもの。速く駆けるフィドルのダンス・約48秒", bpm:140, fiddle:true,
-  chd:{
-    D:{bass:26,pad:[62,66,69],ost:[50,57,62,66,69]},
-    G:{bass:31,pad:[59,62,67],ost:[43,55,59,62,67]},
-    A:{bass:33,pad:[57,61,64],ost:[45,52,57,61,64]},
-    Bm:{bass:35,pad:[59,62,66],ost:[47,54,59,62,66]},
-    Em:{bass:28,pad:[55,59,64],ost:[40,52,55,59,64]},
-  },
-  song:[
-    {sec:"in",ch:"D", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"G", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"D", mel:[86,_,_,_,83,_,81,_,78,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"A", mel:[81,_,83,_,86,_,_,_,85,_,83,_,81,_,_,_],fill:1},
-    {sec:"A",ch:"D", mel:[74,_,76,_,78,_,81,_,83,_,81,_,78,_,76,_]},
-    {sec:"A",ch:"G", mel:[79,_,78,_,76,_,78,_,79,_,_,_,76,_,_,_]},
-    {sec:"A",ch:"D", mel:[74,_,76,_,78,_,81,_,86,_,83,_,81,_,78,_]},
-    {sec:"A",ch:"A", mel:[81,_,_,_,78,_,76,_,78,_,81,_,85,_,_,_]},
-    {sec:"A",ch:"D", mel:[74,_,76,_,78,_,81,_,83,_,86,_,83,_,81,_]},
-    {sec:"A",ch:"G", mel:[83,_,81,_,79,_,81,_,79,_,76,_,78,_,_,_]},
-    {sec:"A",ch:"Bm",mel:[78,_,81,_,83,_,81,_,78,_,76,_,74,_,76,_]},
-    {sec:"A",ch:"A", mel:[78,_,_,_,76,_,_,_,81,_,_,_,85,_,_,_],fill:1},
-    {sec:"B",ch:"Em",mel:[76,78,79,_,81,_,79,_,76,_,79,_,81,_,_,_]},
-    {sec:"B",ch:"G", mel:[79,81,83,_,81,_,79,_,83,_,86,_,83,_,_,_]},
-    {sec:"B",ch:"D", mel:[86,_,83,_,81,_,83,_,86,_,88,_,86,_,83,_]},
-    {sec:"B",ch:"Bm",mel:[83,_,81,_,78,_,81,_,83,_,81,_,78,_,_,_]},
-    {sec:"B",ch:"Em",mel:[76,78,79,_,81,_,83,_,81,_,79,_,76,_,_,_]},
-    {sec:"B",ch:"G", mel:[79,_,81,_,83,_,86,_,83,_,81,_,79,_,_,_]},
-    {sec:"B",ch:"D", mel:[81,_,83,_,86,_,_,_,88,_,86,_,83,_,81,_]},
-    {sec:"B",ch:"A", mel:[85,_,83,_,81,_,78,_,81,_,_,_,85,_,88,_],fill:1},
-    {sec:"C",ch:"D", crash:1,mel:[86,_,_,_,_,_,_,_,83,_,_,_,81,_,_,_],har:[81,_,_,_,_,_,_,_,78,_,_,_,74,_,_,_]},
-    {sec:"C",ch:"G", mel:[83,_,_,_,_,_,_,_,79,_,_,_,81,_,_,_],har:[79,_,_,_,_,_,_,_,74,_,_,_,71,_,_,_]},
-    {sec:"C",ch:"D", mel:[86,_,_,_,_,_,83,_,81,_,_,_,83,_,_,_],har:[81,_,_,_,_,_,78,_,74,_,_,_,78,_,_,_]},
-    {sec:"C",ch:"A", mel:[85,_,_,_,_,_,_,_,81,_,_,_,85,_,_,_],har:[81,_,_,_,_,_,_,_,76,_,_,_,81,_,_,_]},
-    {sec:"C",ch:"D", crash:1,mel:[86,_,_,_,88,_,_,_,90,_,_,_,_,_,_,_],har:[78,_,_,_,81,_,_,_,86,_,_,_,_,_,_,_]},
-    {sec:"C",ch:"G", mel:[88,_,_,_,_,_,_,_,83,_,_,_,79,_,_,_],har:[83,_,_,_,_,_,_,_,79,_,_,_,74,_,_,_]},
-    {sec:"C",ch:"Bm",mel:[86,_,_,_,_,_,83,_,81,_,_,_,83,_,_,_],har:[78,_,_,_,_,_,74,_,71,_,_,_,74,_,_,_]},
-    {sec:"C",ch:"A", mel:[85,_,_,_,81,_,_,_,86,_,_,_,_,_,85,_],har:[76,_,_,_,73,_,_,_,76,_,_,_,_,_,73,_],fill:1},
-  ]},
- {name:"♪ D2 かぜのジグ", desc:"D風。ぴょんぴょん跳ねるジグ・約51秒", bpm:132, fiddle:true,
-  chd:{
-    G:{bass:31,pad:[59,62,67],ost:[43,55,59,62,67]},
-    C:{bass:36,pad:[60,64,67],ost:[48,55,60,64,67]},
-    D:{bass:26,pad:[62,66,69],ost:[50,57,62,66,69]},
-    Em:{bass:28,pad:[55,59,64],ost:[40,52,55,59,64]},
-    Am:{bass:33,pad:[57,60,64],ost:[45,52,57,60,64]},
-  },
-  song:[
-    {sec:"in",ch:"G", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"C", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"G", mel:[83,_,_,81,_,79,_,_,81,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"D", mel:[81,_,_,83,_,86,_,_,85,_,83,_,81,_,_,_],fill:1},
-    {sec:"A",ch:"G", mel:[79,_,_,81,_,83,_,_,81,_,_,79,_,76,_,_]},
-    {sec:"A",ch:"C", mel:[84,_,_,83,_,81,_,_,79,_,_,81,_,84,_,_]},
-    {sec:"A",ch:"G", mel:[83,_,_,81,_,79,_,_,76,_,_,79,_,81,_,_]},
-    {sec:"A",ch:"D", mel:[81,_,_,83,_,85,_,_,86,_,_,85,_,83,_,_]},
-    {sec:"A",ch:"G", mel:[79,_,_,81,_,83,_,_,86,_,_,83,_,81,_,_]},
-    {sec:"A",ch:"Em",mel:[83,_,_,81,_,79,_,_,81,_,_,76,_,79,_,_]},
-    {sec:"A",ch:"C", mel:[81,_,_,84,_,83,_,_,81,_,_,79,_,81,_,_]},
-    {sec:"A",ch:"D", mel:[83,_,_,81,_,78,_,_,81,_,_,86,_,_,_,_],fill:1},
-    {sec:"B",ch:"G", mel:[79,_,81,_,83,_,81,_,79,_,76,_,79,_,_,_]},
-    {sec:"B",ch:"Em",mel:[76,_,79,_,81,_,79,_,83,_,81,_,79,_,_,_]},
-    {sec:"B",ch:"C", mel:[84,_,81,_,79,_,81,_,84,_,86,_,84,_,_,_]},
-    {sec:"B",ch:"G", mel:[83,_,86,_,88,_,86,_,83,_,81,_,83,_,_,_]},
-    {sec:"B",ch:"Am",mel:[81,_,79,_,76,_,79,_,81,_,84,_,81,_,_,_]},
-    {sec:"B",ch:"C", mel:[84,_,86,_,84,_,81,_,79,_,81,_,84,_,_,_]},
-    {sec:"B",ch:"G", mel:[86,_,83,_,81,_,83,_,86,_,_,_,83,_,81,_]},
-    {sec:"B",ch:"D", mel:[85,_,83,_,81,_,83,_,85,_,_,_,88,_,_,_],fill:1},
-    {sec:"C",ch:"G", crash:1,mel:[83,_,_,_,_,_,_,_,86,_,_,_,83,_,_,_],har:[79,_,_,_,_,_,_,_,74,_,_,_,71,_,_,_]},
-    {sec:"C",ch:"C", mel:[84,_,_,_,_,_,_,_,81,_,_,_,79,_,_,_],har:[79,_,_,_,_,_,_,_,76,_,_,_,72,_,_,_]},
-    {sec:"C",ch:"G", mel:[86,_,_,_,_,_,83,_,81,_,_,_,83,_,_,_],har:[79,_,_,_,_,_,74,_,71,_,_,_,74,_,_,_]},
-    {sec:"C",ch:"D", mel:[86,_,_,_,_,_,_,_,83,_,_,_,86,_,_,_],har:[81,_,_,_,_,_,_,_,78,_,_,_,81,_,_,_]},
-    {sec:"C",ch:"Em",crash:1,mel:[84,_,_,_,86,_,_,_,88,_,_,_,_,_,_,_],har:[76,_,_,_,79,_,_,_,84,_,_,_,_,_,_,_]},
-    {sec:"C",ch:"C", mel:[88,_,_,_,_,_,_,_,84,_,_,_,81,_,_,_],har:[84,_,_,_,_,_,_,_,79,_,_,_,76,_,_,_]},
-    {sec:"C",ch:"Am",mel:[86,_,_,_,_,_,83,_,81,_,_,_,84,_,_,_],har:[81,_,_,_,_,_,76,_,72,_,_,_,76,_,_,_]},
-    {sec:"C",ch:"D", mel:[86,_,_,_,83,_,_,_,86,_,_,_,_,_,83,_],har:[81,_,_,_,78,_,_,_,81,_,_,_,_,_,78,_],fill:1},
-  ]},
- {name:"♪ D3 ようせいリール", desc:"D風。速くてキラキラしたリール・約46秒", bpm:146, fiddle:true,
-  chd:{
-    Em:{bass:28,pad:[55,59,64],ost:[40,52,55,59,64]},
-    G:{bass:31,pad:[59,62,67],ost:[43,55,59,62,67]},
-    D:{bass:26,pad:[62,66,69],ost:[50,57,62,66,69]},
-    C:{bass:36,pad:[60,64,67],ost:[48,55,60,64,67]},
-    A:{bass:33,pad:[57,61,64],ost:[45,52,57,61,64]},
-  },
-  song:[
-    {sec:"in",ch:"Em",mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"G", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"Em",mel:[83,_,_,_,81,_,79,_,76,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"D", mel:[78,_,_,_,81,_,83,_,85,_,_,_,_,_,_,_],fill:1},
-    {sec:"A",ch:"Em",mel:[76,_,78,_,79,_,81,_,79,_,78,_,76,_,78,_]},
-    {sec:"A",ch:"G", mel:[79,_,81,_,83,_,81,_,79,_,76,_,79,_,_,_]},
-    {sec:"A",ch:"Em",mel:[76,_,78,_,79,_,81,_,83,_,81,_,79,_,78,_]},
-    {sec:"A",ch:"D", mel:[81,_,_,_,78,_,76,_,78,_,81,_,83,_,_,_]},
-    {sec:"A",ch:"Em",mel:[88,_,86,_,83,_,81,_,83,_,81,_,79,_,81,_]},
-    {sec:"A",ch:"C", mel:[84,_,83,_,81,_,79,_,81,_,79,_,76,_,_,_]},
-    {sec:"A",ch:"Em",mel:[79,_,81,_,83,_,86,_,83,_,81,_,79,_,81,_]},
-    {sec:"A",ch:"A", mel:[85,_,_,_,81,_,_,_,85,_,_,_,88,_,_,_],fill:1},
-    {sec:"B",ch:"Em",mel:[76,78,79,81,83,_,81,_,79,_,81,_,83,_,_,_]},
-    {sec:"B",ch:"G", mel:[83,81,79,81,83,_,86,_,83,_,81,_,79,_,_,_]},
-    {sec:"B",ch:"C", mel:[84,_,81,_,84,_,86,_,88,_,86,_,84,_,_,_]},
-    {sec:"B",ch:"Em",mel:[88,_,86,_,83,_,81,_,79,_,81,_,83,_,_,_]},
-    {sec:"B",ch:"G", mel:[79,81,83,_,86,_,83,_,81,_,79,_,81,_,_,_]},
-    {sec:"B",ch:"D", mel:[81,83,85,_,83,_,81,_,78,_,81,_,83,_,_,_]},
-    {sec:"B",ch:"Em",mel:[76,_,79,_,83,_,86,_,88,_,86,_,83,_,_,_]},
-    {sec:"B",ch:"A", mel:[85,_,81,_,76,_,81,_,85,_,_,_,88,_,_,_],fill:1},
-    {sec:"C",ch:"Em",crash:1,mel:[83,_,_,_,_,_,_,_,79,_,_,_,76,_,_,_],har:[79,_,_,_,_,_,_,_,76,_,_,_,71,_,_,_]},
-    {sec:"C",ch:"G", mel:[86,_,_,_,_,_,_,_,83,_,_,_,79,_,_,_],har:[83,_,_,_,_,_,_,_,79,_,_,_,74,_,_,_]},
-    {sec:"C",ch:"Em",mel:[88,_,_,_,_,_,83,_,81,_,_,_,83,_,_,_],har:[84,_,_,_,_,_,79,_,76,_,_,_,79,_,_,_]},
-    {sec:"C",ch:"D", mel:[86,_,_,_,_,_,_,_,83,_,_,_,85,_,_,_],har:[81,_,_,_,_,_,_,_,78,_,_,_,81,_,_,_]},
-    {sec:"C",ch:"Em",crash:1,mel:[83,_,_,_,86,_,_,_,88,_,_,_,_,_,_,_],har:[79,_,_,_,83,_,_,_,84,_,_,_,_,_,_,_]},
-    {sec:"C",ch:"C", mel:[88,_,_,_,_,_,_,_,86,_,_,_,84,_,_,_],har:[84,_,_,_,_,_,_,_,79,_,_,_,76,_,_,_]},
-    {sec:"C",ch:"G", mel:[86,_,_,_,_,_,83,_,79,_,_,_,83,_,_,_],har:[83,_,_,_,_,_,79,_,74,_,_,_,79,_,_,_]},
-    {sec:"C",ch:"A", mel:[85,_,_,_,81,_,_,_,88,_,_,_,_,_,85,_],har:[81,_,_,_,76,_,_,_,85,_,_,_,_,_,81,_],fill:1},
-  ]},
  /* H「しっそうケルト」：ユーザーが最終候補から選んだ曲。Dの世界観の
     まま速く（156 BPM）、16分音符の駆け上がりを多用して推進力を
     強めたバトル向きの1曲。イントロから旋律が走り出す。 */
- {name:"♪ H しっそうケルト", desc:"えらばれた曲！速くて推進力のあるケルト、バトル向き・約43秒", bpm:156, fiddle:true,
+ {name:"♪ しっそうケルト", desc:"速くて推進力のあるケルト、バトル向き・約43秒", bpm:156, fiddle:true,
   chd:{
     D:{bass:26,pad:[62,66,69],ost:[50,57,62,66,69]},
     G:{bass:31,pad:[59,62,67],ost:[43,55,59,62,67]},
@@ -636,18 +524,7 @@ const TRACKS=[
     {sec:"C",ch:"A", mel:[85,_,_,_,88,_,_,_,90,_,_,_,_,_,88,_],har:[81,_,_,_,85,_,_,_,86,_,_,_,_,_,85,_],fill:1},
   ]},
 ];
-let curTrack=3; /* 未選択時のデフォルトは、選ばれた H（インデックス3） */
-try{ const v=parseInt(localStorage.getItem("yhp_bgm_track")||"3",10); if(v>=0&&v<TRACKS.length)curTrack=v; }catch(e){}
-function renderTrackList(){ const el=document.getElementById("trackList"); if(!el)return;
-  el.innerHTML=TRACKS.map((t,i)=>'<button class="track-btn'+(i===curTrack?" sel":"")+(bgmOn&&i===curTrack?" playing":"")+'" data-track="'+i+'"><span class="t-play">'+(bgmOn&&i===curTrack?"⏸":"▶")+'</span><span class="t-name">'+t.name+'<small>'+t.desc+'</small></span><span class="t-check">✔</span></button>').join("");
-  el.querySelectorAll(".track-btn").forEach(b=>b.onclick=()=>selectTrack(parseInt(b.dataset.track,10))); }
-function selectTrack(i){ if(i===curTrack&&bgmOn){ setBGM(false); return; }
-  curTrack=i; try{ localStorage.setItem("yhp_bgm_track",String(i)); }catch(e){}
-  bgmOn=true;
-  document.getElementById("bgmBtn").textContent="🎵 おんがく ON";
-  document.getElementById("bgmBtn").classList.add("on");
-  document.getElementById("bgmBtn2").textContent="🎵 ON";
-  ac(); startBGM(); renderTrackList(); }
+const curTrack=0; /* BGMは H「しっそうケルト」固定。曲えらびは無い */
 function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
   const shifts=[0,2,-3,5,0,3,-2,5,0,2,-3], shift=shifts[(curStage-1)%shifts.length]||0;
   const isBoss=(curStage===3||curStage===8);
@@ -697,7 +574,7 @@ function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
     {sec:"C",ch:"Dm",mel:[86,_,_,_,_,_,81,_,77,_,_,_,81,_,_,_],har:[81,_,_,_,_,_,77,_,74,_,_,_,77,_,_,_]},
     {sec:"C",ch:"E", mel:[80,_,_,_,83,_,_,_,88,_,_,_,_,_,83,_],har:[76,_,_,_,80,_,_,_,83,_,_,_,_,_,80,_],fill:1},
   ];
-  /* 候補曲が選ばれていれば、その曲データとテンポに差し替える */
+  /* 固定曲 H「しっそうケルト」の曲データとテンポに差し替える */
   const TD=TRACKS[curTrack];
   if(TD&&TD.song){ CHD=TD.chd; SONG=TD.song; }
   const TOTAL=SONG.length*16, LOOP=4*16; /* ループ時はイントロを飛ばしてAメロへ */
@@ -755,8 +632,7 @@ function stopBGM(){ if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;} }
 function setBGM(on){ bgmOn=on; document.getElementById("bgmBtn").textContent="🎵 おんがく "+(on?"ON":"OFF");
   document.getElementById("bgmBtn").classList.toggle("on",on);
   document.getElementById("bgmBtn2").textContent="🎵 "+(on?"ON":"OFF");
-  if(on){ac();startBGM();} else stopBGM(); renderTrackList(); }
-renderTrackList();
+  if(on){ac();startBGM();} else stopBGM(); }
 document.getElementById("bgmBtn").onclick=()=>setBGM(!bgmOn);
 document.getElementById("bgmBtn2").onclick=()=>setBGM(!bgmOn);
 document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="🔔 おと "+(seOn?"ON":"OFF"); e.target.classList.toggle("on",seOn); if(seOn)ac(); };
@@ -804,7 +680,7 @@ function toggleParty(id){
 document.querySelectorAll(".player-btn").forEach(b=>b.onclick=()=>{ player=b.dataset.player; renderHome(); });
 
 /* ================= バトル ================= */
-const N=8, TYPES=["fire","water","forest","heal"];
+const N=7, TYPES=["fire","water","forest","heal"];
 /* オーブの紋様：パズドラ風に、濃い属性色の彫り込み紋様＋内側の
    明るいハイライトで凝った立体表現にする（白シルエットは廃止） */
 const ORB_ICON={ fire:'<svg viewBox="0 0 48 48"><path d="M24 4 C30 14 38 18 35 30 C33 37 28 40 24 40 C20 40 15 37 13 30 C10 18 18 14 24 4Z" fill="#c81e06"/><path d="M13 27 C15 29.5 16.5 30.5 16 33 C15.7 34.6 14.6 35.3 13.2 35.3 C11.8 35.3 10.7 34.5 10.5 33 C10.2 30.6 11.3 28.8 13 27Z" fill="#c81e06" opacity=".85"/><path d="M35 27 C37 29.5 38.5 30.5 38 33 C37.7 34.6 36.6 35.3 35.2 35.3 C33.8 35.3 32.7 34.5 32.5 33 C32.2 30.6 33.3 28.8 35 27Z" fill="#c81e06" opacity=".85"/><path d="M24 16 C27.5 21 30.5 23 29.3 28.6 C28.6 31.6 26.4 33 24 33 C21.6 33 19.4 31.6 18.7 28.6 C17.5 23 20.5 21 24 16Z" fill="#ff9a3c"/><path d="M24 25 C25.8 27.4 27 28.6 26.5 30.8 C26.2 32.2 25.2 32.8 24 32.8 C22.8 32.8 21.8 32.2 21.5 30.8 C21 28.6 22.2 27.4 24 25Z" fill="#ffe9a8"/></svg>',
@@ -836,6 +712,7 @@ function startBattle(st){
   B={ stage:st, enemy, enemyHp:st.hp, partyHp:PARTY_HP, cd:st.cd, board:newBoard(),
       charges:save().party.map(()=>0), acc:save().party.map(()=>0), accRaw:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false };
   $("comboLayer").innerHTML="";
+  $("bgLayer").innerHTML=BG_SCENES[STAGE_BG[st.n]||"temple"];
   $("home").classList.add("hidden"); $("battle").classList.remove("hidden");
   $("stageTitle").textContent="ステージ "+st.n;
   $("enemyArt").innerHTML=enemy.art();
@@ -900,7 +777,7 @@ function fitBoard(){
     const bw=$("board"), battle=$("battle");
     if(!bw||battle.classList.contains("hidden"))return;
     let others=0;
-    for(const el of battle.children){ if(!el.classList.contains("board-wrap")) others+=el.offsetHeight; }
+    for(const el of battle.children){ if(!el.classList.contains("board-wrap")&&el.id!=="bgLayer") others+=el.offsetHeight; }
     const availW=Math.min(window.innerWidth-16, 560);
     const availH=window.innerHeight - others - 18;
     const size=Math.max(180, Math.floor(Math.min(availW, availH)));
@@ -1057,19 +934,19 @@ function boomSE(attr){
     const o=c.createOscillator(), og=c.createGain();
     o.type="sine"; o.frequency.setValueAtTime(attr==="fire"?160:attr==="water"?120:140,t);
     o.frequency.exponentialRampToValueAtTime(38,t+.38);
-    og.gain.setValueAtTime(.72,t); og.gain.exponentialRampToValueAtTime(.001,t+.45);
+    og.gain.setValueAtTime(.98,t); og.gain.exponentialRampToValueAtTime(.001,t+.45);
     o.connect(og); og.connect(c.destination); o.start(t); o.stop(t+.5);
     const len=Math.floor(c.sampleRate*.42), buf=c.createBuffer(1,len,c.sampleRate), d=buf.getChannelData(0);
     for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,1.4);
     const src=c.createBufferSource(); src.buffer=buf;
     const f=c.createBiquadFilter(); f.type=attr==="water"?"bandpass":"lowpass"; f.frequency.value=attr==="fire"?900:attr==="water"?1400:1100; f.Q.value=.7;
-    const g=c.createGain(); g.gain.setValueAtTime(attr==="fire"?.62:.45,t); g.gain.exponentialRampToValueAtTime(.001,t+.42);
+    const g=c.createGain(); g.gain.setValueAtTime(attr==="fire"?.88:.65,t); g.gain.exponentialRampToValueAtTime(.001,t+.42);
     src.connect(f); f.connect(g); g.connect(c.destination); src.start(t);
     if(attr==="fire"){ /* 炎のゴォーという吹き上がり */
       const src2=c.createBufferSource(); src2.buffer=buf;
       const f2=c.createBiquadFilter(); f2.type="bandpass"; f2.Q.value=1.2;
       f2.frequency.setValueAtTime(400,t); f2.frequency.exponentialRampToValueAtTime(1800,t+.3);
-      const g2=c.createGain(); g2.gain.setValueAtTime(.3,t); g2.gain.exponentialRampToValueAtTime(.001,t+.5);
+      const g2=c.createGain(); g2.gain.setValueAtTime(.5,t); g2.gain.exponentialRampToValueAtTime(.001,t+.5);
       src2.connect(f2); f2.connect(g2); g2.connect(c.destination); src2.start(t+.03);
     }
   }catch(e){}
