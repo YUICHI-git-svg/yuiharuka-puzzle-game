@@ -6,13 +6,7 @@
 <meta name="color-scheme" content="dark" />
 <link rel="icon" href="data:," />
 <title>ゆいとはるかのパズルゲーム</title>
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#14122b">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="パズルゲーム">
-<link rel="apple-touch-icon" href="icon-192.png">
-
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#14122b"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="パズルゲーム"><link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root{
     color-scheme: dark;
@@ -321,7 +315,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.45</div>
+    <div class="ver-line">ver 1.0.46</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
@@ -329,7 +323,7 @@
 
     <div class="sec-title">限定ステージ</div>
     <div class="stages" id="extraGrid"></div>
-    <p class="hint">オーブの いろを かえる とくべつな なかまが いるよ。いつでも あそべるよ！<br>ステージ12には、オーブ全部を ひかりに かえる <b style="color:var(--light)">スーパーでんきドラゴン</b> が あらわれたよ！</p>
+    <p class="hint">オーブの いろを かえる とくべつな なかまが いるよ。いつでも あそべるよ！<br>ステージ12には、オーブ全部を ひかりに かえる <b style="color:var(--light)">スーパーでんきドラゴン</b> が あらわれたよ！ なかまにすると、<b style="color:var(--light)">ひかりの こうげきが 2ばい</b>に なるよ！</p>
 
     <div class="sec-title">⚡ チャレンジステージ ⚡</div>
     <div class="stages challenge" id="challengeGrid"></div>
@@ -459,8 +453,11 @@ const CHARS = [
     ひかりオーブは通常サタンのダンジョンでしか落ちないが、このスキルを
     使えば どのステージでも盤面を ひかりだらけにして、ひかり属性の
     仲間（スーパーでんきドラゴン自身とゼウス）の大コンボにつなげられる。
-    盤面全部を変える分、たまるまでのターンは長め（7）にした */
- {id:"dragon_light", name:"スーパーでんきドラゴン", attr:"light", atk:60, art:()=>imgArt("dragon-light.png"), passive:"コンボの いりょく +35%", skill:{name:"ぜんぶ ひかりへんげ", desc:"オーブ 全部 → きいろ（ひかり）に かえる", turns:7, type:"changeAll", to:"light"}},
+    盤面全部を変える分、たまるまでのターンは長め（7）にした。
+    いつもスキルには「ひかりの こうげき 2ばい」も持つ（追加リクエスト）：
+    パーティにいる間、ひかり属性の攻撃が全部2倍になる（lightBoostOn で
+    判定し、オーブ攻撃の蓄積とスキルダメージの両方に適用する） */
+ {id:"dragon_light", name:"スーパーでんきドラゴン", attr:"light", atk:60, art:()=>imgArt("dragon-light.png"), passive:"コンボの いりょく +35%・ひかりの こうげき 2ばい", skill:{name:"ぜんぶ ひかりへんげ", desc:"オーブ 全部 → きいろ（ひかり）に かえる", turns:7, type:"changeAll", to:"light"}},
  /* ゼウス：チャレンジステージの神。ひかり属性は三すくみの外で、
     対抗の「やみ」属性にだけ強い（やみも ひかりに強い）。
     ひかりオーブはサタンのダンジョンでだけ落ちるので、そこで
@@ -1272,7 +1269,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.45";
+const APP_VER="1.0.46";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1530,8 +1527,14 @@ function tapOrb(i){
    前回よりさらに引き上げ：1コンボ×1.0 → 3コンボ×2.64 → 5コンボ×5.56
    → 8コンボ×12.34 → 10コンボ×18.46 */
 function comboMult(n){ const k=Math.max(0,n-1); return 1 + 0.50*k + 0.16*k*k; }
+/* ひかり攻撃2倍パッシブ（スーパーでんきドラゴンの いつもスキル）：
+   パーティに「ひかりの こうげき 2ばい」を持つ仲間がいると、
+   ひかり属性の攻撃（オーブ攻撃・スキルダメージ）が全部2倍になる。
+   かいふくオーブ+50%パッシブと同じ「パーティ全員に効く」方式 */
+function lightBoostOn(){ return save().party.some(id=>{ const c=charById(id); return c && c.passive.includes("ひかりの こうげき 2ばい"); }); }
 async function resolveBoard(){
   let combo=0, guard=0;
+  const lBoost=lightBoostOn(); // ひかりの こうげき 2ばい が有効か（このターン中は不変）
   const tags=[]; // コンボ表示はコンボが終わるまで残す
   /* 演出全体の時間予算：開始から4.5秒を超えたら残りの待ちを全て畳んで
      攻撃→結果画面へ進む。古いiPhoneでは1フレームの描画が重く、
@@ -1557,7 +1560,7 @@ async function resolveBoard(){
         save().party.forEach((id,idx)=>{
           const c=charById(id); if(c.attr!==g.type)return;
           const pb=c.passive.includes("+35")?1.35:c.passive.includes("+25")?1.25:1.1;
-          const raw=c.atk * g.cells.length * 0.34 * pb;
+          const raw=c.atk * g.cells.length * 0.34 * pb * (c.attr==="light"&&lBoost?2:1);
           B.accRaw[idx]+=raw;
           B.acc[idx]+=raw * comboMult(combo);
         });
@@ -1878,7 +1881,7 @@ function useSkill(i){
        属性相性を適用し、自分の属性のエフェクトとダメージ表示を出す。
        以前は属性なしの固定ダメージで、攻撃の属性が見えなかった */
     const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1;
-    const dmg=Math.round(sk.power*m);
+    const dmg=Math.round(sk.power*m*(c.attr==="light"&&lightBoostOn()?2:1));
     B.enemyHp-=dmg;
     attackEffect(c.attr);
     showDmgPop(dmg);
@@ -1997,8 +2000,6 @@ function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 renderHome();
 </script>
-<script>
-if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch(e) {} }
-</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}</script>
 </body>
 </html>
