@@ -251,7 +251,7 @@
   .overlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:rgba(8,6,24,.72);display:flex;align-items:center;justify-content:center;z-index:40;padding:1rem;}
   /* フォールバック結果パネル：オーバーレイ（position:fixed）が実機で
      描画できなかった場合に、描画できることが実証済みの #battle 内
-     （調査ログバーと同じ absolute 配置）へ結果を出し直すための受け皿 */
+     （absolute 配置）へ結果を出し直すための受け皿 */
   #resultPanel{position:absolute;top:0;left:0;right:0;bottom:0;z-index:30;background:rgba(8,6,24,.82);
     display:flex;align-items:center;justify-content:center;padding:1rem;}
   .sheet{background:var(--panel2);border:1px solid var(--line);border-radius:20px;max-width:420px;width:100%;
@@ -265,22 +265,8 @@
   .btn.primary{background:var(--gold);color:#3a2c00;}
   .btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);}
   .btn:disabled{opacity:.4;}
-  /* ---------- 調査版（v30） ---------- */
-  /* 端末で新しい版が動いているか目視確認するためのバージョン表記 */
-  .ver-badge{display:block;width:fit-content;margin:.1rem auto .5rem;padding:.32rem 1rem;
-    background:var(--gold);color:#3a2c00;border-radius:999px;font-size:1rem;font-weight:900;
-    letter-spacing:.06em;box-shadow:0 2px 10px rgba(255,211,77,.45);}
-  .diag-box{background:#0d0b22;border:1px solid var(--line);border-radius:10px;padding:.5rem .6rem;
-    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.68rem;line-height:1.65;color:#a9f0b6;
-    white-space:pre-wrap;word-break:break-all;max-height:190px;overflow:auto;}
-  /* バトル画面下部の調査ログ：固まった瞬間に最後のチェックポイントと
-     ハートビート（タイマーが生きているか）が見えるようにする */
-  #battle #diagBar{position:absolute;left:0;right:0;bottom:0;z-index:15;pointer-events:none;
-    background:rgba(5,4,18,.88);border-top:1px solid var(--line);
-    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;line-height:1.55;
-    color:#a9f0b6;padding:3px 7px calc(3px + env(safe-area-inset-bottom));}
-  #battle #diagBar .diag-head{color:var(--gold);font-weight:700;}
-  #battle #diagBar #diagBeat{color:#8fd0ff;}
+  /* バージョン表記：タイトル下に小さく常時表示（公開のたびに末尾を+1） */
+  .ver-line{text-align:center;font-size:.78rem;color:#a49fd0;margin:.05rem 0 .4rem;letter-spacing:.08em;}
   @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
 </style>
 </head>
@@ -295,7 +281,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-badge">v30 調査版</div>
+    <div class="ver-line">ver 1.0.32</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
@@ -310,10 +296,7 @@
     <p class="msg" id="homeMsg"></p>
 
     <button class="btn ghost" id="zukanBtn" style="margin-top:1rem;">📖 ずかんを みる</button>
-
-    <div class="sec-title">調査ログ（v30 調査版）</div>
-    <div class="diag-box" id="diagHome">（まだ記録なし）</div>
-    <p class="hint">バトルで固まったら、画面下の調査ログの「最後の行」と「⏱の秒数」を教えてね。</p>
+    <button class="btn ghost" id="resetBtn" style="margin-top:.6rem;">🔄 データを さいしょから はじめる</button>
   </div>
 </div>
 
@@ -358,7 +341,6 @@
     </div>
   </div>
   <div class="board-wrap"><div id="board"></div><div id="comboLayer"></div></div>
-  <div id="diagBar"><div class="diag-head">v30 調査版 ・ 調査ログ</div><div id="diagBeat">⏱ -</div><div id="diagLines"></div></div>
   <div id="resultPanel" class="hidden"><div class="sheet" id="sheet2"></div></div>
 </div>
 
@@ -474,6 +456,18 @@ const STAGE_BG = {1:"ice",2:"volcano",3:"wasteland",4:"sea",5:"volcano",6:"templ
 function newSave(){ return { owned:["slime_fire","slime_water","slime_forest"], party:["slime_fire","slime_water","slime_forest"], cleared:[] }; }
 const singleSave = newSave();
 const save = () => singleSave;
+/* ================= セーブ初期化（手動ボタンのみ） =================
+   初期化は、その端末でホーム画面の「データを初期化」ボタンを押した
+   ときだけ行う。新しい版が読み込まれても、記録を自動で消すことは
+   一切しない（他の端末の記録に影響しないようにするため）。
+   resetSave() は手動ボタン専用：メモリ内の記録を初期状態に戻し、
+   公開PWA版で使われる旧セーブキーもその端末分だけ消す */
+const LEGACY_SAVE_KEYS=["yuiharuka-puzzle-save-v1","yuiharuka-puzzle-save-v2","yuiharuka-puzzle-save"];
+function resetSave(){
+  const f=newSave();
+  singleSave.owned=f.owned; singleSave.party=f.party; singleSave.cleared=f.cleared;
+  try{ LEGACY_SAVE_KEYS.forEach(k=>localStorage.removeItem(k)); }catch(e){}
+}
 
 /* ================= おと・おんがく ================= */
 let AC=null, seOn=true, bgmOn=false, bgmTimer=null, bgmStep=0, curStage=1;
@@ -759,44 +753,9 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 
 /* ================= ホーム ================= */
 const $=id=>document.getElementById(id);
-/* ================= 調査版（v30）：診断ログ =================
-   iPhone 7 実機で「クリア！」が出ずに固まる件の原因を確定させるため、
-   勝利フローの各段階にチェックポイントを置き、バトル画面下部と
-   ホームの調査ログ欄に常時表示する。固まった瞬間に
-   ・最後に通過したチェックポイント（＝どこで止まったか）
-   ・⏱ハートビートの秒数が進んでいるか（＝タイマー自体が生きているか）
-   がスクリーンショットで分かるようにするのが目的。 */
-const APP_VER="v30 調査版";
-const DIAG_LOG=[]; let diagBattleT0=0;
-function diagEsc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function diag(msg){
-  const t=diagBattleT0?((Date.now()-diagBattleT0)/1000).toFixed(1):"-";
-  DIAG_LOG.push("["+t+"s] "+msg);
-  if(DIAG_LOG.length>80)DIAG_LOG.shift();
-  renderDiag();
-}
-function renderDiag(){
-  const lines=$("diagLines"); if(lines) lines.innerHTML=DIAG_LOG.slice(-4).map(diagEsc).join("<br>");
-  const home=$("diagHome"); if(home) home.innerHTML=DIAG_LOG.length?DIAG_LOG.slice(-40).map(diagEsc).join("<br>"):"（まだ記録なし）";
-}
-window.addEventListener("error",e=>{ try{ diag("⚠ エラー: "+(e.message||"不明")+(e.lineno?" ("+e.lineno+"行)":"")); }catch(_){} });
-window.addEventListener("unhandledrejection",e=>{ try{ const r=e.reason; diag("⚠ 未処理のPromiseエラー: "+((r&&r.message)||r||"不明")); }catch(_){} });
-/* ハートビート：0.5秒ごとに状態を書き直すだけの軽い処理。
-   これが止まって見えるならタイマー／描画そのものが死んでいる、
-   進んでいるのにフローが止まっているならロジック側の詰まり、
-   と切り分けられる */
-let beatTimer=null;
-function startBeat(){
-  stopBeat(); diagBattleT0=Date.now();
-  beatTimer=setInterval(()=>{
-    const el=$("diagBeat"); if(!el)return;
-    const s=((Date.now()-diagBattleT0)/1000).toFixed(0);
-    el.textContent="⏱ "+s+"秒 ・ busy="+(B?B.busy:"-")+" ・ over="+(B?B.over:"-")+
-      " ・ 敵HP="+(B?Math.max(0,Math.ceil(B.enemyHp)):"-")+
-      " ・ クリア表示="+(resultVisible()?"済み":"まだ");
-  },500);
-}
-function stopBeat(){ if(beatTimer){clearInterval(beatTimer);beatTimer=null;} }
+/* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
+   （1.0.31 → 1.0.32 → ...） */
+const APP_VER="1.0.32";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる */
 function stageUnlocked(st){ if(st.extra) return true; if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
 function renderHome(){
@@ -847,6 +806,18 @@ function openZukan(){ renderZukan(); $("home").classList.add("hidden"); $("zukan
 function closeZukan(){ $("zukan").classList.add("hidden"); $("home").classList.remove("hidden"); window.scrollTo(0,0); }
 $("zukanBtn").onclick=openZukan;
 $("zukanBack").onclick=closeZukan;
+/* データ初期化：確認ダイアログ（ページ内モーダル）を出してから消す */
+$("resetBtn").onclick=()=>{
+  showSheet('<h2>データを さいしょから？</h2><p>なかま・クリア記録が 全部 消えて、<br>最初の 3にんだけの 状態に もどるよ。</p>'+
+   '<button class="btn primary" onclick="doResetSave()">初期化する</button>'+
+   '<button class="btn ghost" onclick="closeSheet()">やめる</button>');
+};
+function doResetSave(){
+  resetSave();
+  closeSheet();
+  renderHome();
+  $("homeMsg").textContent="データを 初期化したよ。さいしょから あそべるよ！";
+}
 function toggleParty(id){
   const s=save(), i=s.party.indexOf(id);
   if(i>=0){ if(s.party.length<=1){ $("homeMsg").textContent="パーティは 1にんは 必要だよ"; return; } s.party.splice(i,1); }
@@ -901,8 +872,6 @@ function startBattle(st){
   buildPartyRow(); renderBattle(); fitBoard();
   setTimeout(fitBoard, 80);
   if(bgmOn)startBGM();
-  startBeat();
-  diag("▶ バトル開始 ステージ"+st.n+"（敵HP "+st.hp+"）");
 }
 /* バトル画面に最初から出すスキルの簡易表記（例：HP60 かいふく）。
    詳しい説明はホームの編成カードと図鑑に残してある */
@@ -974,7 +943,7 @@ function fitBoard(){
     const bw=$("board"), battle=$("battle");
     if(!bw||battle.classList.contains("hidden"))return;
     let others=0;
-    for(const el of battle.children){ if(!el.classList.contains("board-wrap")&&el.id!=="bgLayer"&&el.id!=="diagBar") others+=el.offsetHeight; }
+    for(const el of battle.children){ if(!el.classList.contains("board-wrap")&&el.id!=="bgLayer") others+=el.offsetHeight; }
     const availW=Math.min(window.innerWidth-6, 620);
     const availH=window.innerHeight - others - 6;
     const size=Math.max(180, Math.floor(Math.min(availW, availH)));
@@ -995,23 +964,20 @@ function tapOrb(i){
   if(!findGroups(B.board).length){ [B.board[a],B.board[i]]=[B.board[i],B.board[a]]; renderBoard();
     const bd=$("board"); bd.classList.remove("shake"); void bd.offsetWidth; bd.classList.add("shake"); return; }
   swapSE(); B.busy=true; renderBoard();
-  diag("オーブ入れかえ → コンボ解決スタート");
   resolveBoard().then(()=>{ if(!B||B.over)return; endTurn(); })
     /* 途中で何かあっても busy が残って画面が固まらないようにする */
-    .catch((err)=>{ diag("⚠ コンボ解決でエラー: "+((err&&err.message)||err||"不明")+" → 復帰処理"); if(B&&!B.over){ B.busy=false; if(B.enemyHp<=0)winBattle(); else renderBattle(); } });
+    .catch(()=>{ if(B&&!B.over){ B.busy=false; if(B.enemyHp<=0)winBattle(); else renderBattle(); } });
   /* ウォッチドッグ：演出の途中で何があっても15秒後には必ず復帰させる。
      敵を倒しているのに結果画面が出ていない場合は出し直し、
      そうでなければ操作を受け付ける状態に戻す */
   const wdB=B;
   setTimeout(()=>{
     if(!wdB||B!==wdB)return;
-    diag("⏰ ウォッチドッグ作動（15秒）busy="+B.busy+" over="+B.over+" 敵HP="+Math.ceil(B.enemyHp)+" クリア表示="+(resultVisible()?"済み":"まだ"));
-    /* v29の反省：クラスが外れているかではなく「実際に画面に見えているか」
-       （計算済みスタイル＋矩形）で判定する。クラスだけ見ていたため、
-       画面外に配置されたオーバーレイを「表示済み」と誤判定し、
-       ウォッチドッグが何もしなかった */
+    /* クラスが外れているかではなく「実際に画面に見えているか」
+       （計算済みスタイル＋矩形）で判定する。クラスだけ見ると、
+       画面外に配置されたオーバーレイを「表示済み」と誤判定する */
     if(B.enemyHp<=0 && !resultVisible()){
-      if(lastSheetHTML){ diag("⏰ 結果が見えていない → 出し直し"); showSheet(lastSheetHTML); }
+      if(lastSheetHTML){ showSheet(lastSheetHTML); }
       else { B.over=false; winBattle(); }
     }
     else if(!B.over && B.busy){ B.busy=false; renderBattle(); }
@@ -1065,7 +1031,6 @@ async function resolveBoard(){
   }
   // コンボ終了：コンボ表示が1から順にシュンシュンと消えて、
   // そのたびに攻撃値がコンボ倍率ぶんバウンドしながら増えていく
-  diag("コンボ連鎖おわり "+combo+"コンボ（予算超過="+fast()+"）→ カウントアップへ");
   const totalBonus=B.acc.map((v,i)=>v-B.accRaw[i]);
   if(tags.length){
     if(fast()){
@@ -1104,7 +1069,6 @@ async function resolveBoard(){
       if(j<attackers.length-1) await wait(fast()?0:280);
     }
     B.enemyHp-=dmg;
-    diag("攻撃！ ダメージ "+Math.round(dmg)+" → 敵HP "+Math.max(0,Math.ceil(B.enemyHp)));
     showDmgPop(dmg);
     renderBattle();
     /* 倒したときは結果画面までを短くして、固まった印象を与えない */
@@ -1112,8 +1076,7 @@ async function resolveBoard(){
     B.acc=B.acc.map(()=>0); B.accRaw=B.accRaw.map(()=>0); B.accDisp=B.accDisp.map(()=>0); renderBattle();
     await wait(200);
   }
-  if(B.enemyHp<=0){ diag("敵HPが0 → クリア処理へ"); winBattle(); }
-  else diag("コンボ解決おわり（敵HP "+Math.ceil(B.enemyHp)+"）");
+  if(B.enemyHp<=0){ winBattle(); }
 }
 function showComboTag(g, combo){
   const layer=$("comboLayer"); if(!layer)return null;
@@ -1355,7 +1318,6 @@ function useSkill(i){
 }
 function winBattle(){
   if(!B||B.over)return; B.over=true; B.busy=false;
-  diag("winBattle 開始 → クリア表示を出す");
   /* 結果ダイアログを「必ず」出すための構造：
      以前は B.over=true にした後、演出タイマーの停止→エフェクト除去→
      勝利音→セーブ→ダイアログ表示の順で、途中で何か止まると
@@ -1372,7 +1334,7 @@ function winBattle(){
     $("comboLayer").innerHTML="";
     /* 残っている攻撃エフェクトもその場で消し、結果画面の表示を軽くする */
     document.querySelectorAll(".fx,.dmg-pop,.efx-proj").forEach(el=>el.remove());
-  }catch(e){ diag("⚠ winBattle後片付けでエラー: "+((e&&e.message)||e)); }
+  }catch(e){}
   const s=save(), st=B.stage;
   if(!s.cleared.includes(st.n))s.cleared.push(st.n);
   const ec=charById(st.enemy);
@@ -1383,24 +1345,21 @@ function winBattle(){
   }
   showSheet('<h2>🎉 クリア！</h2><p>ステージ '+st.n+' の '+ec.name+' を たおしたよ！</p>'+recruitMsg+
    '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
-  diag("✅ クリア！を表示した");
   try{ winSE(); }catch(e){}
 }
 function loseBattle(){
   if(!B||B.over)return; B.over=true; B.busy=false;
-  diag("まけ表示を出した");
   showSheet('<h2>💦 まけちゃった…</h2><p>パーティを つよくして、もう一度 チャレンジしよう！<br>なかまを あつめると つよくなれるよ。</p><button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
 }
-/* ================= 結果表示（v30で構造から作り直し） =================
-   v29調査版の実機ログで確定した事実：winBattle は完了し、overlay の
-   hidden クラスも外れていた（＝JS判定では「表示済み」）のに、実機の
-   画面には結果ダイアログが描画されていなかった。原因は .overlay の
-   配置指定 inset:0 が古いSafariで無効で、top/left等が auto のまま
-   fixed 配置され、オーバーレイが画面外（バトル画面の下）に置かれて
-   いたこと。対策は3段構え：
+/* ================= 結果表示 =================
+   実機で確定した事実：winBattle は完了し、overlay の hidden クラスも
+   外れていた（＝JS判定では「表示済み」）のに、画面には結果ダイアログが
+   描画されていなかった。原因は .overlay の配置指定 inset:0 が古い
+   Safariで無効で、top/left等が auto のまま fixed 配置され、オーバー
+   レイが画面外（バトル画面の下）に置かれていたこと。対策は3段構え：
    1) CSS・インラインの両方で top/left/right/bottom を個別に明記する
-   2) 表示後に「実際に見えているか」を計算済みスタイルと矩形で実測し、
-      結果を調査ログに残す（クラス判定は二度と信用しない）
+   2) 表示後に「実際に見えているか」を計算済みスタイルと矩形で実測する
+      （クラス判定だけでは信用しない）
    3) 実測で見えていなければ、描画できることが実証済みの #battle 内
       パネル（#resultPanel）へ同じ内容を出し直す */
 let lastSheetHTML="", sheetWanted=false, sheetVerifyTimer=null;
@@ -1433,14 +1392,8 @@ function showSheet(html){
 }
 function verifySheet(){
   if(!sheetWanted)return;
-  let info="";
-  try{
-    const ov=$("overlay"), cs=getComputedStyle(ov), r=ov.getBoundingClientRect(), sr=$("sheet").getBoundingClientRect();
-    info="display="+cs.display+" ov="+Math.round(r.left)+","+Math.round(r.top)+" "+Math.round(r.width)+"x"+Math.round(r.height)+
-      " sheet="+Math.round(sr.width)+"x"+Math.round(sr.height)+"@top"+Math.round(sr.top)+" 画面"+window.innerWidth+"x"+window.innerHeight;
-  }catch(e){ info="実測エラー: "+((e&&e.message)||e); }
-  if(resultVisible()){ diag("🖥 表示を実測で確認OK "+info); hideResultPanel(); }
-  else{ diag("🖥 表示が見えない → バトル内パネルで出し直し "+info); showResultPanel(); }
+  if(resultVisible()){ hideResultPanel(); }
+  else{ showResultPanel(); }
 }
 function showResultPanel(){
   const rp=$("resultPanel"); if(!rp)return;
@@ -1458,21 +1411,20 @@ function closeSheet(){
   const ov=$("overlay"); ov.classList.add("hidden"); ov.style.display="";
   hideResultPanel();
 }
-function backHome(){ stopBeat(); diag("ホームへもどった"); closeSheet(); B=null; $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); renderHome(); renderDiag(); }
+function backHome(){ closeSheet(); B=null; $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); renderHome(); }
 $("quitBtn").onclick=backHome;
 $("overlay").addEventListener("click",e=>{ if(e.target===$("overlay"))closeSheet(); });
 function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 renderHome();
-diag("起動 "+APP_VER);
-renderDiag();
 </script>
 <script>
 if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch(e) {} }
 try {
+  var saveObj = (typeof save === 'function') ? save() : save;
   var raw = localStorage.getItem('yuiharuka-puzzle-save-v2');
-  if (raw) { var p = JSON.parse(raw); if (p) { for (var k in p) { if (Object.prototype.hasOwnProperty.call(p, k)) save[k] = p[k]; } } }
-  var persist = function(){ try { localStorage.setItem('yuiharuka-puzzle-save-v2', JSON.stringify(save)); } catch(e) {} };
+  if (raw) { var p = JSON.parse(raw); if (p) { for (var k in p) { if (Object.prototype.hasOwnProperty.call(p, k)) saveObj[k] = p[k]; } } }
+  var persist = function(){ try { localStorage.setItem('yuiharuka-puzzle-save-v2', JSON.stringify(saveObj)); } catch(e) {} };
   persist();
   setInterval(persist, 1000);
   document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') persist(); });
