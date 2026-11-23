@@ -311,11 +311,11 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.34</div>
+    <div class="ver-line">ver 1.0.35</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
-    <p class="hint">ぞくせいの さんすくみ：<b style="color:var(--fire)">ひ</b> は <b style="color:var(--forest)">もり</b>に、<b style="color:var(--forest)">もり</b> は <b style="color:var(--water)">みず</b>に、<b style="color:var(--water)">みず</b> は <b style="color:var(--fire)">ひ</b>に つよいよ。<br><b style="color:var(--light)">ひかり</b> と <b style="color:var(--dark)">やみ</b> は おたがいに つよいよ（ひかり↔やみ）。<br>ステージごとに <b>おちるオーブ</b> が 決まっているよ：ボタンの 色の丸が そのステージで おちるオーブ。<b style="color:var(--light)">きいろ＝ひかり</b>、<b style="color:var(--dark)">むらさき＝やみ</b>。ひかり・やみの キャラは、そのオーブが おちるステージで オーブ攻撃できるよ！</p>
+    <p class="hint">ぞくせいの さんすくみ：<b style="color:var(--fire)">ひ</b> は <b style="color:var(--forest)">もり</b>に、<b style="color:var(--forest)">もり</b> は <b style="color:var(--water)">みず</b>に、<b style="color:var(--water)">みず</b> は <b style="color:var(--fire)">ひ</b>に つよいよ。<br><b style="color:var(--light)">ひかり</b> と <b style="color:var(--dark)">やみ</b> は おたがいに つよいよ（ひかり↔やみ）。<br>ステージごとに <b>おちるオーブ</b> が 決まっているよ：ボタンの 色の丸が そのステージで おちるオーブ。<b style="color:var(--light)">きいろ＝ひかり</b> は <b>サタンのダンジョンでだけ</b> おちるよ。ゼウスは そこで オーブ攻撃できるよ！ <b>やみオーブは どこにも おちない</b>から、サタンは スキルで こうげきするよ。</p>
 
     <div class="sec-title">限定ステージ</div>
     <div class="stages" id="extraGrid"></div>
@@ -445,13 +445,13 @@ const CHARS = [
  {id:"dragon_change_fire", name:"ルビードラゴン", attr:"fire", atk:40, art:()=>imgArt("dragon-fire.png","hue-rotate(14deg) saturate(1.3)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・ほのお", desc:"あおオーブ 全部 → あか に かえる", turns:5, type:"change", from:"water", to:"fire"}},
  /* ゼウス：チャレンジステージの神。ひかり属性は三すくみの外で、
     対抗の「やみ」属性にだけ強い（やみも ひかりに強い）。
-    ひかりオーブが落ちるステージでは オーブ攻撃もでき、
-    落ちないステージではスキル「てんくうの らいめい」が主力になる */
+    ひかりオーブはサタンのダンジョンでだけ落ちるので、そこで
+    オーブ攻撃でき、それ以外ではスキル「てんくうの らいめい」が主力 */
  {id:"zeus", name:"ゼウス", attr:"light", atk:60, art:()=>imgArt("zeus.png"), passive:"コンボの いりょく +35%", skill:{name:"てんくうの らいめい", desc:"ひかりの ダメージ 800", turns:6, type:"dmg", power:800}},
  /* サタン：ゼウスの対抗となる やみ属性の魔王。第1章の最終ボス。
     ひかりに弱く・ひかりに強い（相互×1.6）ので、仲間にしたゼウスの
-    ひかり攻撃が勝負の鍵になる。仲間時は やみオーブが落ちる
-    ステージでオーブ攻撃でき、スキル「ダークノヴァ」が主力 */
+    ひかり攻撃が勝負の鍵になる。やみオーブは全ステージで落ちない
+    ため、仲間時はスキル「ダークノヴァ」が主力になる */
  {id:"satan", name:"サタン", attr:"dark", atk:66, art:()=>imgArt("satan.png"), passive:"コンボの いりょく +35%", skill:{name:"ダークノヴァ", desc:"やみの ダメージ 900", turns:6, type:"dmg", power:900}},
 ];
 function imgArt(src, filter){ return '<img src="'+src+'" alt=""'+(filter?' style="filter:'+filter+'"':"")+">"; }
@@ -478,27 +478,32 @@ function starHTML(c){ let s='<span class="stars">'; const slots=Math.max(5,c.sta
    1つ追加される）。新しい属性（ひかり／やみ等）のキャラは、
    自分の属性オーブが orbs に入っているステージでのみオーブ攻撃
    できる。キャラ追加時はキャラ定義と、この orbs 設定だけで済む
-   汎用構造にしてある（盤面生成・落下補充・表示は全てここを参照）。 */
+   汎用構造にしてある（盤面生成・落下補充・表示は全てここを参照）。
+   ※ステージ1〜12（通常＋限定＋ゼウス戦）は基本4種（ひ・みず・
+   もり・かいふく）のみ。ひかりオーブはサタンのダンジョン（13）
+   だけに落ち、やみオーブは全ステージで一切落ちない（ユーザーの
+   指定による）。サタンの属性・スキルは やみのままだが、オーブと
+   しては出現しない。 */
 const ORB_BASE = ["fire","water","forest","heal"];
 const STAGES = [
  {n:1, enemy:"fairy_star", hp:1840, atk:38, cd:3, recruit:.4, orbs:[...ORB_BASE]},
  {n:2, enemy:"dragon_fire", hp:2560, atk:50, cd:3, recruit:.4, orbs:[...ORB_BASE]},
- {n:3, enemy:"dragon_forest", hp:3680, atk:66, cd:2, recruit:.4, boss:true, orbs:[...ORB_BASE,"light"]},
- {n:4, enemy:"dragon_water", hp:4320, atk:74, cd:3, recruit:.4, orbs:[...ORB_BASE,"dark"]},
- {n:5, enemy:"phoenix", hp:5120, atk:86, cd:3, recruit:.4, orbs:[...ORB_BASE,"light"]},
- {n:6, enemy:"fairy_flower", hp:6080, atk:100, cd:2, recruit:.4, orbs:[...ORB_BASE,"light"], bonus:"light"},
- {n:7, enemy:"dragon_sea", hp:7200, atk:112, cd:3, recruit:.4, orbs:[...ORB_BASE,"dark"]},
- {n:8, enemy:"phoenix", hp:8800, atk:130, cd:2, recruit:.4, boss:true, orbs:[...ORB_BASE,"light","dark"]},
- {n:9, enemy:"dragon_change_forest", hp:3040, atk:56, cd:3, recruit:.4, extra:true, orbs:[...ORB_BASE,"light"], bonus:"light"},
- {n:10, enemy:"fairy_change_water", hp:3360, atk:60, cd:3, recruit:.4, extra:true, orbs:[...ORB_BASE,"dark"]},
- {n:11, enemy:"dragon_change_fire", hp:3680, atk:64, cd:3, recruit:.4, extra:true, orbs:[...ORB_BASE,"dark"], bonus:"dark"},
+ {n:3, enemy:"dragon_forest", hp:3680, atk:66, cd:2, recruit:.4, boss:true, orbs:[...ORB_BASE]},
+ {n:4, enemy:"dragon_water", hp:4320, atk:74, cd:3, recruit:.4, orbs:[...ORB_BASE]},
+ {n:5, enemy:"phoenix", hp:5120, atk:86, cd:3, recruit:.4, orbs:[...ORB_BASE]},
+ {n:6, enemy:"fairy_flower", hp:6080, atk:100, cd:2, recruit:.4, orbs:[...ORB_BASE]},
+ {n:7, enemy:"dragon_sea", hp:7200, atk:112, cd:3, recruit:.4, orbs:[...ORB_BASE]},
+ {n:8, enemy:"phoenix", hp:8800, atk:130, cd:2, recruit:.4, boss:true, orbs:[...ORB_BASE]},
+ {n:9, enemy:"dragon_change_forest", hp:3040, atk:56, cd:3, recruit:.4, extra:true, orbs:[...ORB_BASE]},
+ {n:10, enemy:"fairy_change_water", hp:3360, atk:60, cd:3, recruit:.4, extra:true, orbs:[...ORB_BASE]},
+ {n:11, enemy:"dragon_change_fire", hp:3680, atk:64, cd:3, recruit:.4, extra:true, orbs:[...ORB_BASE]},
  /* チャレンジ：ゼウス。最終ボス（ステージ8：HP8800/攻130/2ターン）の
     約2倍のHP 18000、攻撃140（パーティHP150なので一撃で残り10まで
     追い込まれる）を3ターンごとに放つ。フル編成＋回復を回せば
     いい勝負になる最終試練。撃破で必ず仲間になる（recruit:1）。
-    ここは全6種が落ち、ひかりが多め：仲間にしたゼウスが再戦で
-    オーブ攻撃でき、将来のやみ属性（対抗の悪魔）も戦える舞台 */
- {n:12, enemy:"zeus", hp:18000, atk:140, cd:3, recruit:1, boss:true, challenge:true, orbs:[...ORB_BASE,"light","dark"], bonus:"light"},
+    ここも基本4種のみ（ひかり／やみオーブは落ちない）。仲間にした
+    ゼウスが ひかりオーブで攻撃できるのはサタンのダンジョンだけ */
+ {n:12, enemy:"zeus", hp:18000, atk:140, cd:3, recruit:1, boss:true, challenge:true, orbs:[...ORB_BASE]},
  /* サタンのダンジョン：第1章の最終決戦。解放条件は「ゼウスを仲間に
     していること」（stageUnlocked で判定）。通常オーブ＋ひかりオーブが
     多めに落ちるので、ゼウスがオーブ攻撃でき、しかも ひかりは やみに
@@ -842,7 +847,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.34";
+const APP_VER="1.0.35";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1468,7 +1473,7 @@ function winBattle(){
   if(st.satan){
     /* 第1章の最終ボス撃破専用ダイアログ：サタンは recruit:1 で必ず仲間になる */
     showSheet('<h2>🏆 第1章 ゲームクリア！</h2><p>魔王サタンを たおしたよ！<br>ゆいと はるかの 大ぼうけん 第1章、クリア！</p>'+recruitMsg+
-     '<p class="sub">サタンは やみオーブが おちるステージで オーブ攻撃できるよ。<br>あつめた なかまたちと、また あそんでね！</p>'+
+     '<p class="sub">サタンは スキル「ダークノヴァ」で つよく こうげきできるよ。<br>あつめた なかまたちと、また あそんでね！</p>'+
      '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
   } else {
     showSheet('<h2>🎉 クリア！</h2><p>ステージ '+st.n+' の '+ec.name+' を たおしたよ！</p>'+recruitMsg+
