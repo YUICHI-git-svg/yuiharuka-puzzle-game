@@ -86,26 +86,29 @@
     font-size:1.05rem;padding:.65rem .05rem .55rem;box-shadow:0 0 14px rgba(157,107,255,.5);}
   .stage-btn.score small{font-size:.66rem;}
   .stage-btn.score .stage-thumb{height:58px;margin-top:-.65rem;}
-  #battle.score .enemy-stage{height:23vh;height:23dvh;max-height:208px;}
-  #battle.score #enemyArt img{max-height:23vh;max-height:23dvh;max-width:80vw;}
-  /* ルシファーのオーラ：スコアが伸びるほど大きく・強く光る（見た目変化）。
-     #enemyArt は overflow:hidden なので、オーラは兄弟要素として
-     敵ステージ側に置き、はみ出して見せる */
-  #luciAura{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);width:150px;height:150px;border-radius:50%;
-    background:radial-gradient(circle,rgba(196,166,255,.55) 0%,rgba(124,77,255,.30) 45%,rgba(124,77,255,0) 70%);
-    opacity:0;pointer-events:none;transition:width .8s ease,height .8s ease,opacity .8s ease;}
+  /* ルシファーは「大きく待ち構える」見せ方にする：敵エリアを通常の
+     約2倍の高さにし、全面イラスト（透過なし）を cover で横いっぱいに
+     広げて、顔と翼が大きく迫る構図にする。下端はマスクで背景へ
+     溶かし、「四角い画像を貼っただけ」に見えないようにする。
+     盤面は fitBoard が残りの高さから自動で決めるので、敵を大きく
+     しても盤面がはみ出すことはない */
+  #battle.score .enemy-stage{height:32vh;height:32dvh;max-height:330px;}
+  #battle.score #enemyArt{width:100%;}
+  #battle.score #enemyArt img{width:97vw;max-width:660px;height:100%;max-height:32vh;max-height:32dvh;
+    object-fit:cover;object-position:50% 32%;
+    -webkit-mask-image:linear-gradient(180deg,#000 82%,transparent 99%);mask-image:linear-gradient(180deg,#000 82%,transparent 99%);}
   #enemyArt{position:relative;}
-  #battle.score #luciAura{opacity:.5;}
-  #battle.score-p2 #luciAura{width:235px;height:235px;opacity:.85;}
-  #battle.score-p3 #luciAura{width:330px;height:330px;opacity:1;}
   #enemyArt img{transition:filter .8s ease,transform .8s ease;}
-  #battle.score-p2 #enemyArt img{filter:drop-shadow(0 10px 18px rgba(0,0,0,.45)) brightness(1.1) saturate(1.22);}
-  #battle.score-p3 #enemyArt img{filter:drop-shadow(0 0 22px rgba(157,107,255,.85)) brightness(1.16) saturate(1.35);transform:scale(1.05);}
-  .phase-pop{position:absolute;left:50%;top:4%;transform:translateX(-50%);z-index:11;white-space:nowrap;
-    font-size:1rem;font-weight:900;color:#e9dfff;pointer-events:none;
-    text-shadow:0 0 12px rgba(157,107,255,.95),2px 2px 0 #000,-1px 1px 0 #000;
-    animation:phasepop 1.6s ease-out forwards;}
-  @keyframes phasepop{0%{opacity:0;transform:translateX(-50%) translateY(8px) scale(.7);}18%{opacity:1;transform:translateX(-50%) translateY(0) scale(1.08);}30%{transform:translateX(-50%) scale(1);}75%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-10px);}}
+  /* ルシファーのセリフ（ふきだし）：スコアが伸びる節目でコメントする。
+     以前の「オーラの段階変化」は何が変わったか分かりにくいとの声で廃止し、
+     代わりにセリフで反応が伝わるようにした */
+  .luci-bubble{position:absolute;left:50%;top:3%;transform:translateX(-50%);z-index:12;max-width:94vw;white-space:nowrap;
+    background:#fff;color:#2a1052;font-size:.98rem;font-weight:900;line-height:1.35;text-align:center;
+    padding:.5rem .85rem;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.55);opacity:0;pointer-events:none;}
+  .luci-bubble::after{content:"";position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);
+    border:10px solid transparent;border-top-color:#fff;border-bottom:0;}
+  .luci-bubble.show{animation:lucib 2.8s ease forwards;}
+  @keyframes lucib{0%{opacity:0;transform:translateX(-50%) translateY(6px) scale(.85);}12%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}80%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-6px) scale(.98);}}
   /* スコアアタック中のHUD（のこりターン・スコア・さいだいコンボ） */
   #scoreHud{display:flex;align-items:flex-start;justify-content:space-between;gap:.4rem;margin:.2rem .45rem 0;
     background:rgba(10,8,28,.74);border:1px solid #7c4dff;border-radius:12px;padding:.34rem .65rem;}
@@ -364,7 +367,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.54</div>
+    <div class="ver-line">ver 1.0.55</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <p class="recruit-legend"><span class="recruit yes">✓ なかま</span><span>は もう なかまに なってるよ。</span></p>
@@ -385,7 +388,7 @@
 
     <div class="sec-title">🏆 スコアアタック（とくべつダンジョン）</div>
     <div class="stages score" id="scoreGrid"></div>
-    <p class="hint">ルシファーは たおせないし、こうげきも してこないよ。<br>10ターンで あたえた ダメージが スコアになる、とくべつな ダンジョン！<br>オーブは ひ・みず・もり・ひかり・やみの 5しょく（かいふくは なし）。<br>ひかりも やみも おちるから、ゼウスも サタンも オーブで こうげきできるよ！<br>スコアが ふえると ルシファーの オーラが つよくなっていくよ。<br>さいだいコンボ ボーナス（コンボ数 × 100てん）も つくよ。</p>
+    <p class="hint">ルシファーは たおせないし、こうげきも してこないよ。<br>10ターンで あたえた ダメージが スコアになる、とくべつな ダンジョン！<br>オーブは ひ・みず・もり・ひかり・やみの 5しょく（かいふくは なし）。<br>ひかりも やみも おちるから、ゼウスも サタンも オーブで こうげきできるよ！<br>スコアが ふえると ルシファーが コメントしてくれるよ。<br>さいだいコンボ ボーナス（コンボ数 × 100てん）も つくよ。</p>
     <div class="sec-title">🏅 スコア TOP5（この端末の 記録）</div>
     <div id="scoreRankBox"></div>
 
@@ -422,7 +425,6 @@
   <div id="orbInfo"></div>
   <div class="enemy-zone">
     <div class="enemy-stage" id="enemyStage">
-      <div id="luciAura"></div>
       <div id="enemyArt"></div>
       <div class="atk-badge" id="atkBadge">こうげきまで<span class="num" id="atkNum">3</span>ターン</div>
     </div>
@@ -528,9 +530,17 @@ const CHARS = [
  {id:"zeus", name:"ゼウス", attr:"light", atk:60, hp:560, art:()=>imgArt("zeus.png"), passive:"コンボの いりょく +35%", skill:{name:"てんくうの らいめい", desc:"ひかりの ダメージ 800", turns:6, type:"dmg", power:800}},
  /* サタン：ゼウスの対抗となる やみ属性の魔王。第1章の最終ボス。
     ひかりに弱く・ひかりに強い（相互×1.6）ので、仲間にしたゼウスの
-    ひかり攻撃が勝負の鍵になる。やみオーブは全ステージで落ちない
-    ため、仲間時はスキル「ダークノヴァ」が主力になる */
- {id:"satan", name:"サタン", attr:"dark", atk:66, hp:600, art:()=>imgArt("satan.png"), passive:"コンボの いりょく +35%", skill:{name:"ダークノヴァ", desc:"やみの ダメージ 900", turns:6, type:"dmg", power:900}},
+    ひかり攻撃が勝負の鍵になる。やみオーブは通常ステージで落ちない
+    ため、仲間時はスキル「ダークノヴァ」が主力になる。
+    ダークノヴァは最強スキル（追加リクエスト）：やみダメージ2000に
+    加えて盤面のオーブ全部を やみに変える dmgChangeAll 型。変えた
+    盤面で次の入れかえから やみの大コンボにつなげられる。
+    いつもスキルには「やみの こうげき 2ばい」も持つ（追加リクエスト）：
+    スーパーでんきドラゴンの ひかり2ばいと同じ形式で、パーティに
+    いる間 やみ属性の攻撃が全部2倍になる（darkBoostOn で判定し、
+    オーブ攻撃の蓄積とスキルダメージの両方に適用する。そのため
+    ダークノヴァ自身のダメージも2000→4000になる） */
+ {id:"satan", name:"サタン", attr:"dark", atk:66, hp:600, art:()=>imgArt("satan.png"), passive:"コンボの いりょく +35%・やみの こうげき 2ばい", skill:{name:"ダークノヴァ", desc:"やみの ダメージ 2000 と オーブ全部 → むらさき（やみ）に かえる さいきょうスキル", turns:6, type:"dmgChangeAll", power:2000, to:"dark"}},
  /* ルシファー：スコアアタック（特別ダンジョン）専用の敵。堕天使で
     やみ属性・☆6。たおすことはできず（HPは実質無限）、こうげきも
     してこない。なかまにはならないので、atk/hp は図鑑表示用の目安値
@@ -1361,7 +1371,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.54";
+const APP_VER="1.0.55";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.score) return true; if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1508,14 +1518,13 @@ function startBattle(st){
   const dropPool=stageDropPool(st);
   B={ stage:st, enemy, enemyHp:st.hp, partyHp:partyMaxHp(), maxHp:partyMaxHp(), cd:st.cd, board:newBoard(dropPool), dropPool:dropPool, orbTypes:stageOrbTypes(st),
       charges:save().party.map(()=>0), acc:save().party.map(()=>0), accRaw:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false,
-      scoreMode:!!st.score, score:0, turnsLeft:SCORE_TURNS, maxCombo:0, luciPhase:1 };
+      scoreMode:!!st.score, score:0, turnsLeft:SCORE_TURNS, maxCombo:0, luciLvl:0 };
   $("comboLayer").innerHTML="";
   $("bgLayer").innerHTML=BG_SCENES[STAGE_BG[st.n]||"temple"];
   $("home").classList.add("hidden"); $("battle").classList.remove("hidden");
   $("battle").classList.toggle("challenge",!!st.challenge);
   $("battle").classList.toggle("satan",!!st.satan);
   $("battle").classList.toggle("score",!!st.score);
-  $("battle").classList.remove("score-p2","score-p3");
   /* スコアアタックでは敵は攻撃しないので攻撃カウントとパーティHPを
      隠し、代わりにスコアHUD（のこりターン・スコア・最大コンボ）を出す */
   $("atkBadge").style.display=st.score?"none":"";
@@ -1530,6 +1539,8 @@ function startBattle(st){
   const tag=$("enemyTag"); tag.textContent=ATTR[enemy.attr].name; tag.className="tag "+enemy.attr;
   buildPartyRow(); renderBattle(); fitBoard();
   setTimeout(fitBoard, 80);
+  /* スコアアタック開始時：大きく待ち構えるルシファーの開幕セリフ */
+  if(st.score)setTimeout(()=>{ if(B&&B.scoreMode)showLuciComment("10ターン、すきなだけ かかってこい"); },550);
   if(bgmOn)startBGM();
 }
 /* バトル画面に最初から出すスキルの簡易表記（例：HP60 かいふく）。
@@ -1541,6 +1552,7 @@ function shortSkill(c){
   if(sk.type==="dmgheal") return an+"ダメ"+sk.power+"+HP"+sk.heal;
   if(sk.type==="change"){ return (ORB_COLOR_NAME[sk.from]||sk.from)+"→"+(ORB_COLOR_NAME[sk.to]||sk.to)+" へんげ"; }
   if(sk.type==="changeAll"){ return "全部→"+(ORB_COLOR_NAME[sk.to]||sk.to)+" へんげ"; }
+  if(sk.type==="dmgChangeAll"){ return an+"ダメ"+sk.power+"+全部→"+(ORB_COLOR_NAME[sk.to]||sk.to); }
   return sk.desc;
 }
 /* スキルがたまった時にキャラの周りへ出すエネルギーのキラキラ */
@@ -1561,23 +1573,30 @@ function buildPartyRow(){
     $("partyRow").appendChild(d);
   });
 }
-/* ルシファーの見た目変化：スコアが伸びるほどオーラが強くなる
-   （8000点で第2段階、20000点で第3段階）。段階が上がった瞬間だけ
-   メッセージを出して、達成感を目に見える形にする */
-function updateLuciPhase(){
-  if(!B||!B.scoreMode)return;
-  const p=B.score>=20000?3:B.score>=8000?2:1;
-  if(p===(B.luciPhase||1))return;
-  B.luciPhase=p;
-  const bt=$("battle");
-  bt.classList.toggle("score-p2",p===2);
-  bt.classList.toggle("score-p3",p===3);
+/* ルシファーのセリフ：スコアが節目を超えるたびに、ふきだしで
+   コメントする（以前のオーラ段階変化は「何が変わったか分からない」
+   との声で廃止し、反応が言葉で伝わる形に変えた）。
+   一度出した節目は同じバトル中には繰り返さない */
+const LUCI_COMMENTS=[
+  [2500,"ふん、その ちょうしか"],
+  [5000,"なかなかやるな"],
+  [10000,"おもしろい… もっと みせてみろ"],
+  [18000,"まさか、ここまでとは…！"],
+  [26000,"わたしを こえる つもりか…！"]
+];
+function showLuciComment(text){
   const stage=$("enemyStage"); if(!stage)return;
-  const el=document.createElement("div");
-  el.className="phase-pop";
-  el.textContent=p===3?"ルシファーの オーラが あふれだした！！":"ルシファーの つばさが ひろがった！";
-  stage.appendChild(el);
-  setTimeout(()=>el.remove(),1650);
+  let el=stage.querySelector(".luci-bubble");
+  if(!el){ el=document.createElement("div"); el.className="luci-bubble"; stage.appendChild(el); }
+  el.textContent=text;
+  el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
+}
+function updateLuciComment(){
+  if(!B||!B.scoreMode)return;
+  let lv=0; for(const c of LUCI_COMMENTS){ if(B.score>=c[0])lv++; }
+  if(lv<=(B.luciLvl||0))return;
+  B.luciLvl=lv;
+  showLuciComment(LUCI_COMMENTS[lv-1][1]);
 }
 function renderBattle(skipBoard){
   if(!B)return;
@@ -1589,7 +1608,7 @@ function renderBattle(skipBoard){
     $("scoreNum").textContent=fmtNum(B.score);
     $("turnsNum").textContent=B.turnsLeft;
     $("maxComboNum").textContent=B.maxCombo;
-    updateLuciPhase();
+    updateLuciComment();
   } else {
     $("enemyHpFill").style.width=Math.max(0,B.enemyHp/st.hp*100)+"%";
     $("enemyHpNum").textContent="HP "+Math.max(0,Math.ceil(B.enemyHp))+" / "+st.hp;
@@ -1719,9 +1738,14 @@ function comboMult(n){ const k=Math.max(0,n-1); return 1 + 0.50*k + 0.16*k*k; }
    ひかり属性の攻撃（オーブ攻撃・スキルダメージ）が全部2倍になる。
    かいふくオーブ+50%パッシブと同じ「パーティ全員に効く」方式 */
 function lightBoostOn(){ return save().party.some(id=>{ const c=charById(id); return c && c.passive.includes("ひかりの こうげき 2ばい"); }); }
+/* やみ攻撃2倍パッシブ（サタンの いつもスキル）：ひかり版と同形式。
+   パーティに「やみの こうげき 2ばい」を持つ仲間（サタン）がいると、
+   やみ属性の攻撃（オーブ攻撃・スキルダメージ）が全部2倍になる */
+function darkBoostOn(){ return save().party.some(id=>{ const c=charById(id); return c && c.passive.includes("やみの こうげき 2ばい"); }); }
 async function resolveBoard(){
   let combo=0, guard=0;
   const lBoost=lightBoostOn(); // ひかりの こうげき 2ばい が有効か（このターン中は不変）
+  const dBoost=darkBoostOn(); // やみの こうげき 2ばい が有効か（このターン中は不変）
   const tags=[]; // コンボ表示はコンボが終わるまで残す
   /* 演出全体の時間予算（連鎖フェーズの非常ブレーキ）：開始から
      10秒を超えたら、残りの連鎖の待ちだけを畳んで攻撃へ進む。
@@ -1753,7 +1777,7 @@ async function resolveBoard(){
         save().party.forEach((id,idx)=>{
           const c=charById(id); if(c.attr!==g.type)return;
           const pb=c.passive.includes("+35")?1.35:c.passive.includes("+25")?1.25:1.1;
-          const raw=c.atk * g.cells.length * 0.34 * pb * (c.attr==="light"&&lBoost?2:1);
+          const raw=c.atk * g.cells.length * 0.34 * pb * ((c.attr==="light"&&lBoost)||(c.attr==="dark"&&dBoost)?2:1);
           B.accRaw[idx]+=raw;
           B.acc[idx]+=raw * comboMult(combo);
         });
@@ -2095,13 +2119,36 @@ function useSkill(i){
     showSheet('<h2>'+sk.name+'</h2><p>オーブの いろが かわったよ！<br>つぎの 入れかえで コンボが はじまるよ。</p><button class="btn primary" onclick="closeSheet()">とじる</button>');
     return;
   }
+  if(sk.type==="dmgChangeAll"){
+    /* 最強スキル（サタンの「ダークノヴァ」）：大ダメージ＋盤面の
+       オーブ全部を sk.to に変える複合型。ダメージ部分は常に役立つ
+       ので、盤面がすでに全部その色でも消費して発動する（へんげ
+       単体スキルのような「つかえない」にはしない）。
+       ダメージ計算は通常のスキルダメージと同じ：属性相性と
+       自分の属性の2倍パッシブ（サタン自身の やみ2ばい）を適用する。
+       へんげ自体ではコンボは始まらず、次の入れかえで始まる */
+    B.charges[i]=0; skillSE();
+    const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1;
+    const dmg=Math.round(sk.power*m*((c.attr==="light"&&lightBoostOn())||(c.attr==="dark"&&darkBoostOn())?2:1));
+    B.enemyHp-=dmg;
+    /* スコアアタック：スキルのダメージもスコアに加算する */
+    if(B.scoreMode)B.score+=dmg;
+    attackEffect(c.attr);
+    showDmgPop(dmg);
+    const changedAll=[];
+    B.board=B.board.map((t,idx)=>{ if(t!==sk.to){changedAll.push(idx);return sk.to;} return t; });
+    renderBoard(changedAll); renderBattle();
+    if(B.enemyHp<=0){ winBattle(); return; }
+    showSheet('<h2>'+sk.name+'！</h2><p>'+(ATTR[c.attr]?ATTR[c.attr].name:c.attr)+'の ダメージ '+fmtNum(dmg)+'！<br>'+(changedAll.length?'オーブが 全部 '+(ORB_COLOR_NAME[sk.to]||sk.to)+'（'+(ATTR[sk.to]?ATTR[sk.to].name:sk.to)+'）に かわったよ！<br>つぎの 入れかえで 大コンボが はじまるよ。':'オーブは もう全部 '+(ORB_COLOR_NAME[sk.to]||sk.to)+'だったよ。')+'</p><button class="btn primary" onclick="closeSheet()">とじる</button>');
+    return;
+  }
   B.charges[i]=0; skillSE();
   if(sk.type==="dmg"||sk.type==="dmgheal"){
     /* スキル攻撃もオーブ攻撃と同じく「キャラ自身の属性」で攻撃する：
        属性相性を適用し、自分の属性のエフェクトとダメージ表示を出す。
        以前は属性なしの固定ダメージで、攻撃の属性が見えなかった */
     const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1;
-    const dmg=Math.round(sk.power*m*(c.attr==="light"&&lightBoostOn()?2:1));
+    const dmg=Math.round(sk.power*m*((c.attr==="light"&&lightBoostOn())||(c.attr==="dark"&&darkBoostOn())?2:1));
     B.enemyHp-=dmg;
     /* スコアアタック：スキルのダメージもスコアに加算する */
     if(B.scoreMode)B.score+=dmg;
@@ -2143,7 +2190,7 @@ function winBattle(){
   if(st.satan){
     /* 第1章の最終ボス撃破専用ダイアログ：サタンも他のキャラと同じ50%で仲間になる */
     showSheet('<h2>🏆 第1章 ゲームクリア！</h2><p>魔王サタンを たおしたよ！<br>ゆいと はるかの 大ぼうけん 第1章、クリア！</p>'+recruitMsg+
-     '<p class="sub">サタンは スキル「ダークノヴァ」で つよく こうげきできるよ。<br>あつめた なかまたちと、また あそんでね！</p>'+
+     '<p class="sub">サタンは さいきょうスキル「ダークノヴァ」（やみダメージ＋オーブ全部を やみに かえる）と、やみの こうげき 2ばいの いつもスキルを もっているよ。<br>あつめた なかまたちと、また あそんでね！</p>'+
      '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
   } else {
     showSheet('<h2>🎉 クリア！</h2><p>ステージ '+(st.disp||st.n)+' の '+ec.name+' を たおしたよ！</p>'+recruitMsg+
