@@ -73,11 +73,11 @@
      vhを先に書いてフォールバックにし、対応端末ではdvhで上書きする */
   #battle{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative;background:#0d0b22;}
   /* ステージごとの壮大な背景（神殿・荒野・宇宙など）を全面に敷く */
-  #bgLayer{position:absolute;inset:0;z-index:0;overflow:hidden;}
+  #bgLayer{position:absolute;top:0;left:0;right:0;bottom:0;z-index:0;overflow:hidden;}
   #bgLayer img{width:100%;height:100%;object-fit:cover;object-position:50% 38%;display:block;}
   /* 背景イラストの上に薄い暗幕＋上下グラデーションを重ねて、
      敵キャラ・HPバー・盤面の読みやすさを保つ */
-  #bgLayer::after{content:"";position:absolute;inset:0;
+  #bgLayer::after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;
     background:linear-gradient(180deg,rgba(10,8,28,.34) 0%,rgba(10,8,28,.10) 30%,rgba(10,8,28,.16) 58%,rgba(10,8,28,.55) 100%);}
   #battle>*:not(#bgLayer){position:relative;z-index:1;}
   .b-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:10;padding:max(.18rem, env(safe-area-inset-top)) .4rem 0;}
@@ -143,7 +143,7 @@
   /* 敵の攻撃：属性の弾（炎・水滴・葉）が敵からパーティへ飛ぶ */
   .efx-proj{position:absolute;left:50%;width:56px;height:56px;margin:-28px 0 0 -28px;z-index:9;pointer-events:none;animation:projfly .47s ease-in forwards;}
   .efx-proj svg{width:100%;height:100%;position:relative;z-index:1;filter:drop-shadow(0 0 6px rgba(255,255,255,.55));}
-  .efx-proj .core{position:absolute;inset:0;border-radius:50%;opacity:.85;}
+  .efx-proj .core{position:absolute;top:0;left:0;right:0;bottom:0;border-radius:50%;opacity:.85;}
   @keyframes projfly{0%{transform:translateY(0) scale(.65);opacity:0;}18%{opacity:1;}100%{transform:translateY(var(--dy)) scale(1.3);opacity:1;}}
   .party-row{position:relative;}
   .fx.pfx{left:50%;top:36%;}
@@ -228,7 +228,7 @@
   .orb::before{content:"";position:absolute;left:14%;top:5%;width:42%;height:28%;border-radius:50%;z-index:2;pointer-events:none;
     background:radial-gradient(ellipse at 42% 40%,#ffffff 0%,rgba(255,255,255,.94) 26%,rgba(255,255,255,.40) 55%,rgba(255,255,255,0) 78%);
     transform:rotate(-18deg);}
-  .orb::after{content:"";position:absolute;inset:0;border-radius:50%;z-index:1;pointer-events:none;
+  .orb::after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;border-radius:50%;z-index:1;pointer-events:none;
     box-shadow:inset 0 0 0 2px rgba(255,255,255,.55),inset 0 7px 9px rgba(255,255,255,.50),inset 0 -13px 15px -5px rgba(255,255,255,.55),inset 0 -9px 13px rgba(0,0,0,.20),inset 6px 0 10px rgba(255,255,255,.20),inset -6px 0 11px rgba(0,0,0,.15);}
   .orb.fire{background:radial-gradient(circle at 33% 26%,#ffc46b 0%,#ff8f4d 26%,#ff5f2e 55%,#f0331a 82%,#cd1f06 100%);}
   .orb.water{background:radial-gradient(circle at 33% 26%,#a5e3ff 0%,#5cc0ff 26%,#2b9bf5 55%,#0f7fe0 82%,#0a63bd 100%);}
@@ -243,7 +243,17 @@
   @keyframes shk{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
 
   /* モーダル */
-  .overlay{position:fixed;inset:0;background:rgba(8,6,24,.72);display:flex;align-items:center;justify-content:center;z-index:20;padding:1rem;}
+  /* 注意：inset ショートハンドは古いSafari（iOS 14.0以下）で無効になり、
+     top/left等が全て auto のまま position:fixed されると、オーバーレイが
+     バトル画面（100vh）の下＝画面外に配置されて「JSは表示したのに
+     見えない」事故になる（v29調査版の実機ログで確認）。そのため
+     top/right/bottom/left を個別に明記し、width/height も保険で付ける */
+  .overlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:rgba(8,6,24,.72);display:flex;align-items:center;justify-content:center;z-index:40;padding:1rem;}
+  /* フォールバック結果パネル：オーバーレイ（position:fixed）が実機で
+     描画できなかった場合に、描画できることが実証済みの #battle 内
+     （調査ログバーと同じ absolute 配置）へ結果を出し直すための受け皿 */
+  #resultPanel{position:absolute;top:0;left:0;right:0;bottom:0;z-index:30;background:rgba(8,6,24,.82);
+    display:flex;align-items:center;justify-content:center;padding:1rem;}
   .sheet{background:var(--panel2);border:1px solid var(--line);border-radius:20px;max-width:420px;width:100%;
     padding:1rem;text-align:center;max-height:88vh;max-height:88dvh;overflow:auto;}
   .sheet .art{height:110px;display:flex;align-items:flex-end;justify-content:center;}
@@ -255,7 +265,7 @@
   .btn.primary{background:var(--gold);color:#3a2c00;}
   .btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);}
   .btn:disabled{opacity:.4;}
-  /* ---------- 調査版（v29） ---------- */
+  /* ---------- 調査版（v30） ---------- */
   /* 端末で新しい版が動いているか目視確認するためのバージョン表記 */
   .ver-badge{display:block;width:fit-content;margin:.1rem auto .5rem;padding:.32rem 1rem;
     background:var(--gold);color:#3a2c00;border-radius:999px;font-size:1rem;font-weight:900;
@@ -285,7 +295,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-badge">v29 調査版</div>
+    <div class="ver-badge">v30 調査版</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
@@ -301,7 +311,7 @@
 
     <button class="btn ghost" id="zukanBtn" style="margin-top:1rem;">📖 ずかんを みる</button>
 
-    <div class="sec-title">調査ログ（v29 調査版）</div>
+    <div class="sec-title">調査ログ（v30 調査版）</div>
     <div class="diag-box" id="diagHome">（まだ記録なし）</div>
     <p class="hint">バトルで固まったら、画面下の調査ログの「最後の行」と「⏱の秒数」を教えてね。</p>
   </div>
@@ -348,7 +358,8 @@
     </div>
   </div>
   <div class="board-wrap"><div id="board"></div><div id="comboLayer"></div></div>
-  <div id="diagBar"><div class="diag-head">v29 調査版 ・ 調査ログ</div><div id="diagBeat">⏱ -</div><div id="diagLines"></div></div>
+  <div id="diagBar"><div class="diag-head">v30 調査版 ・ 調査ログ</div><div id="diagBeat">⏱ -</div><div id="diagLines"></div></div>
+  <div id="resultPanel" class="hidden"><div class="sheet" id="sheet2"></div></div>
 </div>
 
 <!-- ============ モーダル ============ -->
@@ -748,14 +759,14 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 
 /* ================= ホーム ================= */
 const $=id=>document.getElementById(id);
-/* ================= 調査版（v29）：診断ログ =================
+/* ================= 調査版（v30）：診断ログ =================
    iPhone 7 実機で「クリア！」が出ずに固まる件の原因を確定させるため、
    勝利フローの各段階にチェックポイントを置き、バトル画面下部と
    ホームの調査ログ欄に常時表示する。固まった瞬間に
    ・最後に通過したチェックポイント（＝どこで止まったか）
    ・⏱ハートビートの秒数が進んでいるか（＝タイマー自体が生きているか）
    がスクリーンショットで分かるようにするのが目的。 */
-const APP_VER="v29 調査版";
+const APP_VER="v30 調査版";
 const DIAG_LOG=[]; let diagBattleT0=0;
 function diagEsc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function diag(msg){
@@ -782,7 +793,7 @@ function startBeat(){
     const s=((Date.now()-diagBattleT0)/1000).toFixed(0);
     el.textContent="⏱ "+s+"秒 ・ busy="+(B?B.busy:"-")+" ・ over="+(B?B.over:"-")+
       " ・ 敵HP="+(B?Math.max(0,Math.ceil(B.enemyHp)):"-")+
-      " ・ クリア表示="+($("overlay").classList.contains("hidden")?"まだ":"済み");
+      " ・ クリア表示="+(resultVisible()?"済み":"まだ");
   },500);
 }
 function stopBeat(){ if(beatTimer){clearInterval(beatTimer);beatTimer=null;} }
@@ -994,8 +1005,15 @@ function tapOrb(i){
   const wdB=B;
   setTimeout(()=>{
     if(!wdB||B!==wdB)return;
-    diag("⏰ ウォッチドッグ作動（15秒）busy="+B.busy+" over="+B.over+" 敵HP="+Math.ceil(B.enemyHp)+" クリア表示="+($("overlay").classList.contains("hidden")?"まだ":"済み"));
-    if(B.enemyHp<=0 && $("overlay").classList.contains("hidden")){ B.over=false; winBattle(); }
+    diag("⏰ ウォッチドッグ作動（15秒）busy="+B.busy+" over="+B.over+" 敵HP="+Math.ceil(B.enemyHp)+" クリア表示="+(resultVisible()?"済み":"まだ"));
+    /* v29の反省：クラスが外れているかではなく「実際に画面に見えているか」
+       （計算済みスタイル＋矩形）で判定する。クラスだけ見ていたため、
+       画面外に配置されたオーバーレイを「表示済み」と誤判定し、
+       ウォッチドッグが何もしなかった */
+    if(B.enemyHp<=0 && !resultVisible()){
+      if(lastSheetHTML){ diag("⏰ 結果が見えていない → 出し直し"); showSheet(lastSheetHTML); }
+      else { B.over=false; winBattle(); }
+    }
     else if(!B.over && B.busy){ B.busy=false; renderBattle(); }
   },15000);
 }
@@ -1373,8 +1391,73 @@ function loseBattle(){
   diag("まけ表示を出した");
   showSheet('<h2>💦 まけちゃった…</h2><p>パーティを つよくして、もう一度 チャレンジしよう！<br>なかまを あつめると つよくなれるよ。</p><button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
 }
-function showSheet(html){ $("sheet").innerHTML=html; $("overlay").classList.remove("hidden"); }
-function closeSheet(){ $("overlay").classList.add("hidden"); }
+/* ================= 結果表示（v30で構造から作り直し） =================
+   v29調査版の実機ログで確定した事実：winBattle は完了し、overlay の
+   hidden クラスも外れていた（＝JS判定では「表示済み」）のに、実機の
+   画面には結果ダイアログが描画されていなかった。原因は .overlay の
+   配置指定 inset:0 が古いSafariで無効で、top/left等が auto のまま
+   fixed 配置され、オーバーレイが画面外（バトル画面の下）に置かれて
+   いたこと。対策は3段構え：
+   1) CSS・インラインの両方で top/left/right/bottom を個別に明記する
+   2) 表示後に「実際に見えているか」を計算済みスタイルと矩形で実測し、
+      結果を調査ログに残す（クラス判定は二度と信用しない）
+   3) 実測で見えていなければ、描画できることが実証済みの #battle 内
+      パネル（#resultPanel）へ同じ内容を出し直す */
+let lastSheetHTML="", sheetWanted=false, sheetVerifyTimer=null;
+function resultVisible(){
+  try{
+    const ov=$("overlay");
+    if(ov && !ov.classList.contains("hidden")){
+      const cs=getComputedStyle(ov), r=ov.getBoundingClientRect(), sr=$("sheet").getBoundingClientRect();
+      if(cs.display!=="none" && r.width>0 && r.height>0 && sr.width>0 && sr.height>0 && sr.bottom>0 && sr.top<window.innerHeight) return true;
+    }
+    const rp=$("resultPanel");
+    if(rp && !rp.classList.contains("hidden")){
+      const sr2=$("sheet2").getBoundingClientRect();
+      if(sr2.width>0 && sr2.height>0 && sr2.bottom>0 && sr2.top<window.innerHeight) return true;
+    }
+  }catch(e){}
+  return false;
+}
+function showSheet(html){
+  lastSheetHTML=html; sheetWanted=true;
+  const ov=$("overlay");
+  $("sheet").innerHTML=html;
+  ov.classList.remove("hidden");
+  /* クラス任せにせず、インラインでも固定配置を明示する（古いSafari対策） */
+  ov.style.position="fixed"; ov.style.top="0"; ov.style.left="0"; ov.style.right="0"; ov.style.bottom="0";
+  ov.style.width="100%"; ov.style.height="100%"; ov.style.display="flex"; ov.style.zIndex="40";
+  void ov.offsetWidth; /* レイアウト確定（再描画）を強制する */
+  if(sheetVerifyTimer)clearTimeout(sheetVerifyTimer);
+  sheetVerifyTimer=setTimeout(verifySheet,350);
+}
+function verifySheet(){
+  if(!sheetWanted)return;
+  let info="";
+  try{
+    const ov=$("overlay"), cs=getComputedStyle(ov), r=ov.getBoundingClientRect(), sr=$("sheet").getBoundingClientRect();
+    info="display="+cs.display+" ov="+Math.round(r.left)+","+Math.round(r.top)+" "+Math.round(r.width)+"x"+Math.round(r.height)+
+      " sheet="+Math.round(sr.width)+"x"+Math.round(sr.height)+"@top"+Math.round(sr.top)+" 画面"+window.innerWidth+"x"+window.innerHeight;
+  }catch(e){ info="実測エラー: "+((e&&e.message)||e); }
+  if(resultVisible()){ diag("🖥 表示を実測で確認OK "+info); hideResultPanel(); }
+  else{ diag("🖥 表示が見えない → バトル内パネルで出し直し "+info); showResultPanel(); }
+}
+function showResultPanel(){
+  const rp=$("resultPanel"); if(!rp)return;
+  $("sheet2").innerHTML=lastSheetHTML;
+  rp.classList.remove("hidden"); rp.style.display="flex";
+  void rp.offsetWidth;
+}
+function hideResultPanel(){
+  const rp=$("resultPanel"); if(!rp)return;
+  rp.classList.add("hidden"); rp.style.display="";
+}
+function closeSheet(){
+  sheetWanted=false;
+  if(sheetVerifyTimer){ clearTimeout(sheetVerifyTimer); sheetVerifyTimer=null; }
+  const ov=$("overlay"); ov.classList.add("hidden"); ov.style.display="";
+  hideResultPanel();
+}
 function backHome(){ stopBeat(); diag("ホームへもどった"); closeSheet(); B=null; $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); renderHome(); renderDiag(); }
 $("quitBtn").onclick=backHome;
 $("overlay").addEventListener("click",e=>{ if(e.target===$("overlay"))closeSheet(); });
