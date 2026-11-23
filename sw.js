@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yuiharuka-puzzle-v35';
+const CACHE_NAME = 'yuiharuka-puzzle-v36';
 const ASSETS = [
   './',
   'index.html',
@@ -18,7 +18,9 @@ const ASSETS = [
   'bg-volcano.jpg',
   'bg-ice.jpg',
   'bg-sea.jpg',
-  'bg-space.jpg'
+  'bg-space.jpg',
+  'bg-heaven.jpg',
+  'bg-demon.jpg'
 ];
 
 self.addEventListener('install', (event) => {

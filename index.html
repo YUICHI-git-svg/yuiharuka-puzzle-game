@@ -311,7 +311,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.35</div>
+    <div class="ver-line">ver 1.0.36</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
@@ -540,8 +540,11 @@ const BG_SCENES = {
  ice:'<img src="bg-ice.jpg" alt="">',
  sea:'<img src="bg-sea.jpg" alt="">',
  space:'<img src="bg-space.jpg" alt="">',
+ heaven:'<img src="bg-heaven.jpg" alt="">',
+ demon:'<img src="bg-demon.jpg" alt="">',
 };
-const STAGE_BG = {1:"ice",2:"volcano",3:"wasteland",4:"sea",5:"volcano",6:"temple",7:"sea",8:"space",9:"temple",10:"ice",11:"wasteland",12:"space",13:"volcano"};
+/* ゼウス戦（12）は雲の上の天界神殿、サタン戦（13）は魔界の魔城が専用背景 */
+const STAGE_BG = {1:"ice",2:"volcano",3:"wasteland",4:"sea",5:"volcano",6:"temple",7:"sea",8:"space",9:"temple",10:"ice",11:"wasteland",12:"heaven",13:"demon"};
 
 /* ================= セーブ（メモリ内・共通ひとつ） =================
    人ごとのデータ保持は不要になったため、記録は全員で共通のひとつだけ */
@@ -847,7 +850,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.35";
+const APP_VER="1.0.36";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
