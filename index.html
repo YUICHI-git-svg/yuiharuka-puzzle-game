@@ -357,7 +357,7 @@ let AC=null, seOn=true, bgmOn=false, bgmTimer=null, bgmStep=0, curStage=1;
 function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==="suspended")AC.resume(); return AC; }
 function tone(f,t0,d,type,g){ if(!seOn&&type!=="bgm")return; const c=ac(),o=c.createOscillator(),v=c.createGain();
   o.type=type==="bgm"?"triangle":"sine"; o.frequency.value=f; o.connect(v); v.connect(c.destination);
-  const s=c.currentTime+t0; v.gain.setValueAtTime(0,s); v.gain.linearRampToValueAtTime(g||.12,s+.015); v.gain.exponentialRampToValueAtTime(.001,s+d);
+  const s=c.currentTime+t0; v.gain.setValueAtTime(0,s); v.gain.linearRampToValueAtTime(g||.24,s+.015); v.gain.exponentialRampToValueAtTime(.001,s+d);
   o.start(s); o.stop(s+d+.05); }
 function comboSE(combo){ const base=520*Math.pow(1.122,Math.min(combo-1,10)); tone(base,0,.14); tone(base*1.5,.05,.16); }
 function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.sampleRate*0.52);
@@ -368,7 +368,7 @@ function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.
   const t=c.currentTime; const f0=480+Math.min(combo-1,10)*90;
   /* パラメータが上がっていく感じの、ゆっくりした上昇スイープ */
   f.frequency.setValueAtTime(f0,t); f.frequency.exponentialRampToValueAtTime(f0*4.2,t+0.44);
-  const g=c.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.22,t+.07); g.gain.exponentialRampToValueAtTime(.001,t+.52);
+  const g=c.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.42,t+.07); g.gain.exponentialRampToValueAtTime(.001,t+.52);
   src.connect(f); f.connect(g); g.connect(c.destination); src.start(t); src.stop(t+.54); }
 function swapSE(){ tone(660,0,.07); }
 function skillSE(){ [523,659,784,1046].forEach((f,i)=>tone(f,i*.06,.16)); }
@@ -441,6 +441,28 @@ function bgmLead(midi,dur,vol){ if(!bgmOn)return; const c=ac(),t=c.currentTime;
     lfo.start(t); lfo.stop(t+dur+.05); }
   o1.start(t); o2.start(t); o3.start(t); o1.stop(t+dur+.05); o2.stop(t+dur+.05); o3.stop(t+dur+.05);
 }
+function bgmFiddle(midi,dur,vol){ if(!bgmOn)return; const c=ac(),t=c.currentTime;
+  /* フィドル風リード：速いアタックで明るく、弓で弾くような鋸波2本＋
+     矩形波を高めのローパスで開く。長い音は早めにビブラートを入れる */
+  const o1=c.createOscillator(),o2=c.createOscillator(),o3=c.createOscillator(),v=c.createGain(),fl=c.createBiquadFilter();
+  o1.type="sawtooth"; o1.frequency.value=mtof(midi);
+  o2.type="sawtooth"; o2.frequency.value=mtof(midi)*1.005;
+  o3.type="square"; o3.frequency.value=mtof(midi);
+  const g3=c.createGain(); g3.gain.value=.35; o3.connect(g3); g3.connect(fl);
+  fl.type="lowpass"; fl.frequency.setValueAtTime(2400,t);
+  fl.frequency.linearRampToValueAtTime(3400,t+.06);
+  fl.frequency.linearRampToValueAtTime(2300,t+dur);
+  fl.Q.value=.6;
+  v.gain.setValueAtTime(0,t); v.gain.linearRampToValueAtTime(vol,t+.014);
+  v.gain.setValueAtTime(vol,t+Math.max(.03,dur-.05)); v.gain.exponentialRampToValueAtTime(.0008,t+dur);
+  o1.connect(fl); o2.connect(fl); fl.connect(v); v.connect(c.destination);
+  if(dur>.3){ const lfo=c.createOscillator(),lg=c.createGain();
+    lfo.type="sine"; lfo.frequency.value=6.2;
+    lg.gain.setValueAtTime(0,t); lg.gain.linearRampToValueAtTime(mtof(midi)*.007,t+.2);
+    lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency); lg.connect(o3.frequency);
+    lfo.start(t); lfo.stop(t+dur+.05); }
+  o1.start(t); o2.start(t); o3.start(t); o1.stop(t+dur+.05); o2.stop(t+dur+.05); o3.stop(t+dur+.05);
+}
 function bgmString(midi){ if(!bgmOn)return; const c=ac(),t=c.currentTime;
   /* 弦のスピッカート風オスティナート：短く切る鋸波をローパスで抑える */
   const o=c.createOscillator(),v=c.createGain(),fl=c.createBiquadFilter();
@@ -450,91 +472,172 @@ function bgmString(midi){ if(!bgmOn)return; const c=ac(),t=c.currentTime;
   v.gain.exponentialRampToValueAtTime(.0008,t+.13);
   o.connect(fl); fl.connect(v); v.connect(c.destination);
   o.start(t); o.stop(t+.16); }
-/* ---- BGM候補曲：ホーム画面で試聴して選べる3曲 ----
-   0番は従来曲（startBGM内のデータ）。1・2番はここに曲データを持ち、
-   startBGM が選択中の曲に差し替える。選択は localStorage に保存。 */
+/* ---- BGM候補曲：D（ケルト風ダンス）を元にした3バリエーション ----
+   ユーザーが選んだD「ケルト風ダンス（フィドルっぽい速い旋律と
+   ハープ、ダンジョンを駆ける感じ）」の文法で3曲とも作り直した。
+   共通の作り：Dドリアン／Dメジャーの速い8分・16分のフィドル旋律、
+   サビでは弦のアルペジオがハープのように流れる。リードは
+   bgmFiddle（速いアタックの明るい弦）で鳴らす。選択は localStorage。 */
 const _=null;
 const TRACKS=[
- {name:"♪1 ゆうしゃのテーマ", desc:"いまの曲。勇ましい金管のファンタジー", bpm:148},
- {name:"♪2 ゆうきのファンファーレ", desc:"あかるい行進曲みたいな曲", bpm:152,
+ {name:"♪ D1 ケルトダンス", desc:"Dの曲そのもの。速く駆けるフィドルのダンス・約48秒", bpm:140, fiddle:true,
   chd:{
-    C:{bass:36,pad:[60,64,67],ost:[48,55,60,64,67]},
-    G:{bass:31,pad:[59,62,67],ost:[47,55,59,62,67]},
-    Am:{bass:33,pad:[57,60,64],ost:[45,52,57,60,64]},
-    F:{bass:29,pad:[53,57,60],ost:[41,48,53,57,60]},
+    D:{bass:26,pad:[62,66,69],ost:[50,57,62,66,69]},
+    G:{bass:31,pad:[59,62,67],ost:[43,55,59,62,67]},
+    A:{bass:33,pad:[57,61,64],ost:[45,52,57,61,64]},
+    Bm:{bass:35,pad:[59,62,66],ost:[47,54,59,62,66]},
+    Em:{bass:28,pad:[55,59,64],ost:[40,52,55,59,64]},
   },
   song:[
-    {sec:"in",ch:"C", mel:[72,_,_,_,76,_,_,_,79,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"G", mel:[79,_,_,_,83,_,_,_,86,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"C", mel:[84,_,_,_,_,_,_,_,79,_,_,_,76,_,_,_]},
-    {sec:"in",ch:"G", mel:[86,_,_,_,83,_,79,_,83,_,_,_,_,_,_,_],fill:1},
-    {sec:"A",ch:"C", mel:[72,_,76,_,79,_,_,_,76,_,_,_,_,_,_,_]},
-    {sec:"A",ch:"G", mel:[74,_,79,_,83,_,_,_,79,_,_,_,_,_,_,_]},
-    {sec:"A",ch:"Am",mel:[81,_,_,_,79,_,76,_,79,_,_,_,_,_,_,_]},
-    {sec:"A",ch:"F", mel:[77,_,81,_,84,_,_,_,81,_,_,_,_,_,_,_]},
-    {sec:"A",ch:"C", mel:[72,_,76,_,79,_,_,_,81,_,_,_,79,_,_,_]},
-    {sec:"A",ch:"G", mel:[83,_,_,_,79,_,74,_,79,_,_,_,_,_,_,_]},
-    {sec:"A",ch:"F", mel:[81,_,_,_,84,_,_,_,81,_,77,_,76,_,_,_]},
-    {sec:"A",ch:"G", mel:[79,_,_,_,74,_,_,_,79,_,_,_,_,_,_,_],fill:1},
-    {sec:"B",ch:"F", mel:[77,_,81,_,84,_,81,_,86,_,84,_,81,_,_,_]},
-    {sec:"B",ch:"G", mel:[79,_,83,_,86,_,83,_,88,_,86,_,83,_,_,_]},
-    {sec:"B",ch:"C", mel:[84,_,81,_,79,_,81,_,84,_,_,_,88,_,_,_]},
-    {sec:"B",ch:"Am",mel:[81,_,79,_,76,_,79,_,81,_,_,_,0,_,79,_]},
-    {sec:"B",ch:"F", mel:[84,_,_,_,81,_,77,_,81,_,84,_,89,_,_,_]},
-    {sec:"B",ch:"G", mel:[86,_,_,_,83,_,79,_,83,_,86,_,91,_,_,_]},
-    {sec:"B",ch:"Am",mel:[88,_,84,_,81,_,84,_,88,_,_,_,84,_,_,_]},
-    {sec:"B",ch:"G", mel:[86,_,83,_,79,_,83,_,86,_,_,_,88,_,_,_],fill:1},
-    {sec:"C",ch:"C", crash:1,mel:[84,_,_,_,_,_,_,_,88,_,_,_,84,_,_,_],har:[79,_,_,_,_,_,_,_,84,_,_,_,79,_,_,_]},
-    {sec:"C",ch:"F", mel:[89,_,_,_,_,_,_,_,84,_,_,_,81,_,_,_],har:[84,_,_,_,_,_,_,_,81,_,_,_,77,_,_,_]},
-    {sec:"C",ch:"C", mel:[88,_,_,_,_,_,84,_,79,_,_,_,81,_,_,_],har:[84,_,_,_,_,_,79,_,76,_,_,_,79,_,_,_]},
-    {sec:"C",ch:"G", mel:[86,_,_,_,_,_,_,_,83,_,_,_,86,_,_,_],har:[83,_,_,_,_,_,_,_,79,_,_,_,83,_,_,_]},
-    {sec:"C",ch:"Am",crash:1,mel:[84,_,_,_,88,_,_,_,93,_,_,_,_,_,_,_],har:[79,_,_,_,84,_,_,_,88,_,_,_,_,_,_,_]},
-    {sec:"C",ch:"F", mel:[93,_,_,_,_,_,_,_,89,_,_,_,84,_,_,_],har:[88,_,_,_,_,_,_,_,84,_,_,_,81,_,_,_]},
-    {sec:"C",ch:"G", mel:[91,_,_,_,_,_,86,_,83,_,_,_,86,_,_,_],har:[86,_,_,_,_,_,83,_,79,_,_,_,83,_,_,_]},
-    {sec:"C",ch:"C", mel:[88,_,_,_,84,_,_,_,88,_,_,_,_,_,84,_],har:[84,_,_,_,79,_,_,_,84,_,_,_,_,_,79,_],fill:1},
+    {sec:"in",ch:"D", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
+    {sec:"in",ch:"G", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
+    {sec:"in",ch:"D", mel:[86,_,_,_,83,_,81,_,78,_,_,_,_,_,_,_]},
+    {sec:"in",ch:"A", mel:[81,_,83,_,86,_,_,_,85,_,83,_,81,_,_,_],fill:1},
+    {sec:"A",ch:"D", mel:[74,_,76,_,78,_,81,_,83,_,81,_,78,_,76,_]},
+    {sec:"A",ch:"G", mel:[79,_,78,_,76,_,78,_,79,_,_,_,76,_,_,_]},
+    {sec:"A",ch:"D", mel:[74,_,76,_,78,_,81,_,86,_,83,_,81,_,78,_]},
+    {sec:"A",ch:"A", mel:[81,_,_,_,78,_,76,_,78,_,81,_,85,_,_,_]},
+    {sec:"A",ch:"D", mel:[74,_,76,_,78,_,81,_,83,_,86,_,83,_,81,_]},
+    {sec:"A",ch:"G", mel:[83,_,81,_,79,_,81,_,79,_,76,_,78,_,_,_]},
+    {sec:"A",ch:"Bm",mel:[78,_,81,_,83,_,81,_,78,_,76,_,74,_,76,_]},
+    {sec:"A",ch:"A", mel:[78,_,_,_,76,_,_,_,81,_,_,_,85,_,_,_],fill:1},
+    {sec:"B",ch:"Em",mel:[76,78,79,_,81,_,79,_,76,_,79,_,81,_,_,_]},
+    {sec:"B",ch:"G", mel:[79,81,83,_,81,_,79,_,83,_,86,_,83,_,_,_]},
+    {sec:"B",ch:"D", mel:[86,_,83,_,81,_,83,_,86,_,88,_,86,_,83,_]},
+    {sec:"B",ch:"Bm",mel:[83,_,81,_,78,_,81,_,83,_,81,_,78,_,_,_]},
+    {sec:"B",ch:"Em",mel:[76,78,79,_,81,_,83,_,81,_,79,_,76,_,_,_]},
+    {sec:"B",ch:"G", mel:[79,_,81,_,83,_,86,_,83,_,81,_,79,_,_,_]},
+    {sec:"B",ch:"D", mel:[81,_,83,_,86,_,_,_,88,_,86,_,83,_,81,_]},
+    {sec:"B",ch:"A", mel:[85,_,83,_,81,_,78,_,81,_,_,_,85,_,88,_],fill:1},
+    {sec:"C",ch:"D", crash:1,mel:[86,_,_,_,_,_,_,_,83,_,_,_,81,_,_,_],har:[81,_,_,_,_,_,_,_,78,_,_,_,74,_,_,_]},
+    {sec:"C",ch:"G", mel:[83,_,_,_,_,_,_,_,79,_,_,_,81,_,_,_],har:[79,_,_,_,_,_,_,_,74,_,_,_,71,_,_,_]},
+    {sec:"C",ch:"D", mel:[86,_,_,_,_,_,83,_,81,_,_,_,83,_,_,_],har:[81,_,_,_,_,_,78,_,74,_,_,_,78,_,_,_]},
+    {sec:"C",ch:"A", mel:[85,_,_,_,_,_,_,_,81,_,_,_,85,_,_,_],har:[81,_,_,_,_,_,_,_,76,_,_,_,81,_,_,_]},
+    {sec:"C",ch:"D", crash:1,mel:[86,_,_,_,88,_,_,_,90,_,_,_,_,_,_,_],har:[78,_,_,_,81,_,_,_,86,_,_,_,_,_,_,_]},
+    {sec:"C",ch:"G", mel:[88,_,_,_,_,_,_,_,83,_,_,_,79,_,_,_],har:[83,_,_,_,_,_,_,_,79,_,_,_,74,_,_,_]},
+    {sec:"C",ch:"Bm",mel:[86,_,_,_,_,_,83,_,81,_,_,_,83,_,_,_],har:[78,_,_,_,_,_,74,_,71,_,_,_,74,_,_,_]},
+    {sec:"C",ch:"A", mel:[85,_,_,_,81,_,_,_,86,_,_,_,_,_,85,_],har:[76,_,_,_,73,_,_,_,76,_,_,_,_,_,73,_],fill:1},
   ]},
- {name:"♪3 もりのぼうけん", desc:"やさしくて ゆったりした森の曲", bpm:118,
+ {name:"♪ D2 かぜのジグ", desc:"D風。ぴょんぴょん跳ねるジグ・約51秒", bpm:132, fiddle:true,
   chd:{
-    F:{bass:29,pad:[53,57,60],ost:[41,48,53,57,60]},
-    Bb:{bass:34,pad:[58,62,65],ost:[46,50,58,62,65]},
-    Dm:{bass:26,pad:[50,53,57],ost:[38,45,50,53,57]},
-    C:{bass:36,pad:[55,60,64],ost:[43,48,55,60,64]},
-    Gm:{bass:31,pad:[55,58,62],ost:[43,50,55,58,62]},
-    A:{bass:33,pad:[57,61,64],ost:[45,49,57,61,64]},
+    G:{bass:31,pad:[59,62,67],ost:[43,55,59,62,67]},
+    C:{bass:36,pad:[60,64,67],ost:[48,55,60,64,67]},
+    D:{bass:26,pad:[62,66,69],ost:[50,57,62,66,69]},
+    Em:{bass:28,pad:[55,59,64],ost:[40,52,55,59,64]},
+    Am:{bass:33,pad:[57,60,64],ost:[45,52,57,60,64]},
   },
   song:[
-    {sec:"in",ch:"F", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"Bb",mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"F", mel:[77,_,_,_,_,_,_,_,76,_,_,_,_,_,_,_]},
-    {sec:"in",ch:"C", mel:[79,_,_,_,_,_,81,_,84,_,_,_,_,_,_,_],fill:1},
-    {sec:"A",ch:"F", mel:[77,_,_,_,76,_,74,_,72,_,_,_,74,_,_,_]},
-    {sec:"A",ch:"C", mel:[76,_,_,_,79,_,_,_,76,_,_,_,_,_,_,_]},
-    {sec:"A",ch:"Bb",mel:[77,_,_,_,81,_,_,_,79,_,77,_,76,_,_,_]},
-    {sec:"A",ch:"F", mel:[74,_,_,_,76,_,_,_,77,_,_,_,_,_,_,_]},
-    {sec:"A",ch:"Dm",mel:[74,_,_,_,77,_,_,_,81,_,_,_,79,_,_,_]},
-    {sec:"A",ch:"Gm",mel:[79,_,_,_,77,_,74,_,77,_,_,_,_,_,_,_]},
-    {sec:"A",ch:"F", mel:[81,_,_,_,79,_,77,_,76,_,_,_,77,_,_,_]},
-    {sec:"A",ch:"C", mel:[76,_,_,_,72,_,_,_,76,_,_,_,_,_,_,_],fill:1},
-    {sec:"B",ch:"Bb",mel:[81,_,84,_,82,_,81,_,79,_,_,_,81,_,_,_]},
-    {sec:"B",ch:"F", mel:[79,_,81,_,84,_,_,_,81,_,79,_,77,_,_,_]},
-    {sec:"B",ch:"Dm",mel:[81,_,79,_,77,_,79,_,81,_,_,_,84,_,_,_]},
-    {sec:"B",ch:"C", mel:[84,_,81,_,79,_,81,_,84,_,_,_,86,_,_,_]},
-    {sec:"B",ch:"Gm",mel:[79,_,82,_,86,_,_,_,82,_,79,_,77,_,_,_]},
-    {sec:"B",ch:"F", mel:[81,_,84,_,88,_,_,_,84,_,81,_,79,_,_,_]},
-    {sec:"B",ch:"Dm",mel:[86,_,84,_,81,_,84,_,86,_,_,_,81,_,_,_]},
+    {sec:"in",ch:"G", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
+    {sec:"in",ch:"C", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
+    {sec:"in",ch:"G", mel:[83,_,_,81,_,79,_,_,81,_,_,_,_,_,_,_]},
+    {sec:"in",ch:"D", mel:[81,_,_,83,_,86,_,_,85,_,83,_,81,_,_,_],fill:1},
+    {sec:"A",ch:"G", mel:[79,_,_,81,_,83,_,_,81,_,_,79,_,76,_,_]},
+    {sec:"A",ch:"C", mel:[84,_,_,83,_,81,_,_,79,_,_,81,_,84,_,_]},
+    {sec:"A",ch:"G", mel:[83,_,_,81,_,79,_,_,76,_,_,79,_,81,_,_]},
+    {sec:"A",ch:"D", mel:[81,_,_,83,_,85,_,_,86,_,_,85,_,83,_,_]},
+    {sec:"A",ch:"G", mel:[79,_,_,81,_,83,_,_,86,_,_,83,_,81,_,_]},
+    {sec:"A",ch:"Em",mel:[83,_,_,81,_,79,_,_,81,_,_,76,_,79,_,_]},
+    {sec:"A",ch:"C", mel:[81,_,_,84,_,83,_,_,81,_,_,79,_,81,_,_]},
+    {sec:"A",ch:"D", mel:[83,_,_,81,_,78,_,_,81,_,_,86,_,_,_,_],fill:1},
+    {sec:"B",ch:"G", mel:[79,_,81,_,83,_,81,_,79,_,76,_,79,_,_,_]},
+    {sec:"B",ch:"Em",mel:[76,_,79,_,81,_,79,_,83,_,81,_,79,_,_,_]},
+    {sec:"B",ch:"C", mel:[84,_,81,_,79,_,81,_,84,_,86,_,84,_,_,_]},
+    {sec:"B",ch:"G", mel:[83,_,86,_,88,_,86,_,83,_,81,_,83,_,_,_]},
+    {sec:"B",ch:"Am",mel:[81,_,79,_,76,_,79,_,81,_,84,_,81,_,_,_]},
+    {sec:"B",ch:"C", mel:[84,_,86,_,84,_,81,_,79,_,81,_,84,_,_,_]},
+    {sec:"B",ch:"G", mel:[86,_,83,_,81,_,83,_,86,_,_,_,83,_,81,_]},
+    {sec:"B",ch:"D", mel:[85,_,83,_,81,_,83,_,85,_,_,_,88,_,_,_],fill:1},
+    {sec:"C",ch:"G", crash:1,mel:[83,_,_,_,_,_,_,_,86,_,_,_,83,_,_,_],har:[79,_,_,_,_,_,_,_,74,_,_,_,71,_,_,_]},
+    {sec:"C",ch:"C", mel:[84,_,_,_,_,_,_,_,81,_,_,_,79,_,_,_],har:[79,_,_,_,_,_,_,_,76,_,_,_,72,_,_,_]},
+    {sec:"C",ch:"G", mel:[86,_,_,_,_,_,83,_,81,_,_,_,83,_,_,_],har:[79,_,_,_,_,_,74,_,71,_,_,_,74,_,_,_]},
+    {sec:"C",ch:"D", mel:[86,_,_,_,_,_,_,_,83,_,_,_,86,_,_,_],har:[81,_,_,_,_,_,_,_,78,_,_,_,81,_,_,_]},
+    {sec:"C",ch:"Em",crash:1,mel:[84,_,_,_,86,_,_,_,88,_,_,_,_,_,_,_],har:[76,_,_,_,79,_,_,_,84,_,_,_,_,_,_,_]},
+    {sec:"C",ch:"C", mel:[88,_,_,_,_,_,_,_,84,_,_,_,81,_,_,_],har:[84,_,_,_,_,_,_,_,79,_,_,_,76,_,_,_]},
+    {sec:"C",ch:"Am",mel:[86,_,_,_,_,_,83,_,81,_,_,_,84,_,_,_],har:[81,_,_,_,_,_,76,_,72,_,_,_,76,_,_,_]},
+    {sec:"C",ch:"D", mel:[86,_,_,_,83,_,_,_,86,_,_,_,_,_,83,_],har:[81,_,_,_,78,_,_,_,81,_,_,_,_,_,78,_],fill:1},
+  ]},
+ {name:"♪ D3 ようせいリール", desc:"D風。速くてキラキラしたリール・約46秒", bpm:146, fiddle:true,
+  chd:{
+    Em:{bass:28,pad:[55,59,64],ost:[40,52,55,59,64]},
+    G:{bass:31,pad:[59,62,67],ost:[43,55,59,62,67]},
+    D:{bass:26,pad:[62,66,69],ost:[50,57,62,66,69]},
+    C:{bass:36,pad:[60,64,67],ost:[48,55,60,64,67]},
+    A:{bass:33,pad:[57,61,64],ost:[45,52,57,61,64]},
+  },
+  song:[
+    {sec:"in",ch:"Em",mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
+    {sec:"in",ch:"G", mel:[0,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
+    {sec:"in",ch:"Em",mel:[83,_,_,_,81,_,79,_,76,_,_,_,_,_,_,_]},
+    {sec:"in",ch:"D", mel:[78,_,_,_,81,_,83,_,85,_,_,_,_,_,_,_],fill:1},
+    {sec:"A",ch:"Em",mel:[76,_,78,_,79,_,81,_,79,_,78,_,76,_,78,_]},
+    {sec:"A",ch:"G", mel:[79,_,81,_,83,_,81,_,79,_,76,_,79,_,_,_]},
+    {sec:"A",ch:"Em",mel:[76,_,78,_,79,_,81,_,83,_,81,_,79,_,78,_]},
+    {sec:"A",ch:"D", mel:[81,_,_,_,78,_,76,_,78,_,81,_,83,_,_,_]},
+    {sec:"A",ch:"Em",mel:[88,_,86,_,83,_,81,_,83,_,81,_,79,_,81,_]},
+    {sec:"A",ch:"C", mel:[84,_,83,_,81,_,79,_,81,_,79,_,76,_,_,_]},
+    {sec:"A",ch:"Em",mel:[79,_,81,_,83,_,86,_,83,_,81,_,79,_,81,_]},
+    {sec:"A",ch:"A", mel:[85,_,_,_,81,_,_,_,85,_,_,_,88,_,_,_],fill:1},
+    {sec:"B",ch:"Em",mel:[76,78,79,81,83,_,81,_,79,_,81,_,83,_,_,_]},
+    {sec:"B",ch:"G", mel:[83,81,79,81,83,_,86,_,83,_,81,_,79,_,_,_]},
+    {sec:"B",ch:"C", mel:[84,_,81,_,84,_,86,_,88,_,86,_,84,_,_,_]},
+    {sec:"B",ch:"Em",mel:[88,_,86,_,83,_,81,_,79,_,81,_,83,_,_,_]},
+    {sec:"B",ch:"G", mel:[79,81,83,_,86,_,83,_,81,_,79,_,81,_,_,_]},
+    {sec:"B",ch:"D", mel:[81,83,85,_,83,_,81,_,78,_,81,_,83,_,_,_]},
+    {sec:"B",ch:"Em",mel:[76,_,79,_,83,_,86,_,88,_,86,_,83,_,_,_]},
     {sec:"B",ch:"A", mel:[85,_,81,_,76,_,81,_,85,_,_,_,88,_,_,_],fill:1},
-    {sec:"C",ch:"F", crash:1,mel:[81,_,_,_,_,_,_,_,84,_,_,_,81,_,_,_],har:[77,_,_,_,_,_,_,_,81,_,_,_,77,_,_,_]},
-    {sec:"C",ch:"Bb",mel:[86,_,_,_,_,_,_,_,82,_,_,_,81,_,_,_],har:[82,_,_,_,_,_,_,_,79,_,_,_,77,_,_,_]},
-    {sec:"C",ch:"F", mel:[84,_,_,_,_,_,81,_,79,_,_,_,81,_,_,_],har:[81,_,_,_,_,_,77,_,76,_,_,_,77,_,_,_]},
-    {sec:"C",ch:"C", mel:[84,_,_,_,_,_,_,_,79,_,_,_,81,_,_,_],har:[79,_,_,_,_,_,_,_,76,_,_,_,79,_,_,_]},
-    {sec:"C",ch:"Dm",crash:1,mel:[81,_,_,_,84,_,_,_,89,_,_,_,_,_,_,_],har:[77,_,_,_,81,_,_,_,86,_,_,_,_,_,_,_]},
-    {sec:"C",ch:"Bb",mel:[89,_,_,_,_,_,_,_,86,_,_,_,82,_,_,_],har:[86,_,_,_,_,_,_,_,82,_,_,_,79,_,_,_]},
-    {sec:"C",ch:"Gm",mel:[86,_,_,_,_,_,82,_,79,_,_,_,82,_,_,_],har:[82,_,_,_,_,_,79,_,76,_,_,_,79,_,_,_]},
-    {sec:"C",ch:"C", mel:[84,_,_,_,81,_,_,_,77,_,_,_,_,_,81,_],har:[79,_,_,_,77,_,_,_,74,_,_,_,_,_,77,_],fill:1},
+    {sec:"C",ch:"Em",crash:1,mel:[83,_,_,_,_,_,_,_,79,_,_,_,76,_,_,_],har:[79,_,_,_,_,_,_,_,76,_,_,_,71,_,_,_]},
+    {sec:"C",ch:"G", mel:[86,_,_,_,_,_,_,_,83,_,_,_,79,_,_,_],har:[83,_,_,_,_,_,_,_,79,_,_,_,74,_,_,_]},
+    {sec:"C",ch:"Em",mel:[88,_,_,_,_,_,83,_,81,_,_,_,83,_,_,_],har:[84,_,_,_,_,_,79,_,76,_,_,_,79,_,_,_]},
+    {sec:"C",ch:"D", mel:[86,_,_,_,_,_,_,_,83,_,_,_,85,_,_,_],har:[81,_,_,_,_,_,_,_,78,_,_,_,81,_,_,_]},
+    {sec:"C",ch:"Em",crash:1,mel:[83,_,_,_,86,_,_,_,88,_,_,_,_,_,_,_],har:[79,_,_,_,83,_,_,_,84,_,_,_,_,_,_,_]},
+    {sec:"C",ch:"C", mel:[88,_,_,_,_,_,_,_,86,_,_,_,84,_,_,_],har:[84,_,_,_,_,_,_,_,79,_,_,_,76,_,_,_]},
+    {sec:"C",ch:"G", mel:[86,_,_,_,_,_,83,_,79,_,_,_,83,_,_,_],har:[83,_,_,_,_,_,79,_,74,_,_,_,79,_,_,_]},
+    {sec:"C",ch:"A", mel:[85,_,_,_,81,_,_,_,88,_,_,_,_,_,85,_],har:[81,_,_,_,76,_,_,_,85,_,_,_,_,_,81,_],fill:1},
+  ]},
+ /* H「しっそうケルト」：ユーザーが最終候補から選んだ曲。Dの世界観の
+    まま速く（156 BPM）、16分音符の駆け上がりを多用して推進力を
+    強めたバトル向きの1曲。イントロから旋律が走り出す。 */
+ {name:"♪ H しっそうケルト", desc:"えらばれた曲！速くて推進力のあるケルト、バトル向き・約43秒", bpm:156, fiddle:true,
+  chd:{
+    D:{bass:26,pad:[62,66,69],ost:[50,57,62,66,69]},
+    G:{bass:31,pad:[59,62,67],ost:[43,55,59,62,67]},
+    A:{bass:33,pad:[57,61,64],ost:[45,52,57,61,64]},
+    Bm:{bass:35,pad:[59,62,66],ost:[47,54,59,62,66]},
+    Em:{bass:28,pad:[55,59,64],ost:[40,52,55,59,64]},
+  },
+  song:[
+    {sec:"in",ch:"D", mel:[74,_,76,78,81,_,78,76,74,_,76,78,81,_,_,_]},
+    {sec:"in",ch:"G", mel:[79,_,81,79,78,_,76,78,79,_,_,_,76,_,_,_]},
+    {sec:"in",ch:"D", mel:[86,_,83,81,83,_,81,78,81,_,83,86,88,_,_,_]},
+    {sec:"in",ch:"A", mel:[85,_,83,81,85,_,88,85,81,_,83,85,86,_,_,_],fill:1},
+    {sec:"A",ch:"D", mel:[74,76,78,81,83,81,78,81,86,83,81,78,81,78,76,_]},
+    {sec:"A",ch:"G", mel:[79,81,83,86,83,81,79,81,79,76,78,79,81,_,79,_]},
+    {sec:"A",ch:"D", mel:[74,76,78,81,86,_,83,81,83,86,88,86,83,81,78,_]},
+    {sec:"A",ch:"A", mel:[81,83,85,88,85,83,81,83,81,78,76,78,81,_,_,_]},
+    {sec:"A",ch:"D", mel:[86,_,83,81,78,81,83,86,88,86,83,81,83,81,78,_]},
+    {sec:"A",ch:"G", mel:[83,81,79,81,83,86,83,81,79,76,78,79,81,_,_,_]},
+    {sec:"A",ch:"Bm",mel:[78,81,83,86,83,81,78,81,76,74,76,78,81,78,76,_]},
+    {sec:"A",ch:"A", mel:[78,81,85,88,85,81,78,81,85,_,88,_,90,_,_,_],fill:1},
+    {sec:"B",ch:"Em",mel:[76,79,81,83,81,79,76,79,81,83,86,83,81,79,76,_]},
+    {sec:"B",ch:"G", mel:[79,81,83,86,88,86,83,81,83,86,83,81,79,76,_,_]},
+    {sec:"B",ch:"D", mel:[86,88,90,88,86,83,81,83,86,83,81,78,81,83,_,_]},
+    {sec:"B",ch:"Bm",mel:[83,81,78,81,83,86,83,81,78,76,74,76,78,81,_,_]},
+    {sec:"B",ch:"Em",mel:[76,78,79,81,83,86,83,81,79,81,79,76,79,76,_,_]},
+    {sec:"B",ch:"G", mel:[83,86,88,86,83,81,79,81,83,79,76,79,81,_,_,_]},
+    {sec:"B",ch:"D", mel:[81,83,86,88,90,88,86,83,86,_,83,81,83,86,_,_]},
+    {sec:"B",ch:"A", mel:[85,88,90,88,85,83,81,85,88,_,90,_,92,_,_,_],fill:1},
+    {sec:"C",ch:"D", crash:1,mel:[86,_,_,83,_,81,_,83,86,_,_,_,88,_,_,_],har:[81,_,_,_,78,_,_,_,74,_,_,_,78,_,_,_]},
+    {sec:"C",ch:"G", mel:[88,_,_,86,_,83,_,81,83,_,_,_,86,_,_,_],har:[83,_,_,_,79,_,_,_,74,_,_,_,79,_,_,_]},
+    {sec:"C",ch:"D", mel:[90,_,_,88,_,86,_,83,86,_,_,_,83,_,_,_],har:[86,_,_,_,81,_,_,_,78,_,_,_,74,_,_,_]},
+    {sec:"C",ch:"A", mel:[88,_,_,85,_,81,_,83,85,_,_,_,88,_,_,_],har:[85,_,_,_,81,_,_,_,76,_,_,_,81,_,_,_]},
+    {sec:"C",ch:"D", crash:1,mel:[86,_,_,_,88,_,_,_,90,_,_,_,92,_,_,_],har:[81,_,_,_,83,_,_,_,86,_,_,_,_,_,_,_]},
+    {sec:"C",ch:"G", mel:[90,_,_,_,_,_,88,_,86,_,_,_,83,_,_,_],har:[86,_,_,_,_,_,83,_,79,_,_,_,74,_,_,_]},
+    {sec:"C",ch:"Bm",mel:[88,_,_,_,_,_,86,_,83,_,_,_,81,_,_,_],har:[83,_,_,_,_,_,78,_,74,_,_,_,71,_,_,_]},
+    {sec:"C",ch:"A", mel:[85,_,_,_,88,_,_,_,90,_,_,_,_,_,88,_],har:[81,_,_,_,85,_,_,_,86,_,_,_,_,_,85,_],fill:1},
   ]},
 ];
-let curTrack=0;
-try{ const v=parseInt(localStorage.getItem("yhp_bgm_track")||"0",10); if(v>=0&&v<TRACKS.length)curTrack=v; }catch(e){}
+let curTrack=3; /* 未選択時のデフォルトは、選ばれた H（インデックス3） */
+try{ const v=parseInt(localStorage.getItem("yhp_bgm_track")||"3",10); if(v>=0&&v<TRACKS.length)curTrack=v; }catch(e){}
 function renderTrackList(){ const el=document.getElementById("trackList"); if(!el)return;
   el.innerHTML=TRACKS.map((t,i)=>'<button class="track-btn'+(i===curTrack?" sel":"")+(bgmOn&&i===curTrack?" playing":"")+'" data-track="'+i+'"><span class="t-play">'+(bgmOn&&i===curTrack?"⏸":"▶")+'</span><span class="t-name">'+t.name+'<small>'+t.desc+'</small></span><span class="t-check">✔</span></button>').join("");
   el.querySelectorAll(".track-btn").forEach(b=>b.onclick=()=>selectTrack(parseInt(b.dataset.track,10))); }
@@ -640,7 +743,8 @@ function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
     /* ---- 主旋律（金管）：書かれた長さいっぱいに伸ばして歌わせる ---- */
     const mel=bar.mel[s];
     if(typeof mel==="number"&&mel>0){ const len=noteLen(bar.mel,s);
-      bgmLead(mel+shift, len*stepSec*(len>=6?.97:.93), sec==="C"?.07:.062); }
+      if(TD&&TD.fiddle) bgmFiddle(mel+shift, len*stepSec*(len>=6?.97:.93), sec==="C"?.068:.06);
+      else bgmLead(mel+shift, len*stepSec*(len>=6?.97:.93), sec==="C"?.07:.062); }
     /* ---- ハモリ（サビのみ、長い音で下に重ねる） ---- */
     if(bar.har){ const hv=bar.har[s];
       if(typeof hv==="number"&&hv>0){ const len=noteLen(bar.har,s);
@@ -953,19 +1057,19 @@ function boomSE(attr){
     const o=c.createOscillator(), og=c.createGain();
     o.type="sine"; o.frequency.setValueAtTime(attr==="fire"?160:attr==="water"?120:140,t);
     o.frequency.exponentialRampToValueAtTime(38,t+.38);
-    og.gain.setValueAtTime(.5,t); og.gain.exponentialRampToValueAtTime(.001,t+.45);
+    og.gain.setValueAtTime(.72,t); og.gain.exponentialRampToValueAtTime(.001,t+.45);
     o.connect(og); og.connect(c.destination); o.start(t); o.stop(t+.5);
     const len=Math.floor(c.sampleRate*.42), buf=c.createBuffer(1,len,c.sampleRate), d=buf.getChannelData(0);
     for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,1.4);
     const src=c.createBufferSource(); src.buffer=buf;
     const f=c.createBiquadFilter(); f.type=attr==="water"?"bandpass":"lowpass"; f.frequency.value=attr==="fire"?900:attr==="water"?1400:1100; f.Q.value=.7;
-    const g=c.createGain(); g.gain.setValueAtTime(attr==="fire"?.42:.3,t); g.gain.exponentialRampToValueAtTime(.001,t+.42);
+    const g=c.createGain(); g.gain.setValueAtTime(attr==="fire"?.62:.45,t); g.gain.exponentialRampToValueAtTime(.001,t+.42);
     src.connect(f); f.connect(g); g.connect(c.destination); src.start(t);
     if(attr==="fire"){ /* 炎のゴォーという吹き上がり */
       const src2=c.createBufferSource(); src2.buffer=buf;
       const f2=c.createBiquadFilter(); f2.type="bandpass"; f2.Q.value=1.2;
       f2.frequency.setValueAtTime(400,t); f2.frequency.exponentialRampToValueAtTime(1800,t+.3);
-      const g2=c.createGain(); g2.gain.setValueAtTime(.18,t); g2.gain.exponentialRampToValueAtTime(.001,t+.5);
+      const g2=c.createGain(); g2.gain.setValueAtTime(.3,t); g2.gain.exponentialRampToValueAtTime(.001,t+.5);
       src2.connect(f2); f2.connect(g2); g2.connect(c.destination); src2.start(t+.03);
     }
   }catch(e){}
