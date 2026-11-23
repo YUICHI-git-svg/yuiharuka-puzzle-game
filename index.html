@@ -139,6 +139,10 @@
   .luci-bubble::after{content:"";position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);
     border:10px solid transparent;border-top-color:#fff;border-bottom:0;}
   .luci-bubble.show{animation:lucib 2.8s ease forwards;}
+  /* セリフはルシファー（スコアアタック）専用：それ以外のバトルでは
+     ふきだしを絶対に表示しない（残っていた要素が画面の再表示で
+     アニメーション再生され、別の敵が喋っているように見える事故防止） */
+  #battle:not(.score) .luci-bubble{display:none !important;}
   @keyframes lucib{0%{opacity:0;transform:translateX(-50%) translateY(6px) scale(.85);}12%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}80%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-6px) scale(.98);}}
   /* スコアアタック中のHUD（のこりターン・スコア・さいだいコンボ） */
   #scoreHud{display:flex;align-items:flex-start;justify-content:space-between;gap:.4rem;margin:.12rem .45rem 0;
@@ -398,7 +402,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.58</div>
+    <div class="ver-line">ver 1.0.60</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <p class="recruit-legend"><span class="recruit yes">✓ なかま</span><span>は もう なかまに なってるよ。</span></p>
@@ -743,29 +747,36 @@ function sanitizeSave(p){
   party=party.filter((id,i)=>party.indexOf(id)===i).slice(0,5);
   if(!party.length) party=own.slice(0,3);
   const cleared=Array.isArray(p.cleared)?p.cleared.filter(n=>typeof n==="number"&&n>=1&&n<=14):[];
-  /* スコアアタックの記録：正の数だけを残し、高い順に上位5件まで */
-  const scores=Array.isArray(p.scores)?p.scores.filter(v=>typeof v==="number"&&isFinite(v)&&v>0).map(v=>Math.floor(v)).sort((a,b)=>b-a).slice(0,5):[];
+  /* スコアアタックの記録：正の数だけを残し、高い順に上位5件まで。
+     同じ点数の重複は1件にまとめる（過去の不具合で増殖した記録も
+     ここで自動的に直る） */
+  const rawScores=Array.isArray(p.scores)?p.scores.filter(v=>typeof v==="number"&&isFinite(v)&&v>0).map(v=>Math.floor(v)).sort((a,b)=>b-a):[];
+  const scores=rawScores.filter((v,i)=>rawScores.indexOf(v)===i).slice(0,5);
   return { owned:own, party:party, cleared:cleared, scores:scores };
 }
 function saveScore(s){ return s.owned.length*100+s.cleared.length*10+s.party.length; }
 function loadStoredSave(){
   let best=null;
-  const allScores=[];
+  let bestScores=[];
   try{
     [SAVE_KEY,SAVE_BAK_KEY].concat(LEGACY_SAVE_KEYS).forEach(k=>{
       try{
         const raw=localStorage.getItem(k); if(!raw) return;
         const s=sanitizeSave(JSON.parse(raw)); if(!s) return;
-        /* スコア記録は「いちばん進んだ記録」の採用とは別に、
-           残っている全ての保存先から集めて上位5件を残す
-           （記録がバックアップ側にだけ残っていても消えない） */
-        s.scores.forEach(v=>allScores.push(v));
+        /* スコア記録は保存先ごとに「同じ記録の別コピー」であって
+           別々の記録ではない。全保存先から寄せ集めると、メインと
+           バックアップに同じ点数が入っているだけで重複してしまう
+           （実際に同じ点数でTOP5が埋まった不具合の原因）。
+           そのため、いちばん多く記録が残っている保存先のリストを
+           そのまま採用する（バックアップ側にだけ記録が残って
+           いても消えない） */
+        if(s.scores.length>bestScores.length) bestScores=s.scores;
         if(!best||saveScore(s)>saveScore(best)) best=s;
       }catch(e){}
     });
   }catch(e){}
   if(best){ singleSave.owned=best.owned; singleSave.party=best.party; singleSave.cleared=best.cleared; }
-  if(allScores.length) singleSave.scores=allScores.sort((a,b)=>b-a).slice(0,5);
+  if(bestScores.length) singleSave.scores=bestScores;
 }
 function persistSave(){
   try{
@@ -1563,6 +1574,12 @@ function startBattle(st){
   $("battle").classList.toggle("challenge",!!st.challenge);
   $("battle").classList.toggle("satan",!!st.satan);
   $("battle").classList.toggle("score",!!st.score);
+  /* セリフはルシファーだけ：前のバトルのふきだし要素が敵エリアに
+     残っていると、バトル画面の再表示でアニメーションが再生され、
+     ゼウスやサタンなど別の敵まで喋っているように見えてしまう。
+     バトル開始のたびに必ず取り除き、スコアアタック（ルシファー戦）
+     のときだけ showLuciComment が作り直す */
+  { const oldBubble=$("enemyStage").querySelector(".luci-bubble"); if(oldBubble)oldBubble.remove(); }
   /* スコアアタックでは敵は攻撃しないので攻撃カウントとパーティHPを
      隠し、代わりにスコアHUD（のこりターン・スコア・最大コンボ）を出す */
   $("atkBadge").style.display=st.score?"none":"";
@@ -1625,6 +1642,9 @@ const LUCI_COMMENTS=[
   [26000,"わたしを こえる つもりか…！"]
 ];
 function showLuciComment(text){
+  /* 喋るのはルシファーだけ：スコアアタック以外・敵がルシファー
+     以外のときは、呼ばれてもふきだしを出さない */
+  if(!B||!B.scoreMode||!B.enemy||B.enemy.id!=="lucifer")return;
   const stage=$("enemyStage"); if(!stage)return;
   let el=stage.querySelector(".luci-bubble");
   if(!el){ el=document.createElement("div"); el.className="luci-bubble"; stage.appendChild(el); }
@@ -2416,7 +2436,7 @@ function closeSheet(){
   const ov=$("overlay"); ov.classList.add("hidden"); ov.style.display="";
   hideResultPanel();
 }
-function backHome(){ closeSheet(); B=null; $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); unlockBattleScreen(); renderHome(); if(bgmOn)startBGM(); /* ホームに戻ったらタイトル曲へ */ }
+function backHome(){ closeSheet(); B=null; { const ob=$("enemyStage").querySelector(".luci-bubble"); if(ob)ob.remove(); } $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); unlockBattleScreen(); renderHome(); if(bgmOn)startBGM(); /* ホームに戻ったらタイトル曲へ */ }
 $("quitBtn").onclick=backHome;
 $("overlay").addEventListener("click",e=>{ if(e.target===$("overlay"))closeSheet(); });
 function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
