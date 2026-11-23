@@ -68,8 +68,6 @@
   .odot.fire{background:#ff5a4e;} .odot.water{background:#3fa9f5;} .odot.forest{background:#3ecf6e;}
   .odot.heal{background:#ff7eb0;} .odot.light{background:#ffd34d;} .odot.dark{background:#7c4dff;}
   .orb-drops .many{font-size:.55rem;color:var(--gold);font-weight:800;margin-left:2px;}
-  #orbInfo{display:flex;align-items:center;justify-content:center;gap:4px;padding:.14rem .4rem 0;font-size:.68rem;font-weight:800;color:#e9e6ff;text-shadow:0 1px 4px rgba(0,0,0,.9);flex-wrap:wrap;}
-  #orbInfo .odot{width:10px;height:10px;}
   /* チャレンジ戦では敵（ゼウス）を通常より大きく見せる */
   #battle.challenge .enemy-stage{height:23vh;height:23dvh;max-height:208px;}
   #battle.challenge #enemyArt img{max-height:23vh;max-height:23dvh;max-width:80vw;}
@@ -86,15 +84,16 @@
     font-size:1.05rem;padding:.65rem .05rem .55rem;box-shadow:0 0 14px rgba(157,107,255,.5);}
   .stage-btn.score small{font-size:.66rem;}
   .stage-btn.score .stage-thumb{height:58px;margin-top:-.65rem;}
-  /* ルシファーは「大きく待ち構える」見せ方にする：敵エリアを通常の
-     約2倍の高さにし、全面イラスト（透過なし）を cover で横いっぱいに
-     広げて、顔と翼が大きく迫る構図にする。下端はマスクで背景へ
-     溶かし、「四角い画像を貼っただけ」に見えないようにする。
-     盤面は fitBoard が残りの高さから自動で決めるので、敵を大きく
-     しても盤面がはみ出すことはない */
-  #battle.score .enemy-stage{height:32vh;height:32dvh;max-height:330px;}
+  /* ルシファーは「大きく待ち構える」見せ方にする：敵エリアの高さは
+     他のダンジョンと 同じ（通常の .enemy-stage と同じ 16.5vh）にし、
+     その代わり全面イラスト（透過なし）を cover で横いっぱいに広げて、
+     顔と翼が大きく迫る構図にする。以前は敵エリアを約2倍の高さに
+     していたが、その分 fitBoard が盤面を小さくしてしまい「盤面が
+     小さすぎる」との指摘を受けたため、高さでは稼がない。
+     下端はマスクで背景へ溶かし、「四角い画像を貼っただけ」に
+     見えないようにする */
   #battle.score #enemyArt{width:100%;}
-  #battle.score #enemyArt img{width:97vw;max-width:660px;height:100%;max-height:32vh;max-height:32dvh;
+  #battle.score #enemyArt img{width:97vw;max-width:660px;height:100%;max-height:16.5vh;max-height:16.5dvh;
     object-fit:cover;object-position:50% 32%;
     -webkit-mask-image:linear-gradient(180deg,#000 82%,transparent 99%);mask-image:linear-gradient(180deg,#000 82%,transparent 99%);}
   #enemyArt{position:relative;}
@@ -110,11 +109,11 @@
   .luci-bubble.show{animation:lucib 2.8s ease forwards;}
   @keyframes lucib{0%{opacity:0;transform:translateX(-50%) translateY(6px) scale(.85);}12%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}80%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-6px) scale(.98);}}
   /* スコアアタック中のHUD（のこりターン・スコア・さいだいコンボ） */
-  #scoreHud{display:flex;align-items:flex-start;justify-content:space-between;gap:.4rem;margin:.2rem .45rem 0;
-    background:rgba(10,8,28,.74);border:1px solid #7c4dff;border-radius:12px;padding:.34rem .65rem;}
-  #scoreHud .cell{font-size:.7rem;font-weight:800;color:var(--sub);text-align:center;line-height:1.3;min-width:4.2em;}
-  #scoreHud .cell b{display:block;font-size:1.12rem;color:var(--ink);line-height:1.2;}
-  #scoreHud .cell.score b{color:var(--gold);font-size:1.38rem;}
+  #scoreHud{display:flex;align-items:flex-start;justify-content:space-between;gap:.4rem;margin:.12rem .45rem 0;
+    background:rgba(10,8,28,.74);border:1px solid #7c4dff;border-radius:12px;padding:.2rem .6rem;}
+  #scoreHud .cell{font-size:.68rem;font-weight:800;color:var(--sub);text-align:center;line-height:1.25;min-width:4.2em;}
+  #scoreHud .cell b{display:block;font-size:1.02rem;color:var(--ink);line-height:1.15;}
+  #scoreHud .cell.score b{color:var(--gold);font-size:1.24rem;}
   /* スコアランキング（ホームのTOP5・結果画面 共通） */
   .score-list{display:flex;flex-direction:column;gap:.35rem;margin-top:.15rem;}
   .score-row{display:flex;align-items:center;gap:.55rem;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.42rem .6rem;font-weight:800;text-align:left;}
@@ -367,7 +366,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.55</div>
+    <div class="ver-line">ver 1.0.56</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <p class="recruit-legend"><span class="recruit yes">✓ なかま</span><span>は もう なかまに なってるよ。</span></p>
@@ -422,7 +421,6 @@
     <span class="ttl" id="stageTitle"></span>
     <button class="icon-btn" id="bgmBtn2">🎵 OFF</button>
   </div>
-  <div id="orbInfo"></div>
   <div class="enemy-zone">
     <div class="enemy-stage" id="enemyStage">
       <div id="enemyArt"></div>
@@ -642,7 +640,6 @@ function orbDotsHTML(st){
   if(st && st.bonus) h+='<span class="many">'+ATTR[st.bonus].name+' おおめ</span>';
   return h;
 }
-function orbNamesText(st){ return stageOrbTypes(st).map(t=>ATTR[t].name).join("・"); }
 /* パーティの総体力：バトルのパーティHPは固定値ではなく、
    パーティ全員の「たいりょく（hp）」の合計になる。強い仲間を
    集めて編成するほど総HPが増えて、敵の攻撃に長く耐えられる。
@@ -1531,7 +1528,6 @@ function startBattle(st){
   $("partyHpRow").classList.toggle("hidden",!!st.score);
   $("scoreHud").classList.toggle("hidden",!st.score);
   $("stageTitle").textContent=st.score?"🏆 スコアアタック":st.satan?"👿 サタンのダンジョン":st.challenge?"⚡ チャレンジステージ":"ステージ "+(st.disp||st.n);
-  $("orbInfo").innerHTML="おちるオーブ "+orbDotsHTML(st)+" "+orbNamesText(st);
   $("enemyArt").innerHTML=enemy.art();
   $("enemyArt").firstChild.classList.toggle("boss",!!st.boss);
   $("enemyName").textContent=enemy.name;
