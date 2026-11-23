@@ -322,7 +322,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.50</div>
+    <div class="ver-line">ver 1.0.51</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <p class="recruit-legend"><span class="recruit yes">✓ なかま</span><span>は もう なかまに なってるよ。</span></p>
@@ -1284,7 +1284,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.50";
+const APP_VER="1.0.51";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1595,12 +1595,15 @@ async function resolveBoard(){
   let combo=0, guard=0;
   const lBoost=lightBoostOn(); // ひかりの こうげき 2ばい が有効か（このターン中は不変）
   const tags=[]; // コンボ表示はコンボが終わるまで残す
-  /* 演出全体の時間予算：開始から4.5秒を超えたら残りの待ちを全て畳んで
+  /* 演出全体の時間予算：開始から8秒を超えたら残りの待ちを全て畳んで
      攻撃→結果画面へ進む。古いiPhoneでは1フレームの描画が重く、
      待ち時間ベースの演出が実時間で何倍にも膨らんで「固まった」
-     ように見えていた（特に大コンボで倒すターンが最長になる） */
+     ように見えていた（特に大コンボで倒すターンが最長になる）。
+     予算は以前4.5秒だったが、「何が揃ったか見える前にコンボが
+     決まってしまう」という要望で確認用の間を足した分、8秒に広げた
+     （15秒のウォッチドッグには収まる範囲） */
   const t0=Date.now();
-  const fast=()=>Date.now()-t0>4500;
+  const fast=()=>Date.now()-t0>8000;
   B.accRaw=B.accRaw.map(()=>0);
   while(true){
     /* 万一連鎖が止まらなくなっても画面が固まらないための上限 */
@@ -1626,6 +1629,9 @@ async function resolveBoard(){
         B.accDisp=B.accRaw.slice(); // 初期値（倍率なし）を表示
       }
       renderBattle(true);
+      /* 視認用の間：消える前に、揃ったオーブとCOMBOタグを盤面に
+         残したまま少し止める。何が揃ったか目で追えるようにする */
+      await wait(fast()?0:380);
       const bd=$("board").children;
       g.cells.forEach(ci=>{ if(bd[ci])bd[ci].classList.add("clearing"); });
       await wait(fast()?0:300);
@@ -1634,6 +1640,10 @@ async function resolveBoard(){
       /* オーブが着地するまで待ってから次の連鎖を見る（落下中に
          次の消去が始まるとアニメーション同士が重なって見えるため） */
       await wait(fast()?0:Math.max(130, B.fallMs||0));
+      /* 着地後の静止時間：落ちてきた盤面が止まった状態で少し置き、
+         次に何が揃っているかを視認してから次のコンボを決める
+         （要望：「視認する前にコンボが決まってしまう」対策） */
+      await wait(fast()?0:520);
     }
   }
   // コンボ終了：コンボ表示が1から順にシュンシュンと消えて、
