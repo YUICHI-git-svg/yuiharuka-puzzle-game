@@ -296,6 +296,9 @@
   .btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);}
   .btn:disabled{opacity:.4;}
   /* バージョン表記：タイトル下に小さく常時表示（公開のたびに末尾を+1） */
+  /* ホーム画面の背景：最初の仲間（森・水・炎のスライムたち）の世界に
+     合わせて、森と花畑のイラストを濃い暗幕の下に敷く */
+  #home{background:linear-gradient(rgba(17,15,38,.85),rgba(17,15,38,.94)),url("bg-forest.jpg") center top/cover no-repeat;min-height:100vh;min-height:100dvh;}
   .ver-line{text-align:center;font-size:.78rem;color:#a49fd0;margin:.05rem 0 .4rem;letter-spacing:.08em;}
   @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
 </style>
@@ -311,7 +314,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.40</div>
+    <div class="ver-line">ver 1.0.41</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
@@ -541,10 +544,21 @@ const BG_SCENES = {
  sea:'<img src="bg-sea.jpg" alt="">',
  space:'<img src="bg-space.jpg" alt="">',
  heaven:'<img src="bg-heaven.jpg" alt="">',
+ forest:'<img src="bg-forest.jpg" alt="">',
  demon:'<img src="bg-demon.jpg" alt="">',
 };
 /* ゼウス戦（12）は雲の上の天界神殿、サタン戦（13）は魔界の魔城が専用背景 */
-const STAGE_BG = {1:"ice",2:"volcano",3:"wasteland",4:"sea",5:"volcano",6:"temple",7:"sea",8:"space",9:"temple",10:"ice",11:"wasteland",12:"heaven",13:"demon"};
+/* ステージ背景は「敵キャラの属性・姿」に合わせて割り当てる（全体見直し）：
+   ほのおの敵（ドラゴン・フェニックス・ルビードラゴン）は火山、
+   みずの敵（アビス・エンシェント・サファイア）は深海、
+   もりの敵（グリーンドラゴン・フラワーフェアリー・エメラルド）は
+   新規の「森と花畑」（bg-forest.jpg：苔むした古木と花畑と池）、
+   スターフェアリーは星空の宇宙、ゼウスは天界、サタンは魔界。
+   以前は森ドラゴンが荒野、フェアリーが神殿、フェニックス（ボス）が
+   宇宙など、キャラと合わない組み合わせが多かったので揃えた */
+const STAGE_BG = {1:"space",2:"volcano",3:"forest",4:"sea",5:"volcano",6:"forest",7:"sea",8:"volcano",9:"forest",10:"sea",11:"volcano",12:"heaven",13:"demon"};
+/* シーン名→背景ファイル名（ホームのステージボタンのサムネイル用） */
+const SCENE_FILE = {temple:"bg-temple.jpg",wasteland:"bg-wasteland.jpg",volcano:"bg-volcano.jpg",ice:"bg-ice.jpg",sea:"bg-sea.jpg",space:"bg-space.jpg",heaven:"bg-heaven.jpg",demon:"bg-demon.jpg",forest:"bg-forest.jpg"};
 
 /* ================= セーブ（端末に保存・共通ひとつ） =================
    人ごとのデータ保持は不要になったため、記録は全員で共通のひとつだけ。
@@ -800,7 +814,7 @@ function bgmFlute(midi,dur,vol){ if(!bgmOn)return; const c=ac(),t=c.currentTime;
     lfo.start(t); lfo.stop(t+dur+.05); }
   o1.start(t); o2.start(t); o1.stop(t+dur+.05); o2.stop(t+dur+.05); }
 /* ---- BGM：ステージごとに、ジャンルから違う専用曲（バラエティ編） ----
-   TRACKS[0] の H「しっそうケルト」はホーム（タイトル）の曲として残し、
+   TRACKS[0] はホーム（タイトル）専用の落ち着いた曲で、
    バトル中はステージの背景シーン（氷原・火山・荒野・深海・神殿・宇宙・
    天界・魔界）に合わせた曲へ自動で切り替える（STAGE_TRACK で対応付け）。
    前版は全曲が同じ骨格（16小節構成・同じドラム/ベース/刻み・リード
@@ -813,46 +827,36 @@ function bgmFlute(midi,dur,vol){ if(!bgmOn)return; const c=ac(),t=c.currentTime;
    ループ時はイントロ（sec:"in" の小節）を飛ばしてAに戻る。 */
 const _=null;
 const TRACKS=[
- /* H「しっそうケルト」：ユーザーが最終候補から選んだ曲。Dの世界観の
-    まま速く（156 BPM）、16分音符の駆け上がりを多用して推進力を
-    強めたバトル向きの1曲。イントロから旋律が走り出す。 */
- {name:"♪ しっそうケルト", desc:"速くて推進力のあるケルト、バトル向き・約43秒", bpm:156, fiddle:true,
+ /* 0：ホーム（タイトル）― 落ち着いた曲に作り替えた（ユーザーの要望）。
+    以前の速いケルト（156 BPM・フィドル・刻み多め）はやめ、92 BPM の
+    ゆったりした子守歌ふうにした：ドラムは無し、ベースは小節いっぱいに
+    伸ばすロングトーン、主旋律は柔らかい soft 音色で長い音を歌わせ、
+    刻みは小節に2回だけの静かな置き音。進行は C→F→Am→G の穏やかな
+    循環で、ホームで長く聴いても疲れないようにした（calm:true） */
+ {name:"♪ そよかぜのこもりうた", desc:"ホーム：ドラムなし、柔らかい音色でゆったり歌う落ち着いた曲", bpm:92, lead:"soft", drum:"none", bass:"long", ost:"slow", calm:true,
   chd:{
-    D:{bass:26,pad:[62,66,69],ost:[50,57,62,66,69]},
-    G:{bass:31,pad:[59,62,67],ost:[43,55,59,62,67]},
-    A:{bass:33,pad:[57,61,64],ost:[45,52,57,61,64]},
-    Bm:{bass:35,pad:[59,62,66],ost:[47,54,59,62,66]},
-    Em:{bass:28,pad:[55,59,64],ost:[40,52,55,59,64]},
+    C:{bass:36,pad:[55,60,64],ost:[43,48,55,60,64]},
+    G:{bass:31,pad:[55,59,62],ost:[43,47,55,59,62]},
+    Am:{bass:33,pad:[57,60,64],ost:[45,52,57,60,64]},
+    F:{bass:29,pad:[53,57,60],ost:[41,48,53,57,60]},
+    Em:{bass:28,pad:[55,59,64],ost:[40,47,55,59,64]},
+    Dm:{bass:26,pad:[50,53,57],ost:[38,45,50,53,57]},
   },
   song:[
-    {sec:"in",ch:"D", mel:[74,_,76,78,81,_,78,76,74,_,76,78,81,_,_,_]},
-    {sec:"in",ch:"G", mel:[79,_,81,79,78,_,76,78,79,_,_,_,76,_,_,_]},
-    {sec:"in",ch:"D", mel:[86,_,83,81,83,_,81,78,81,_,83,86,88,_,_,_]},
-    {sec:"in",ch:"A", mel:[85,_,83,81,85,_,88,85,81,_,83,85,86,_,_,_],fill:1},
-    {sec:"A",ch:"D", mel:[74,76,78,81,83,81,78,81,86,83,81,78,81,78,76,_]},
-    {sec:"A",ch:"G", mel:[79,81,83,86,83,81,79,81,79,76,78,79,81,_,79,_]},
-    {sec:"A",ch:"D", mel:[74,76,78,81,86,_,83,81,83,86,88,86,83,81,78,_]},
-    {sec:"A",ch:"A", mel:[81,83,85,88,85,83,81,83,81,78,76,78,81,_,_,_]},
-    {sec:"A",ch:"D", mel:[86,_,83,81,78,81,83,86,88,86,83,81,83,81,78,_]},
-    {sec:"A",ch:"G", mel:[83,81,79,81,83,86,83,81,79,76,78,79,81,_,_,_]},
-    {sec:"A",ch:"Bm",mel:[78,81,83,86,83,81,78,81,76,74,76,78,81,78,76,_]},
-    {sec:"A",ch:"A", mel:[78,81,85,88,85,81,78,81,85,_,88,_,90,_,_,_],fill:1},
-    {sec:"B",ch:"Em",mel:[76,79,81,83,81,79,76,79,81,83,86,83,81,79,76,_]},
-    {sec:"B",ch:"G", mel:[79,81,83,86,88,86,83,81,83,86,83,81,79,76,_,_]},
-    {sec:"B",ch:"D", mel:[86,88,90,88,86,83,81,83,86,83,81,78,81,83,_,_]},
-    {sec:"B",ch:"Bm",mel:[83,81,78,81,83,86,83,81,78,76,74,76,78,81,_,_]},
-    {sec:"B",ch:"Em",mel:[76,78,79,81,83,86,83,81,79,81,79,76,79,76,_,_]},
-    {sec:"B",ch:"G", mel:[83,86,88,86,83,81,79,81,83,79,76,79,81,_,_,_]},
-    {sec:"B",ch:"D", mel:[81,83,86,88,90,88,86,83,86,_,83,81,83,86,_,_]},
-    {sec:"B",ch:"A", mel:[85,88,90,88,85,83,81,85,88,_,90,_,92,_,_,_],fill:1},
-    {sec:"C",ch:"D", crash:1,mel:[86,_,_,83,_,81,_,83,86,_,_,_,88,_,_,_],har:[81,_,_,_,78,_,_,_,74,_,_,_,78,_,_,_]},
-    {sec:"C",ch:"G", mel:[88,_,_,86,_,83,_,81,83,_,_,_,86,_,_,_],har:[83,_,_,_,79,_,_,_,74,_,_,_,79,_,_,_]},
-    {sec:"C",ch:"D", mel:[90,_,_,88,_,86,_,83,86,_,_,_,83,_,_,_],har:[86,_,_,_,81,_,_,_,78,_,_,_,74,_,_,_]},
-    {sec:"C",ch:"A", mel:[88,_,_,85,_,81,_,83,85,_,_,_,88,_,_,_],har:[85,_,_,_,81,_,_,_,76,_,_,_,81,_,_,_]},
-    {sec:"C",ch:"D", crash:1,mel:[86,_,_,_,88,_,_,_,90,_,_,_,92,_,_,_],har:[81,_,_,_,83,_,_,_,86,_,_,_,_,_,_,_]},
-    {sec:"C",ch:"G", mel:[90,_,_,_,_,_,88,_,86,_,_,_,83,_,_,_],har:[86,_,_,_,_,_,83,_,79,_,_,_,74,_,_,_]},
-    {sec:"C",ch:"Bm",mel:[88,_,_,_,_,_,86,_,83,_,_,_,81,_,_,_],har:[83,_,_,_,_,_,78,_,74,_,_,_,71,_,_,_]},
-    {sec:"C",ch:"A", mel:[85,_,_,_,88,_,_,_,90,_,_,_,_,_,88,_],har:[81,_,_,_,85,_,_,_,86,_,_,_,_,_,85,_],fill:1},
+    {sec:"in",ch:"C", mel:[76,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
+    {sec:"in",ch:"F", mel:[77,_,_,_,_,_,_,_,76,_,_,_,_,_,_,_]},
+    {sec:"A",ch:"C", mel:[79,_,_,_,_,_,_,_,76,_,_,_,_,_,_,_]},
+    {sec:"A",ch:"Am",mel:[76,_,_,_,_,_,_,_,72,_,_,_,_,_,_,_]},
+    {sec:"A",ch:"F", mel:[77,_,_,_,_,_,_,_,81,_,_,_,79,_,_,_]},
+    {sec:"A",ch:"G", mel:[79,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]},
+    {sec:"B",ch:"Em",mel:[76,_,_,_,79,_,_,_,83,_,_,_,79,_,_,_]},
+    {sec:"B",ch:"Am",mel:[81,_,_,_,_,_,_,_,79,_,_,_,76,_,_,_]},
+    {sec:"B",ch:"Dm",mel:[77,_,_,_,_,_,_,_,74,_,_,_,_,_,_,_]},
+    {sec:"B",ch:"G", mel:[74,_,_,_,_,_,_,_,79,_,_,_,_,_,_,_]},
+    {sec:"C",ch:"C", mel:[84,_,_,_,_,_,_,_,79,_,_,_,76,_,_,_],har:[79,_,_,_,_,_,_,_,76,_,_,_,72,_,_,_]},
+    {sec:"C",ch:"F", mel:[81,_,_,_,_,_,_,_,79,_,_,_,77,_,_,_],har:[77,_,_,_,_,_,_,_,72,_,_,_,69,_,_,_]},
+    {sec:"C",ch:"Am",mel:[79,_,_,_,_,_,_,_,76,_,_,_,_,_,_,_],har:[72,_,_,_,_,_,_,_,69,_,_,_,_,_,_,_]},
+    {sec:"C",ch:"G", mel:[79,_,_,_,_,_,_,_,74,_,_,_,_,_,_,_],har:[71,_,_,_,_,_,_,_,67,_,_,_,_,_,_,_]},
   ]},
  /* 1：氷原（ステージ1・10）― 3拍子のワルツ。鉄琴と「ドン・ツ・ツ」の
     ワルツ伴奏だけで、他の曲とは拍子からして違う（steps:12＝1小節3拍） */
@@ -1065,10 +1069,10 @@ const TRACKS=[
     {sec:"C",ch:"A", mel:[85,_,_,_,_,_,81,_,_,_,76,_,_,_,_,_],har:[81,_,_,_,_,_,_,_,76,_,_,_,73,_,_,_],fill:1},
   ]},
 ];
-const curTrack=0; /* ホーム（タイトル）の曲は H「しっそうケルト」 */
+const curTrack=0; /* ホーム（タイトル）の曲は TRACKS[0]「そよかぜのこもりうた」 */
 /* ステージ番号→曲（TRACKSの番号）。背景シーンと対応させている：
-   氷原=1、火山=2、荒野=3、深海=4、神殿=5、宇宙=6、天界=7、魔界=8 */
-const STAGE_TRACK={1:1,2:2,3:3,4:4,5:2,6:5,7:4,8:6,9:5,10:1,11:3,12:7,13:8};
+   宇宙=6、火山=2、森=3（笛の曲が森の空気に合う）、深海=4、天界=7、魔界=8 */
+const STAGE_TRACK={1:6,2:2,3:3,4:4,5:2,6:3,7:4,8:2,9:3,10:4,11:2,12:7,13:8};
 function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
   const shifts=[0,2,-3,5,0,3,-2,5,0,2,-3], shift=shifts[(curStage-1)%shifts.length]||0;
   const isBoss=(curStage===3||curStage===8||curStage===12||curStage===13);
@@ -1119,7 +1123,7 @@ function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
     {sec:"C",ch:"E", mel:[80,_,_,_,83,_,_,_,88,_,_,_,_,_,83,_],har:[76,_,_,_,80,_,_,_,83,_,_,_,_,_,80,_],fill:1},
   ];
   /* 曲データとテンポ：バトル中はステージのイメージに合った専用曲、
-     ホームではタイトル曲 H「しっそうケルト」を使う */
+     ホームではタイトル曲「そよかぜのこもりうた」を使う */
   const TD=(B&&STAGE_TRACK[curStage]!=null)?TRACKS[STAGE_TRACK[curStage]]:TRACKS[curTrack];
   if(TD&&TD.song){ CHD=TD.chd; SONG=TD.song; }
   const STEPS=(TD&&TD.steps)?TD.steps:16; /* 1小節のステップ数（3拍子の曲は12） */
@@ -1239,7 +1243,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.40";
+const APP_VER="1.0.41";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1252,6 +1256,10 @@ function renderHome(){
     const e=charById(st.enemy), un=stageUnlocked(st), cl=save().cleared.includes(st.n);
     const b=document.createElement("button");
     b.className="stage-btn"+(st.boss?" boss":"")+(st.challenge?" challenge":"")+(st.satan?" satan":"")+(cl?" cleared":"")+(!un?" locked":"");
+    /* ボタンの地にも、そのステージの背景イラストを薄く敷いて、
+       入る前から「どんな場所で・誰と戦うか」が合うように見せる */
+    const scFile=SCENE_FILE[STAGE_BG[st.n]];
+    if(scFile) b.style.background="linear-gradient(rgba(18,15,44,.64),rgba(18,15,44,.85)),url(assets/"+scFile+") center/cover";
     if(st.satan){
       b.innerHTML='<span class="crown">👿</span>'+(un?"サタン":"？？？")+"<small>"+(un?"やみ・HP 22000・第1章 最終ボス":"ゼウスを なかまにすると 追加される")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
     } else if(st.challenge){
