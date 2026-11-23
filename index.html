@@ -46,6 +46,14 @@
   .stage-btn.cleared{border-color:var(--forest);}
   .stage-btn.locked{opacity:.38;}
   .stage-btn .crown{position:absolute;top:-7px;right:-2px;font-size:.68rem;color:var(--gold);}
+  /* なかま済みアイコン：そのステージの敵が もう仲間かどうかを
+     ボタン下部のピルで示す（みどり＝なかま済み／暗いピル＝まだ） */
+  .recruit{display:inline-flex;align-items:center;justify-content:center;gap:.15rem;font-size:.58rem;font-weight:900;line-height:1.15;padding:.18rem .34rem;border-radius:999px;white-space:nowrap;letter-spacing:.02em;}
+  .recruit.yes{background:var(--forest);color:#07331a;border:1px solid #a8f5bc;box-shadow:0 1px 6px rgba(0,0,0,.45);}
+  .recruit.no{background:rgba(8,6,24,.78);color:#d6d1ff;border:1px solid rgba(255,255,255,.38);}
+  .stage-btn .recruit{margin-top:.3rem;}
+  .stage-btn.challenge .recruit,.stage-btn.satan .recruit{font-size:.7rem;padding:.26rem .55rem;}
+  .recruit-legend{display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--sub);font-weight:700;margin:-.1rem 0 .5rem;line-height:1.4;}
   /* チャレンジステージ：ゼウス専用の大きな金枠ボタン */
   .stages.challenge{grid-template-columns:1fr;}
   .stage-btn.challenge{border-color:var(--gold);background:linear-gradient(180deg,#4a3a10,var(--panel) 78%);
@@ -315,9 +323,10 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.47</div>
+    <div class="ver-line">ver 1.0.48</div>
 
     <div class="sec-title">ステージを えらんでね</div>
+    <p class="recruit-legend"><span class="recruit yes">✓ なかま</span><span>は もう なかまに なってるよ。<span class="recruit no">まだ</span> は まだ なかまに なってないよ。</span></p>
     <div class="stages" id="stageGrid"></div>
     <p class="hint">ぞくせいの さんすくみ：<b style="color:var(--fire)">ひ</b> は <b style="color:var(--forest)">もり</b>に、<b style="color:var(--forest)">もり</b> は <b style="color:var(--water)">みず</b>に、<b style="color:var(--water)">みず</b> は <b style="color:var(--fire)">ひ</b>に つよいよ。<br><b style="color:var(--light)">ひかり</b> と <b style="color:var(--dark)">やみ</b> は おたがいに つよいよ（ひかり↔やみ）。<br>ステージごとに <b>おちるオーブ</b> が 決まっているよ：ボタンの 色の丸が そのステージで おちるオーブ。<b style="color:var(--light)">きいろ＝ひかり</b> は <b>サタンのダンジョンでだけ</b> おちるよ。ゼウスは そこで オーブ攻撃できるよ！ <b>やみオーブは どこにも おちない</b>から、サタンは スキルで こうげきするよ。<br>限定ステージ12の <b style="color:var(--light)">スーパーでんきドラゴン</b> を なかまにすると、スキルで <b>どのステージでも オーブ全部を ひかりに</b> かえられるよ！</p>
 
@@ -1276,7 +1285,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.47";
+const APP_VER="1.0.48";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1294,12 +1303,16 @@ function renderHome(){
     const scFile=SCENE_FILE[STAGE_BG[st.n]];
     if(scFile) b.style.background="linear-gradient(rgba(18,15,44,.34),rgba(18,15,44,.58)),url("+scFile+") center/cover";
     const thumbHtml=scFile?'<span class="stage-thumb"><img src="'+scFile+'" alt=""></span>':"";
+    /* なかま済みアイコン：このステージの敵キャラを すでに仲間に
+       しているかどうか（save().owned に敵のIDが含まれるか）で出し分ける */
+    const isOwned=save().owned.includes(st.enemy);
+    const recruitHtml='<span class="recruit '+(isOwned?"yes":"no")+'">'+(isOwned?"✓ なかま":"まだ")+'</span>';
     if(st.satan){
-      b.innerHTML=thumbHtml+'<span class="crown">👿</span>'+(un?"サタン":"？？？")+"<small>"+(un?"やみ・HP 22000・第1章 最終ボス":"ゼウスを なかまにすると 追加される")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
+      b.innerHTML=thumbHtml+'<span class="crown">👿</span>'+(un?"サタン":"？？？")+"<small>"+(un?"やみ・HP 22000・第1章 最終ボス":"ゼウスを なかまにすると 追加される")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
     } else if(st.challenge){
-      b.innerHTML=thumbHtml+'<span class="crown">⚡</span>'+(un?"ゼウス":"？？？")+"<small>"+(un?"ひかり・HP 18000・さいきょうの神":"ステージ8 クリアで 出現")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
+      b.innerHTML=thumbHtml+'<span class="crown">⚡</span>'+(un?"ゼウス":"？？？")+"<small>"+(un?"ひかり・HP 18000・さいきょうの神":"ステージ8 クリアで 出現")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
     } else {
-      b.innerHTML=thumbHtml+(st.boss?'<span class="crown">👑</span>':"")+(st.disp||st.n)+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
+      b.innerHTML=thumbHtml+(st.boss?'<span class="crown">👑</span>':"")+(st.disp||st.n)+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
     }
     b.disabled=!un; b.onclick=()=>startBattle(st);
     $(st.extra?"extraGrid":st.satan?"satanGrid":st.challenge?"challengeGrid":"stageGrid").appendChild(b);
