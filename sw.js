@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yuiharuka-puzzle-v8';
+const CACHE_NAME = 'yuiharuka-puzzle-v9';
 const ASSETS = [
   './',
   'index.html',
