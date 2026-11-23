@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <meta name="color-scheme" content="dark" />
 <link rel="icon" href="data:," />
 <title>ゆいとはるかのパズルゲーム</title>
@@ -18,6 +18,38 @@
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:radial-gradient(130% 55% at 50% 0%, #2c2563 0%, var(--bg) 62%) fixed, var(--bg);color:var(--ink);
     font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;}
+  html{height:100%;overscroll-behavior:none;}
+  body{overscroll-behavior:none;touch-action:manipulation;}
+  /* ---------- バトル中の画面固定・縦固定 ---------- */
+  /* バトル中はページ自体をスクロールさせない（タップのたびに画面が
+     上下にズレたり、引っ張って更新されたりしないようにする）。
+     JS がバトル開始時に html/body へ .battle-lock を付け、
+     終了時に外す。body を position:fixed にするのは iOS Safari の
+     ラバーバンド（ゴム引き）スクロールを止めるための定石 */
+  html.battle-lock,body.battle-lock{overflow:hidden !important;height:100%;overscroll-behavior:none;}
+  body.battle-lock{position:fixed;left:0;right:0;width:100%;}
+  /* バトル内ではピンチ拡大やダブルタップ拡大で画面が動かないように
+     する（結果シートの中だけは縦スクロールを許可する） */
+  #battle{touch-action:none;}
+  #battle .sheet,#overlay .sheet{touch-action:pan-y;}
+  /* 縦固定：スマホを横向きにしたら、バトルを隠して「たてに もどしてね」
+     の案内を全画面で出す（向きを戻せばバトルはそのまま続く）。
+     本物の向きロック（screen.orientation.lock）は全画面表示が
+     必要な環境が多く iframe 内では効かないため、案内方式と併用する。
+     対象はスマホの横向きだけ（高さ540px以下・幅980px以下）に絞り、
+     PCやタブレットの横長画面では出さない */
+  #rotateNotice{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:100;
+    background:rgba(8,6,24,.96);display:none;align-items:center;justify-content:center;padding:1rem;text-align:center;}
+  #rotateNotice .rotate-phone{width:46px;height:76px;margin:0 auto .9rem;border:4px solid var(--gold);border-radius:12px;position:relative;
+    animation:rotHint 1.6s ease-in-out infinite;}
+  #rotateNotice .rotate-phone::after{content:"";position:absolute;left:50%;bottom:5px;transform:translateX(-50%);
+    width:14px;height:4px;border-radius:99px;background:var(--gold);}
+  @keyframes rotHint{0%,55%{transform:rotate(90deg);}85%,100%{transform:rotate(0deg);}}
+  #rotateNotice .rotate-ttl{font-size:1.35rem;font-weight:900;margin:.2rem 0 .45rem;}
+  #rotateNotice .rotate-sub{font-size:.92rem;font-weight:700;color:var(--sub);line-height:1.6;margin:0;}
+  @media (orientation:landscape) and (max-height:540px) and (max-width:980px){
+    #rotateNotice{display:flex;}
+  }
   button{font-family:inherit; min-height:2.25rem; cursor:pointer;}
   .hidden{display:none !important;}
 
@@ -366,7 +398,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.56</div>
+    <div class="ver-line">ver 1.0.57</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <p class="recruit-legend"><span class="recruit yes">✓ なかま</span><span>は もう なかまに なってるよ。</span></p>
@@ -452,6 +484,13 @@
 
 <!-- ============ モーダル ============ -->
 <div class="overlay hidden" id="overlay"><div class="sheet" id="sheet"></div></div>
+
+<!-- ============ 横向き案内（縦固定） ============ -->
+<div id="rotateNotice" role="alert"><div>
+  <div class="rotate-phone"></div>
+  <p class="rotate-ttl">たてむきで あそんでね</p>
+  <p class="rotate-sub">スマホを たてに もどしてね。<br>バトルは そのまま つづくよ。</p>
+</div></div>
 
 <script>
 "use strict";
@@ -1510,6 +1549,7 @@ function findGroups(b){
   return merged;
 }
 function startBattle(st){
+  pendingScrollY=window.scrollY||0;
   curStage=st.n;
   const enemy=charById(st.enemy);
   const dropPool=stageDropPool(st);
@@ -1519,6 +1559,7 @@ function startBattle(st){
   $("comboLayer").innerHTML="";
   $("bgLayer").innerHTML=BG_SCENES[STAGE_BG[st.n]||"temple"];
   $("home").classList.add("hidden"); $("battle").classList.remove("hidden");
+  lockBattleScreen();
   $("battle").classList.toggle("challenge",!!st.challenge);
   $("battle").classList.toggle("satan",!!st.satan);
   $("battle").classList.toggle("score",!!st.score);
@@ -1680,14 +1721,71 @@ function applyFallAnim(){
   }
   B.fallMs=maxMs;
 }
+/* ================= バトル中の画面固定・縦固定 =================
+   バトル中だけ画面を固定する仕組み一式：
+   ・html/body に .battle-lock を付けてスクロールを止める
+     （body の position:fixed は iOS のゴム引き対策。top には
+     開始直前のスクロール位置を入れて、見た目が飛ばないようにする）
+   ・バトル開始時点の画面サイズ（lockedVW/lockedVH）を覚えておき、
+     アドレスバーの出入りなど「幅が同じで高さだけ」の変化では
+     盤面サイズを計算し直さない（途中で盤面がズレる・縮むのを防ぐ）。
+     幅が変わったとき（＝回転したとき）だけサイズを取り直す
+   ・対応環境（ホーム画面から全画面で起動した PWA 等）では
+     screen.orientation.lock("portrait") も試みる。iframe 内など
+     効かない環境では失敗を握りつぶし、横向き案内（#rotateNotice）
+     が縦固定の受け皿になる */
+let lockedVW=0, lockedVH=0, savedScrollY=0, pendingScrollY=null;
+function lockBattleScreen(){
+  /* スクロール位置はホームを隠す前に startBattle が控えたものを使う
+     （隠した後ではブラウザが位置を 0 に丸めてしまうため） */
+  savedScrollY=(pendingScrollY!==null)?pendingScrollY:(window.scrollY||document.documentElement.scrollTop||0);
+  pendingScrollY=null;
+  document.documentElement.classList.add("battle-lock");
+  document.body.classList.add("battle-lock");
+  /* 中身はバトル画面（先頭から表示）に切り替わるので top は 0 で固定し、
+     savedScrollY はホームへ戻るときの復元用にだけ使う */
+  document.body.style.top="0px";
+  window.scrollTo(0,0);
+  lockedVW=window.innerWidth; lockedVH=window.innerHeight;
+  try{
+    if(screen.orientation&&screen.orientation.lock){
+      const p=screen.orientation.lock("portrait");
+      if(p&&p.catch)p.catch(()=>{});
+    }
+  }catch(e){}
+}
+function unlockBattleScreen(){
+  document.documentElement.classList.remove("battle-lock");
+  document.body.classList.remove("battle-lock");
+  document.body.style.top="";
+  lockedVW=0; lockedVH=0;
+  window.scrollTo(0,savedScrollY);
+  try{ if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock(); }catch(e){}
+}
+/* バトル中は画面のドラッグでページが動かないよう touchmove を止める。
+   結果シート（.sheet）の中だけはスクロールできるよう対象外にする */
+document.addEventListener("touchmove",function(e){
+  if(!document.body.classList.contains("battle-lock"))return;
+  if(e.target&&e.target.closest&&(e.target.closest(".sheet")))return;
+  e.preventDefault();
+},{passive:false});
+/* 古い iOS のピンチ拡大（gesturestart）もバトル中は止める */
+document.addEventListener("gesturestart",function(e){
+  if(document.body.classList.contains("battle-lock"))e.preventDefault();
+});
 function fitBoard(){
   requestAnimationFrame(()=>{
     const bw=$("board"), battle=$("battle");
     if(!bw||battle.classList.contains("hidden"))return;
     let others=0;
     for(const el of battle.children){ if(!el.classList.contains("board-wrap")&&el.id!=="bgLayer") others+=el.offsetHeight; }
-    const availW=Math.min(window.innerWidth-6, 620);
-    const availH=window.innerHeight - others - 6;
+    let vw=window.innerWidth, vh=window.innerHeight;
+    if(lockedVW&&lockedVH){
+      if(vw===lockedVW){ vh=lockedVH; }
+      else { lockedVW=vw; lockedVH=vh; }
+    }
+    const availW=Math.min(vw-6, 620);
+    const availH=vh - others - 6;
     const size=Math.max(180, Math.floor(Math.min(availW, availH)));
     bw.style.width=size+"px"; bw.style.height=size+"px";
     const layer=$("comboLayer");
@@ -1695,6 +1793,7 @@ function fitBoard(){
   });
 }
 window.addEventListener("resize",fitBoard);
+window.addEventListener("orientationchange",()=>{ setTimeout(fitBoard,120); setTimeout(fitBoard,350); });
 
 function tapOrb(i){
   if(!B||B.busy||B.over)return;
@@ -2298,7 +2397,7 @@ function closeSheet(){
   const ov=$("overlay"); ov.classList.add("hidden"); ov.style.display="";
   hideResultPanel();
 }
-function backHome(){ closeSheet(); B=null; $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); renderHome(); if(bgmOn)startBGM(); /* ホームに戻ったらタイトル曲へ */ }
+function backHome(){ closeSheet(); B=null; $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); unlockBattleScreen(); renderHome(); if(bgmOn)startBGM(); /* ホームに戻ったらタイトル曲へ */ }
 $("quitBtn").onclick=backHome;
 $("overlay").addEventListener("click",e=>{ if(e.target===$("overlay"))closeSheet(); });
 function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
