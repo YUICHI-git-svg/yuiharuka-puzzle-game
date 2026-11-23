@@ -255,6 +255,22 @@
   .btn.primary{background:var(--gold);color:#3a2c00;}
   .btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);}
   .btn:disabled{opacity:.4;}
+  /* ---------- 調査版（v29） ---------- */
+  /* 端末で新しい版が動いているか目視確認するためのバージョン表記 */
+  .ver-badge{display:block;width:fit-content;margin:.1rem auto .5rem;padding:.32rem 1rem;
+    background:var(--gold);color:#3a2c00;border-radius:999px;font-size:1rem;font-weight:900;
+    letter-spacing:.06em;box-shadow:0 2px 10px rgba(255,211,77,.45);}
+  .diag-box{background:#0d0b22;border:1px solid var(--line);border-radius:10px;padding:.5rem .6rem;
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.68rem;line-height:1.65;color:#a9f0b6;
+    white-space:pre-wrap;word-break:break-all;max-height:190px;overflow:auto;}
+  /* バトル画面下部の調査ログ：固まった瞬間に最後のチェックポイントと
+     ハートビート（タイマーが生きているか）が見えるようにする */
+  #battle #diagBar{position:absolute;left:0;right:0;bottom:0;z-index:15;pointer-events:none;
+    background:rgba(5,4,18,.88);border-top:1px solid var(--line);
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;line-height:1.55;
+    color:#a9f0b6;padding:3px 7px calc(3px + env(safe-area-inset-bottom));}
+  #battle #diagBar .diag-head{color:var(--gold);font-weight:700;}
+  #battle #diagBar #diagBeat{color:#8fd0ff;}
   @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
 </style>
 </head>
@@ -269,6 +285,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
+    <div class="ver-badge">v29 調査版</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
@@ -283,6 +300,10 @@
     <p class="msg" id="homeMsg"></p>
 
     <button class="btn ghost" id="zukanBtn" style="margin-top:1rem;">📖 ずかんを みる</button>
+
+    <div class="sec-title">調査ログ（v29 調査版）</div>
+    <div class="diag-box" id="diagHome">（まだ記録なし）</div>
+    <p class="hint">バトルで固まったら、画面下の調査ログの「最後の行」と「⏱の秒数」を教えてね。</p>
   </div>
 </div>
 
@@ -327,6 +348,7 @@
     </div>
   </div>
   <div class="board-wrap"><div id="board"></div><div id="comboLayer"></div></div>
+  <div id="diagBar"><div class="diag-head">v29 調査版 ・ 調査ログ</div><div id="diagBeat">⏱ -</div><div id="diagLines"></div></div>
 </div>
 
 <!-- ============ モーダル ============ -->
@@ -726,6 +748,44 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 
 /* ================= ホーム ================= */
 const $=id=>document.getElementById(id);
+/* ================= 調査版（v29）：診断ログ =================
+   iPhone 7 実機で「クリア！」が出ずに固まる件の原因を確定させるため、
+   勝利フローの各段階にチェックポイントを置き、バトル画面下部と
+   ホームの調査ログ欄に常時表示する。固まった瞬間に
+   ・最後に通過したチェックポイント（＝どこで止まったか）
+   ・⏱ハートビートの秒数が進んでいるか（＝タイマー自体が生きているか）
+   がスクリーンショットで分かるようにするのが目的。 */
+const APP_VER="v29 調査版";
+const DIAG_LOG=[]; let diagBattleT0=0;
+function diagEsc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function diag(msg){
+  const t=diagBattleT0?((Date.now()-diagBattleT0)/1000).toFixed(1):"-";
+  DIAG_LOG.push("["+t+"s] "+msg);
+  if(DIAG_LOG.length>80)DIAG_LOG.shift();
+  renderDiag();
+}
+function renderDiag(){
+  const lines=$("diagLines"); if(lines) lines.innerHTML=DIAG_LOG.slice(-4).map(diagEsc).join("<br>");
+  const home=$("diagHome"); if(home) home.innerHTML=DIAG_LOG.length?DIAG_LOG.slice(-40).map(diagEsc).join("<br>"):"（まだ記録なし）";
+}
+window.addEventListener("error",e=>{ try{ diag("⚠ エラー: "+(e.message||"不明")+(e.lineno?" ("+e.lineno+"行)":"")); }catch(_){} });
+window.addEventListener("unhandledrejection",e=>{ try{ const r=e.reason; diag("⚠ 未処理のPromiseエラー: "+((r&&r.message)||r||"不明")); }catch(_){} });
+/* ハートビート：0.5秒ごとに状態を書き直すだけの軽い処理。
+   これが止まって見えるならタイマー／描画そのものが死んでいる、
+   進んでいるのにフローが止まっているならロジック側の詰まり、
+   と切り分けられる */
+let beatTimer=null;
+function startBeat(){
+  stopBeat(); diagBattleT0=Date.now();
+  beatTimer=setInterval(()=>{
+    const el=$("diagBeat"); if(!el)return;
+    const s=((Date.now()-diagBattleT0)/1000).toFixed(0);
+    el.textContent="⏱ "+s+"秒 ・ busy="+(B?B.busy:"-")+" ・ over="+(B?B.over:"-")+
+      " ・ 敵HP="+(B?Math.max(0,Math.ceil(B.enemyHp)):"-")+
+      " ・ クリア表示="+($("overlay").classList.contains("hidden")?"まだ":"済み");
+  },500);
+}
+function stopBeat(){ if(beatTimer){clearInterval(beatTimer);beatTimer=null;} }
 /* 限定ステージ（extra）は解放条件なしで最初から選べる */
 function stageUnlocked(st){ if(st.extra) return true; if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
 function renderHome(){
@@ -830,6 +890,8 @@ function startBattle(st){
   buildPartyRow(); renderBattle(); fitBoard();
   setTimeout(fitBoard, 80);
   if(bgmOn)startBGM();
+  startBeat();
+  diag("▶ バトル開始 ステージ"+st.n+"（敵HP "+st.hp+"）");
 }
 /* バトル画面に最初から出すスキルの簡易表記（例：HP60 かいふく）。
    詳しい説明はホームの編成カードと図鑑に残してある */
@@ -901,7 +963,7 @@ function fitBoard(){
     const bw=$("board"), battle=$("battle");
     if(!bw||battle.classList.contains("hidden"))return;
     let others=0;
-    for(const el of battle.children){ if(!el.classList.contains("board-wrap")&&el.id!=="bgLayer") others+=el.offsetHeight; }
+    for(const el of battle.children){ if(!el.classList.contains("board-wrap")&&el.id!=="bgLayer"&&el.id!=="diagBar") others+=el.offsetHeight; }
     const availW=Math.min(window.innerWidth-6, 620);
     const availH=window.innerHeight - others - 6;
     const size=Math.max(180, Math.floor(Math.min(availW, availH)));
@@ -922,15 +984,17 @@ function tapOrb(i){
   if(!findGroups(B.board).length){ [B.board[a],B.board[i]]=[B.board[i],B.board[a]]; renderBoard();
     const bd=$("board"); bd.classList.remove("shake"); void bd.offsetWidth; bd.classList.add("shake"); return; }
   swapSE(); B.busy=true; renderBoard();
+  diag("オーブ入れかえ → コンボ解決スタート");
   resolveBoard().then(()=>{ if(!B||B.over)return; endTurn(); })
     /* 途中で何かあっても busy が残って画面が固まらないようにする */
-    .catch(()=>{ if(B&&!B.over){ B.busy=false; if(B.enemyHp<=0)winBattle(); else renderBattle(); } });
+    .catch((err)=>{ diag("⚠ コンボ解決でエラー: "+((err&&err.message)||err||"不明")+" → 復帰処理"); if(B&&!B.over){ B.busy=false; if(B.enemyHp<=0)winBattle(); else renderBattle(); } });
   /* ウォッチドッグ：演出の途中で何があっても15秒後には必ず復帰させる。
      敵を倒しているのに結果画面が出ていない場合は出し直し、
      そうでなければ操作を受け付ける状態に戻す */
   const wdB=B;
   setTimeout(()=>{
     if(!wdB||B!==wdB)return;
+    diag("⏰ ウォッチドッグ作動（15秒）busy="+B.busy+" over="+B.over+" 敵HP="+Math.ceil(B.enemyHp)+" クリア表示="+($("overlay").classList.contains("hidden")?"まだ":"済み"));
     if(B.enemyHp<=0 && $("overlay").classList.contains("hidden")){ B.over=false; winBattle(); }
     else if(!B.over && B.busy){ B.busy=false; renderBattle(); }
   },15000);
@@ -983,6 +1047,7 @@ async function resolveBoard(){
   }
   // コンボ終了：コンボ表示が1から順にシュンシュンと消えて、
   // そのたびに攻撃値がコンボ倍率ぶんバウンドしながら増えていく
+  diag("コンボ連鎖おわり "+combo+"コンボ（予算超過="+fast()+"）→ カウントアップへ");
   const totalBonus=B.acc.map((v,i)=>v-B.accRaw[i]);
   if(tags.length){
     if(fast()){
@@ -1021,6 +1086,7 @@ async function resolveBoard(){
       if(j<attackers.length-1) await wait(fast()?0:280);
     }
     B.enemyHp-=dmg;
+    diag("攻撃！ ダメージ "+Math.round(dmg)+" → 敵HP "+Math.max(0,Math.ceil(B.enemyHp)));
     showDmgPop(dmg);
     renderBattle();
     /* 倒したときは結果画面までを短くして、固まった印象を与えない */
@@ -1028,7 +1094,8 @@ async function resolveBoard(){
     B.acc=B.acc.map(()=>0); B.accRaw=B.accRaw.map(()=>0); B.accDisp=B.accDisp.map(()=>0); renderBattle();
     await wait(200);
   }
-  if(B.enemyHp<=0){ winBattle(); }
+  if(B.enemyHp<=0){ diag("敵HPが0 → クリア処理へ"); winBattle(); }
+  else diag("コンボ解決おわり（敵HP "+Math.ceil(B.enemyHp)+"）");
 }
 function showComboTag(g, combo){
   const layer=$("comboLayer"); if(!layer)return null;
@@ -1047,16 +1114,30 @@ function bumpAccLabels(targets){
     const acc=$("acc"+i); if(acc) acc.classList.add("counting");
   });
 }
-let accAnim=null, accTimer=null;
+let accAnim=null, accTimer=null, accRes=null;
 function tweenAcc(to, dur){
   return new Promise(res=>{
+    /* 調査版で修正した実在の不具合：前のカウントアップが終わらない
+       うちに次が始まると、旧実装はタイマーだけ止めて Promise の
+       解決（res）を放置していた。その約束を待っている resolveBoard が
+       永久に止まり、ウォッチドッグの条件（敵HP>0・busy）にも
+       かかりにくい「固まったまま」状態になりうる構造だった。
+       ここでは前の約束を必ず先に果たしてから始める */
+    if(accRes){ const r=accRes; accRes=null; r(); }
     if(!B){res();return;}
     if(accAnim)cancelAnimationFrame(accAnim);
     if(accTimer){clearInterval(accTimer);accTimer=null;}
     const target=to.map(v=>Math.round(v));
     const start=B.accDisp.map(v=>Math.round(v));
     B.accDisp=start.slice(); updateAccLabels();
-    if(start.every((v,i)=>v>=target[i])){ document.querySelectorAll(".member .acc").forEach(el=>el.classList.remove("counting")); res(); return; }
+    let done=false, guardT=null;
+    const finish=()=>{ if(done)return; done=true; accRes=null;
+      if(accTimer){clearInterval(accTimer);accTimer=null;}
+      if(guardT){clearTimeout(guardT);guardT=null;}
+      document.querySelectorAll(".member .acc").forEach(el=>el.classList.remove("counting"));
+      res(); };
+    accRes=finish;
+    if(start.every((v,i)=>v>=target[i])){ finish(); return; }
     /* カウントアップは「値の大きさ」ではなく「時間」で終わらせる。
        旧実装は1ずつ（最大でも毎秒約125）しか進まなかったため、
        コンボ倍率で攻撃値が大きくなるほど1コンボ分の計算時間が
@@ -1065,17 +1146,16 @@ function tweenAcc(to, dur){
        決めるので、コンボ数や値の大きさによらず1回あたりの
        時間は一定になる。表示は整数で高速に上がっていく。 */
     const D=Math.max(120, dur||420), t0=performance.now();
+    /* 保険：インターバルが何らかの理由で進まなくても、
+       D+800ms で必ず終わらせて約束を果たす */
+    guardT=setTimeout(()=>{ if(B){ B.accDisp=target.slice(); updateAccLabels(); } finish(); }, D+800);
     accTimer=setInterval(()=>{
-      if(!B){clearInterval(accTimer);accTimer=null;res();return;}
+      if(!B){ finish(); return; }
       const p=Math.min(1,(performance.now()-t0)/D);
       const e=1-Math.pow(1-p,3); /* 最初は速く、着地はなめらかに */
       const cur=start.map((s,i)=> s>=target[i] ? s : s+Math.round((target[i]-s)*e));
       B.accDisp=cur; updateAccLabels();
-      if(p>=1){
-        clearInterval(accTimer);accTimer=null;
-        document.querySelectorAll(".member .acc").forEach(el=>el.classList.remove("counting"));
-        res();
-      }
+      if(p>=1) finish();
     }, 16);
   });
 }
@@ -1257,6 +1337,7 @@ function useSkill(i){
 }
 function winBattle(){
   if(!B||B.over)return; B.over=true; B.busy=false;
+  diag("winBattle 開始 → クリア表示を出す");
   /* 結果ダイアログを「必ず」出すための構造：
      以前は B.over=true にした後、演出タイマーの停止→エフェクト除去→
      勝利音→セーブ→ダイアログ表示の順で、途中で何か止まると
@@ -1267,12 +1348,13 @@ function winBattle(){
      勝利音は最後に鳴らす。音や演出が原因でダイアログが
      巻き込まれることは構造的に起きない */
   try{
+    if(accRes)accRes();
     if(accTimer){clearInterval(accTimer);accTimer=null;}
     if(accAnim)cancelAnimationFrame(accAnim);
     $("comboLayer").innerHTML="";
     /* 残っている攻撃エフェクトもその場で消し、結果画面の表示を軽くする */
     document.querySelectorAll(".fx,.dmg-pop,.efx-proj").forEach(el=>el.remove());
-  }catch(e){}
+  }catch(e){ diag("⚠ winBattle後片付けでエラー: "+((e&&e.message)||e)); }
   const s=save(), st=B.stage;
   if(!s.cleared.includes(st.n))s.cleared.push(st.n);
   const ec=charById(st.enemy);
@@ -1283,20 +1365,24 @@ function winBattle(){
   }
   showSheet('<h2>🎉 クリア！</h2><p>ステージ '+st.n+' の '+ec.name+' を たおしたよ！</p>'+recruitMsg+
    '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
+  diag("✅ クリア！を表示した");
   try{ winSE(); }catch(e){}
 }
 function loseBattle(){
   if(!B||B.over)return; B.over=true; B.busy=false;
+  diag("まけ表示を出した");
   showSheet('<h2>💦 まけちゃった…</h2><p>パーティを つよくして、もう一度 チャレンジしよう！<br>なかまを あつめると つよくなれるよ。</p><button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
 }
 function showSheet(html){ $("sheet").innerHTML=html; $("overlay").classList.remove("hidden"); }
 function closeSheet(){ $("overlay").classList.add("hidden"); }
-function backHome(){ closeSheet(); B=null; $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); renderHome(); }
+function backHome(){ stopBeat(); diag("ホームへもどった"); closeSheet(); B=null; $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); renderHome(); renderDiag(); }
 $("quitBtn").onclick=backHome;
 $("overlay").addEventListener("click",e=>{ if(e.target===$("overlay"))closeSheet(); });
 function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 renderHome();
+diag("起動 "+APP_VER);
+renderDiag();
 </script>
 <script>
 if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch(e) {} }
