@@ -118,8 +118,28 @@
   .member .art svg{height:56px;width:auto;max-width:100%;}
   .member .charge{height:6px;border-radius:99px;background:#0d0b22;margin-top:.2rem;overflow:hidden;border:1px solid var(--line);}
   .member .charge i{display:block;height:100%;background:var(--gold);transition:width .3s;}
-  .member.ready .art{animation:pulse 1s infinite alternate;}
+  .member.ready .art{animation:pulse 1s infinite alternate;box-shadow:0 0 0 2px rgba(255,211,77,.9),0 0 16px rgba(255,211,77,.55);border-radius:12px;}
   @keyframes pulse{from{filter:drop-shadow(0 0 0 rgba(255,211,77,0));}to{filter:drop-shadow(0 0 7px rgba(255,211,77,.95));}}
+  /* スキルがたまったらキャラの周りにエネルギーのキラキラを出す */
+  .member .spark{position:absolute;left:0;right:0;top:-7px;height:62px;pointer-events:none;opacity:0;transition:opacity .3s;z-index:7;}
+  .member.ready .spark{opacity:1;}
+  .member .spark i{position:absolute;background:radial-gradient(circle,#fff8d0 0%,#ffd34d 55%,rgba(255,211,77,0) 80%);
+    clip-path:polygon(50% 0,63% 37%,100% 50%,63% 63%,50% 100%,37% 63%,0 50%,37% 37%);animation:sparktw 1.15s ease-in-out infinite;}
+  @keyframes sparktw{0%,100%{transform:scale(.25) rotate(0deg);opacity:.15;}50%{transform:scale(1.15) rotate(45deg);opacity:1;}}
+  /* スキルの簡易表示（長押し廃止：最初から小さく出しておく）。
+     2行分の高さに固定して、文字数でキャラの位置がずれないようにする */
+  .member .skill-txt{font-size:.58rem;font-weight:700;color:var(--sub);line-height:1.3;height:2.6em;overflow:hidden;margin-top:.18rem;}
+  /* 敵の攻撃：敵がこちらへ突っ込む動き */
+  .enemy-lunge{animation:elunge .55s ease-in-out !important;}
+  @keyframes elunge{0%{transform:translateY(0) scale(1);}38%{transform:translateY(30px) scale(1.14);}62%{transform:translateY(24px) scale(1.1);}100%{transform:translateY(0) scale(1);}}
+  /* 敵の攻撃：属性の弾（炎・水滴・葉）が敵からパーティへ飛ぶ */
+  .efx-proj{position:absolute;left:50%;width:56px;height:56px;margin:-28px 0 0 -28px;z-index:9;pointer-events:none;animation:projfly .47s ease-in forwards;}
+  .efx-proj svg{width:100%;height:100%;position:relative;z-index:1;filter:drop-shadow(0 0 6px rgba(255,255,255,.55));}
+  .efx-proj .core{position:absolute;inset:0;border-radius:50%;opacity:.85;}
+  @keyframes projfly{0%{transform:translateY(0) scale(.65);opacity:0;}18%{opacity:1;}100%{transform:translateY(var(--dy)) scale(1.3);opacity:1;}}
+  .party-row{position:relative;}
+  .fx.pfx{left:50%;top:36%;}
+  .dmg-pop.party{top:-14px;font-size:1.7rem;color:#ffb0a6;text-shadow:0 0 12px rgba(255,60,30,.9),0 0 22px rgba(255,40,0,.6),3px 3px 0 #000,-2px 2px 0 #000,0 5px 0 rgba(0,0,0,.85);}
   .member .acc{position:absolute;top:-2.05rem;left:50%;transform:translateX(-50%);z-index:8;
     font-family:"Arial Black","Hiragino Maru Gothic ProN",sans-serif;font-size:1.65rem;font-weight:900;line-height:1;
     letter-spacing:.02em;white-space:nowrap;opacity:0;transition:opacity .15s;
@@ -153,7 +173,7 @@
   .member .acc.bump{animation:none;}
   .fx{position:absolute;left:50%;top:46%;width:0;height:0;pointer-events:none;z-index:9;}
   .fx i{position:absolute;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;opacity:0;animation:fxburst .78s cubic-bezier(.12,.7,.3,1) forwards;}
-  .fx i svg{width:100%;height:100%;filter:drop-shadow(0 0 10px rgba(255,120,30,.95));}
+  .fx i svg{width:100%;height:100%;filter:drop-shadow(0 0 4px rgba(255,120,30,.8));}
   .fx .ring{position:absolute;left:0;top:0;width:210px;height:210px;margin:-105px 0 0 -105px;border-radius:50%;border:7px solid;opacity:0;animation:fxring .62s ease-out forwards;}
   .fx .ring2{position:absolute;left:0;top:0;width:130px;height:130px;margin:-65px 0 0 -65px;border-radius:50%;border:5px solid rgba(255,255,255,.95);opacity:0;animation:fxring .48s ease-out .06s forwards;}
   .fx .core{position:absolute;left:0;top:0;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:50%;opacity:0;animation:fxcore .58s ease-out forwards;}
@@ -236,6 +256,10 @@
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
     <p class="hint">ぞくせいの さんすくみ：<b style="color:var(--fire)">ひ</b> は <b style="color:var(--forest)">もり</b>に、<b style="color:var(--forest)">もり</b> は <b style="color:var(--water)">みず</b>に、<b style="color:var(--water)">みず</b> は <b style="color:var(--fire)">ひ</b>に つよいよ。<br>なかまにした キャラが つよく たたかえる ステージが、つぎに 待っているよ！</p>
+
+    <div class="sec-title">限定ステージ</div>
+    <div class="stages" id="extraGrid"></div>
+    <p class="hint">オーブの いろを かえる とくべつな なかまが いるよ。いつでも あそべるよ！</p>
 
     <div class="sec-title">パーティ（5にんまで）― タップで 入れかえ</div>
     <div class="char-grid" id="partyGrid"></div>
@@ -370,13 +394,13 @@ const STAGES = [
  {n:2, enemy:"dragon_fire", hp:2560, atk:50, cd:3, recruit:.4},
  {n:3, enemy:"dragon_forest", hp:3680, atk:66, cd:2, recruit:.4, boss:true},
  {n:4, enemy:"dragon_water", hp:4320, atk:74, cd:3, recruit:.4},
- {n:5, enemy:"phoenix", hp:5120, atk:86, cd:3, recruit:.35},
- {n:6, enemy:"fairy_flower", hp:6080, atk:100, cd:2, recruit:.35},
- {n:7, enemy:"dragon_sea", hp:7200, atk:112, cd:3, recruit:.35},
- {n:8, enemy:"phoenix", hp:8800, atk:130, cd:2, recruit:.3, boss:true},
- {n:9, enemy:"dragon_change_forest", hp:3040, atk:56, cd:3, recruit:.6, extra:true},
- {n:10, enemy:"fairy_change_water", hp:3360, atk:60, cd:3, recruit:.6, extra:true},
- {n:11, enemy:"dragon_change_fire", hp:3680, atk:64, cd:3, recruit:.6, extra:true},
+ {n:5, enemy:"phoenix", hp:5120, atk:86, cd:3, recruit:.4},
+ {n:6, enemy:"fairy_flower", hp:6080, atk:100, cd:2, recruit:.4},
+ {n:7, enemy:"dragon_sea", hp:7200, atk:112, cd:3, recruit:.4},
+ {n:8, enemy:"phoenix", hp:8800, atk:130, cd:2, recruit:.4, boss:true},
+ {n:9, enemy:"dragon_change_forest", hp:3040, atk:56, cd:3, recruit:.4, extra:true},
+ {n:10, enemy:"fairy_change_water", hp:3360, atk:60, cd:3, recruit:.4, extra:true},
+ {n:11, enemy:"dragon_change_fire", hp:3680, atk:64, cd:3, recruit:.4, extra:true},
 ];
 const PARTY_HP = 150;
 
@@ -685,16 +709,18 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 
 /* ================= ホーム ================= */
 const $=id=>document.getElementById(id);
-function stageUnlocked(st){ if(st.extra) return save().cleared.includes(1); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
+/* 限定ステージ（extra）は解放条件なしで最初から選べる */
+function stageUnlocked(st){ if(st.extra) return true; if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
 function renderHome(){
   $("stageGrid").innerHTML="";
+  $("extraGrid").innerHTML="";
   STAGES.forEach(st=>{
     const e=charById(st.enemy), un=stageUnlocked(st), cl=save().cleared.includes(st.n);
     const b=document.createElement("button");
     b.className="stage-btn"+(st.boss?" boss":"")+(cl?" cleared":"")+(!un?" locked":"");
     b.innerHTML=(st.boss?'<span class="crown">👑</span>':"")+st.n+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>";
     b.disabled=!un; b.onclick=()=>startBattle(st);
-    $("stageGrid").appendChild(b);
+    $(st.extra?"extraGrid":"stageGrid").appendChild(b);
   });
   $("partyGrid").innerHTML="";
   CHARS.filter(c=>save().owned.includes(c.id)).forEach(c=>{
@@ -788,17 +814,31 @@ function startBattle(st){
   setTimeout(fitBoard, 80);
   if(bgmOn)startBGM();
 }
+/* バトル画面に最初から出すスキルの簡易表記（例：HP60 かいふく）。
+   詳しい説明はホームの編成カードと図鑑に残してある */
+function shortSkill(c){
+  const sk=c.skill, an={fire:"ひ",water:"みず",forest:"もり"}[c.attr];
+  if(sk.type==="heal") return "HP"+sk.power+" かいふく";
+  if(sk.type==="dmg") return an+" ダメージ"+sk.power;
+  if(sk.type==="dmgheal") return an+"ダメ"+sk.power+"+HP"+sk.heal;
+  if(sk.type==="change"){ const cn={fire:"あか",water:"あお",forest:"みどり"}; return cn[sk.from]+"→"+cn[sk.to]+" へんげ"; }
+  return sk.desc;
+}
+/* スキルがたまった時にキャラの周りへ出すエネルギーのキラキラ */
+function sparkHTML(){
+  const pos=[[6,16,11,0],[84,8,9,.35],[46,-4,12,.7],[94,52,8,.2],[2,58,9,.55],[70,64,10,.9]];
+  return '<div class="spark">'+pos.map(p=>'<i style="left:'+p[0]+'%;top:'+p[1]+'%;width:'+p[2]+'px;height:'+p[2]+'px;animation-delay:'+p[3]+'s"></i>').join("")+'</div>';
+}
 function buildPartyRow(){
   $("partyRow").innerHTML="";
   save().party.forEach((id,i)=>{
     const c=charById(id);
     const d=document.createElement("button");
     d.className="member"; d.dataset.i=i;
-    d.innerHTML='<div class="acc" id="acc'+i+'"></div><div class="art">'+c.art()+'</div><div class="charge"><i id="chg'+i+'"></i></div>';
-    let timer=null, longed=false;
-    d.addEventListener("pointerdown",()=>{ longed=false; timer=setTimeout(()=>{ longed=true; showSkillPanel(i); },500); });
-    d.addEventListener("pointerup",()=>{ clearTimeout(timer); if(!longed) tapMember(i); });
-    d.addEventListener("pointerleave",()=>clearTimeout(timer));
+    /* 長押しは廃止（iPhone 7で効かなかった）。タップ＝スキル使用のみ。
+       スキルの内容は下の簡易表記で最初から見えるようにする */
+    d.innerHTML='<div class="acc" id="acc'+i+'"></div>'+sparkHTML()+'<div class="art">'+c.art()+'</div><div class="charge"><i id="chg'+i+'"></i></div><div class="skill-txt">'+shortSkill(c)+'</div>';
+    d.onclick=()=>tapMember(i);
     $("partyRow").appendChild(d);
   });
 }
@@ -863,17 +903,21 @@ function tapOrb(i){
   if(!findGroups(B.board).length){ [B.board[a],B.board[i]]=[B.board[i],B.board[a]]; renderBoard();
     const bd=$("board"); bd.classList.remove("shake"); void bd.offsetWidth; bd.classList.add("shake"); return; }
   swapSE(); B.busy=true; renderBoard();
-  resolveBoard().then(()=>{ if(!B||B.over)return; endTurn(); });
+  resolveBoard().then(()=>{ if(!B||B.over)return; endTurn(); })
+    /* 途中で何かあっても busy が残って画面が固まらないようにする */
+    .catch(()=>{ if(B&&!B.over){ B.busy=false; if(B.enemyHp<=0)winBattle(); else renderBattle(); } });
 }
 /* コンボ倍率：コンボが進むほど加速して伸びるカーブ（爽快感重視）。
    前回よりさらに引き上げ：1コンボ×1.0 → 3コンボ×2.64 → 5コンボ×5.56
    → 8コンボ×12.34 → 10コンボ×18.46 */
 function comboMult(n){ const k=Math.max(0,n-1); return 1 + 0.50*k + 0.16*k*k; }
 async function resolveBoard(){
-  let combo=0;
+  let combo=0, guard=0;
   const tags=[]; // コンボ表示はコンボが終わるまで残す
   B.accRaw=B.accRaw.map(()=>0);
   while(true){
+    /* 万一連鎖が止まらなくなっても画面が固まらないための上限 */
+    if(++guard>80)break;
     const groups=findGroups(B.board);
     if(!groups.length)break;
     for(const g of groups){
@@ -1043,7 +1087,7 @@ function attackEffect(attr){
   if(attr==="forest"){
     html+='<span class="pillar" style="background:linear-gradient(to top,#1d8f43,#57d95e 55%,#d6ffd0);width:64px;margin-left:-32px"></span>';
   }
-  const Np=16;
+  const Np=11; /* 粒の数は古いiPhoneでも重くならない量に抑える */
   for(let i=0;i<Np;i++){
     const ang=(Math.PI*2*i/Np)+Math.random()*.6, dist=62+Math.random()*78;
     const dx=Math.round(Math.cos(ang)*dist), dy=Math.round(Math.sin(ang)*dist*.85)-18;
@@ -1052,7 +1096,7 @@ function attackEffect(attr){
     html+='<i style="--dx:'+dx+'px;--dy:'+dy+'px;--rot:'+rot+';width:'+sz+'px;height:'+sz+'px;margin:'+(-sz/2)+'px 0 0 '+(-sz/2)+'px;animation-delay:'+(i*0.018)+'s">'+FX_ICON[attr]+'</i>';
   }
   /* 星屑スパーク */
-  for(let i=0;i<8;i++){
+  for(let i=0;i<5;i++){
     const ang=Math.random()*Math.PI*2, dist=40+Math.random()*95;
     const dx=Math.round(Math.cos(ang)*dist), dy=Math.round(Math.sin(ang)*dist)-10;
     html+='<i style="--dx:'+dx+'px;--dy:'+dy+'px;--rot:45deg;width:16px;height:16px;margin:-8px 0 0 -8px;animation-delay:'+(0.05+i*0.02)+'s"><svg viewBox="0 0 24 24"><path d="M12 1 L14.5 9.5 L23 12 L14.5 14.5 L12 23 L9.5 14.5 L1 12 L9.5 9.5Z" fill="#fff6b0"/></svg></i>';
@@ -1071,6 +1115,49 @@ function showDmgPop(dmg){
   stage.appendChild(el);
   setTimeout(()=>el.remove(),980);
 }
+/* 敵の攻撃エフェクト：敵がこちらへ突っ込み、自分の属性の弾
+   （炎なら炎、水なら水滴、森なら葉）をパーティへ放つ。
+   弾が届いた所で爆発してパーティが揺れ、ダメージ数字が出る */
+function enemyAttackFX(){
+  if(!B)return;
+  const attr=B.enemy.attr;
+  boomSE(attr);
+  const ea=$("enemyArt"), stage=$("enemyStage"), pr=$("partyRow");
+  if(ea){ ea.classList.remove("enemy-lunge"); void ea.offsetWidth; ea.classList.add("enemy-lunge");
+    setTimeout(()=>{ ea.classList.remove("enemy-lunge"); },600); }
+  if(!stage||!pr)return;
+  const sr=stage.getBoundingClientRect(), prr=pr.getBoundingClientRect();
+  const dy=Math.max(60, Math.round(prr.top - sr.bottom + 26));
+  const proj=document.createElement("div");
+  proj.className="efx-proj";
+  proj.style.top=(sr.height-6)+"px";
+  proj.style.setProperty("--dy",dy+"px");
+  proj.innerHTML='<span class="core" style="background:'+FX_GRAD[attr]+'"></span>'+FX_ICON[attr];
+  stage.appendChild(proj);
+  const dmg=B.stage.atk;
+  setTimeout(()=>{ proj.remove(); partyBurst(attr, dmg); },480);
+}
+function partyBurst(attr, dmg){
+  const pr=$("partyRow"); if(!pr)return;
+  pr.classList.remove("shake"); void pr.offsetWidth; pr.classList.add("shake");
+  const fx=document.createElement("div");
+  fx.className="fx pfx";
+  let html='<span class="core" style="background:'+FX_GRAD[attr]+'"></span>';
+  html+='<span class="ring" style="border-color:'+FX_COLOR[attr]+'"></span>';
+  for(let i=0;i<10;i++){
+    const ang=(Math.PI*2*i/10)+Math.random()*.5, dist=42+Math.random()*52;
+    const dx=Math.round(Math.cos(ang)*dist), dy=Math.round(Math.sin(ang)*dist*.8);
+    const sz=24+Math.random()*14;
+    html+='<i style="--dx:'+dx+'px;--dy:'+dy+'px;--rot:120deg;width:'+sz+'px;height:'+sz+'px;margin:'+(-sz/2)+'px 0 0 '+(-sz/2)+'px;animation-delay:'+(i*0.015)+'s">'+FX_ICON[attr]+'</i>';
+  }
+  fx.innerHTML=html;
+  pr.appendChild(fx);
+  setTimeout(()=>fx.remove(),900);
+  const pop=document.createElement("div");
+  pop.className="dmg-pop party"; pop.textContent="-"+dmg;
+  pr.appendChild(pop);
+  setTimeout(()=>pop.remove(),980);
+}
 function dropOrbs(){
   for(let c=0;c<N;c++){
     const col=[];
@@ -1084,7 +1171,7 @@ function endTurn(){
   B.cd--;
   if(B.cd<=0){
     B.partyHp-=B.stage.atk; B.cd=B.stage.cd;
-    const pr=$("partyRow"); pr.classList.remove("shake"); void pr.offsetWidth; pr.classList.add("shake");
+    enemyAttackFX();
     if(B.partyHp<=0){ B.partyHp=0; renderBattle(); loseBattle(); B.busy=false; return; }
   }
   B.busy=false; renderBattle();
@@ -1123,19 +1210,14 @@ function useSkill(i){
   renderBattle();
   if(B.enemyHp<=0) winBattle();
 }
-function showSkillPanel(i){
-  if(!B)return;
-  const c=charById(save().party[i]), ready=B.charges[i]>=c.skill.turns;
-  showSheet('<div class="art">'+c.art()+'</div><h2>'+c.name+'</h2><div>'+starHTML(c)+'</div>'+
-   '<p><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'</p>'+
-   '<p>いつもスキル：'+c.passive+'</p>'+
-   '<p><b>タップスキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'<br><span class="sub">'+c.skill.turns+'ターンで たまる（いま '+B.charges[i]+'）</span></p>'+
-   '<button class="btn primary" id="useSkillBtn" '+(ready?"":"disabled")+'>スキルを つかう</button>'+
-   '<button class="btn ghost" onclick="closeSheet()">とじる</button>');
-  const b=$("useSkillBtn"); if(b)b.onclick=()=>{ closeSheet(); if(!B.busy&&!B.over)useSkill(i); };
-}
 function winBattle(){
-  if(!B||B.over)return; B.over=true; winSE();
+  if(!B||B.over)return; B.over=true;
+  /* 勝利時は残っている演出タイマーを止めてから結果を出す
+     （古いiPhoneで倒した瞬間に固まるのを防ぐ） */
+  if(accTimer){clearInterval(accTimer);accTimer=null;}
+  if(accAnim)cancelAnimationFrame(accAnim);
+  $("comboLayer").innerHTML="";
+  winSE();
   const s=save(), st=B.stage;
   if(!s.cleared.includes(st.n))s.cleared.push(st.n);
   const ec=charById(st.enemy);
