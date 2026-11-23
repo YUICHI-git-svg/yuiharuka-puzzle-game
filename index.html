@@ -72,7 +72,11 @@
   #battle{height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative;background:#0d0b22;}
   /* ステージごとの壮大な背景（神殿・荒野・宇宙など）を全面に敷く */
   #bgLayer{position:absolute;inset:0;z-index:0;overflow:hidden;}
-  #bgLayer svg{width:100%;height:100%;display:block;}
+  #bgLayer img{width:100%;height:100%;object-fit:cover;object-position:50% 38%;display:block;}
+  /* 背景イラストの上に薄い暗幕＋上下グラデーションを重ねて、
+     敵キャラ・HPバー・盤面の読みやすさを保つ */
+  #bgLayer::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(10,8,28,.34) 0%,rgba(10,8,28,.10) 30%,rgba(10,8,28,.16) 58%,rgba(10,8,28,.55) 100%);}
   #battle>*:not(#bgLayer){position:relative;z-index:1;}
   .b-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:10;padding:max(.35rem, env(safe-area-inset-top)) .6rem 0;}
   .b-top .ttl{font-size:.8rem;color:var(--sub);font-weight:800;}
@@ -338,14 +342,16 @@ const PARTY_HP = 150;
 
 /* ================= ステージ背景 =================
    ステージごとに神殿・荒野・火山・氷・深海・宇宙の壮大な風景を
-   SVGシルエットで描く（外部画像なし）。バトル画面の全面に敷く。 */
+   絵画調イラスト（assets/bg-*.jpg）で全面に敷く。
+   神殿はユーザーの添付イメージ（円形列柱＋角の守護像＋中央の
+   篝火＋星雲の空）に寄せて作ったもの。 */
 const BG_SCENES = {
- temple:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#120b36"/><stop offset=".5" stop-color="#3a2160"/><stop offset=".78" stop-color="#7c4470"/><stop offset="1" stop-color="#c97a5e"/></linearGradient></defs><rect width="400" height="800" fill="url(#bgT)"/><circle cx="200" cy="300" r="88" fill="#ffd9a0" opacity=".16"/><circle cx="200" cy="300" r="54" fill="#ffe9bb" opacity=".85"/><g fill="#1d1242"><path d="M-10 330 L200 218 L410 330 L410 356 L-10 356 Z"/><rect x="8" y="356" width="384" height="14"/></g><g fill="#241650"><rect x="26" y="384" width="30" height="276"/><rect x="102" y="384" width="30" height="276"/><rect x="178" y="384" width="30" height="276"/><rect x="254" y="384" width="30" height="276"/><rect x="330" y="384" width="30" height="276"/></g><g fill="#2e1c5e"><rect x="20" y="370" width="42" height="14"/><rect x="96" y="370" width="42" height="14"/><rect x="172" y="370" width="42" height="14"/><rect x="248" y="370" width="42" height="14"/><rect x="324" y="370" width="42" height="14"/></g><rect y="660" width="400" height="140" fill="#160d33"/><rect y="660" width="400" height="10" fill="#3a2566"/><path d="M0 706 H400 M0 748 H400" stroke="#241650" stroke-width="6"/></svg>',
- wasteland:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a0e2e"/><stop offset=".45" stop-color="#8a2f2a"/><stop offset=".75" stop-color="#e06a35"/><stop offset="1" stop-color="#ffb35c"/></linearGradient></defs><rect width="400" height="800" fill="url(#bgW)"/><circle cx="200" cy="470" r="122" fill="#ffcf7d" opacity=".25"/><circle cx="200" cy="470" r="78" fill="#ffd98f"/><path d="M0 520 Q110 470 220 512 T400 505 V800 H0 Z" fill="#7a2c22"/><path d="M0 610 Q130 560 250 600 T400 596 V800 H0 Z" fill="#4a1a20"/><path d="M330 610 C326 560 330 520 318 486 M330 548 C312 536 300 538 288 528 M329 522 C344 508 356 506 368 494" stroke="#2a0d16" stroke-width="7" fill="none" stroke-linecap="round"/><g fill="#33101c"><path d="M40 640 l18 -14 l14 14 Z"/><path d="M70 652 l12 -9 l10 9 Z"/><path d="M96 646 l9 -7 l8 7 Z"/></g></svg>',
- volcano:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#160404"/><stop offset=".5" stop-color="#4a1408"/><stop offset="1" stop-color="#8a2f10"/></linearGradient></defs><rect width="400" height="800" fill="url(#bgV)"/><g fill="#5a5a66" opacity=".22"><circle cx="200" cy="300" r="34"/><circle cx="238" cy="262" r="26"/><circle cx="168" cy="258" r="20"/><circle cx="206" cy="216" r="15"/></g><path d="M52 800 L200 380 L348 800 Z" fill="#200a08"/><ellipse cx="200" cy="384" rx="48" ry="11" fill="#ff7a2e"/><ellipse cx="200" cy="384" rx="30" ry="7" fill="#ffc46b"/><path d="M192 392 C200 460 188 520 198 592 C204 642 196 706 202 800 L226 800 C216 692 228 620 217 546 C209 482 221 442 211 392 Z" fill="#ff5a1e" opacity=".92"/><path d="M160 470 C150 540 162 610 154 690 L168 690 C172 612 162 545 172 478 Z" fill="#ff7a2e" opacity=".55"/><g fill="#ffb35c"><circle cx="86" cy="300" r="3"/><circle cx="140" cy="210" r="2.4"/><circle cx="300" cy="250" r="2.8"/><circle cx="330" cy="360" r="2.2"/><circle cx="70" cy="430" r="2.4"/><circle cx="262" cy="150" r="2"/><circle cx="110" cy="120" r="2.2"/></g><rect y="770" width="400" height="30" fill="#170605"/></svg>',
- ice:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgI" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06182e"/><stop offset=".55" stop-color="#144a74"/><stop offset="1" stop-color="#7fc4e8"/></linearGradient></defs><rect width="400" height="800" fill="url(#bgI)"/><path d="M-20 150 C100 90 240 190 420 110" stroke="#57ffb0" stroke-width="26" fill="none" opacity=".30" stroke-linecap="round"/><path d="M-20 210 C110 150 250 240 420 170" stroke="#4ad8ff" stroke-width="18" fill="none" opacity=".22" stroke-linecap="round"/><path d="M0 800 V716 Q120 688 230 712 T400 704 V800 Z" fill="#dff4ff" opacity=".92"/><g fill="#bfeaff"><polygon points="36,800 78,596 118,800" opacity=".9"/><polygon points="238,800 296,548 352,800" opacity=".9"/><polygon points="318,800 356,648 392,800" opacity=".8"/></g><g fill="#7fc4e8"><polygon points="104,800 148,636 192,800" opacity=".75"/><polygon points="150,800 176,690 202,800" opacity=".7"/></g><g fill="#ffffff"><circle cx="52" cy="120" r="2.2"/><circle cx="150" cy="70" r="1.8"/><circle cx="250" cy="130" r="2.2"/><circle cx="340" cy="80" r="1.8"/><circle cx="90" cy="300" r="1.6"/><circle cx="310" cy="330" r="1.6"/><circle cx="200" cy="240" r="1.5"/><circle cx="30" cy="430" r="1.6"/><circle cx="370" cy="460" r="1.6"/></g></svg>',
- sea:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a5a7a"/><stop offset=".45" stop-color="#063a5e"/><stop offset="1" stop-color="#02101f"/></linearGradient></defs><rect width="400" height="800" fill="url(#bgSea)"/><g fill="#bfeaff" opacity=".10"><polygon points="56,0 104,0 168,800 92,800"/><polygon points="176,0 206,0 236,800 196,800"/><polygon points="292,0 336,0 316,800 268,800"/></g><path d="M0 800 V730 Q80 700 150 728 T400 720 V800 Z" fill="#02141f"/><path d="M28 742 C24 716 30 700 22 682 M52 748 C56 724 50 708 60 692 M344 740 C340 716 348 702 340 686" stroke="#04263c" stroke-width="7" fill="none" stroke-linecap="round"/><g fill="none" stroke="#bfeaff" opacity=".5"><circle cx="90" cy="560" r="5"/><circle cx="112" cy="500" r="3.6"/><circle cx="300" cy="600" r="4.4"/><circle cx="322" cy="540" r="3"/><circle cx="200" cy="640" r="3.2"/></g><g fill="#7ffce8"><circle cx="60" cy="430" r="1.8" opacity=".8"/><circle cx="150" cy="380" r="1.5" opacity=".7"/><circle cx="250" cy="450" r="1.8" opacity=".8"/><circle cx="340" cy="380" r="1.5" opacity=".7"/><circle cx="120" cy="250" r="1.4" opacity=".6"/><circle cx="290" cy="230" r="1.4" opacity=".6"/></g></svg>',
- space:'<svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="bgS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#04061a"/><stop offset=".6" stop-color="#0b1030"/><stop offset="1" stop-color="#1c1440"/></linearGradient><radialGradient id="bgP" cx=".35" cy=".3" r="1.1"><stop offset="0" stop-color="#9fd8ff"/><stop offset=".55" stop-color="#4a6fd4"/><stop offset="1" stop-color="#1d2a6e"/></radialGradient></defs><rect width="400" height="800" fill="url(#bgS)"/><ellipse cx="90" cy="570" rx="150" ry="92" fill="#7a3fd4" opacity=".14"/><ellipse cx="330" cy="110" rx="130" ry="70" fill="#2a7fd4" opacity=".12"/><g fill="#ffffff"><circle cx="30" cy="80" r="2"/><circle cx="90" cy="180" r="1.5"/><circle cx="150" cy="60" r="2.2"/><circle cx="210" cy="140" r="1.4"/><circle cx="60" cy="300" r="1.6"/><circle cx="120" cy="380" r="2"/><circle cx="30" cy="480" r="1.4"/><circle cx="180" cy="300" r="1.3"/><circle cx="240" cy="420" r="1.7"/><circle cx="360" cy="330" r="1.5"/><circle cx="330" cy="470" r="2"/><circle cx="270" cy="560" r="1.4"/><circle cx="150" cy="540" r="1.6"/><circle cx="80" cy="640" r="1.4"/><circle cx="370" cy="620" r="1.6"/><circle cx="220" cy="660" r="1.3"/><circle cx="105" cy="95" r="1.2"/><circle cx="255" cy="55" r="1.6"/><circle cx="345" cy="230" r="1.3"/><circle cx="45" cy="205" r="1.2"/></g><path d="M150 96 l2.4 6.6 6.6 2.4 -6.6 2.4 -2.4 6.6 -2.4 -6.6 -6.6 -2.4 6.6 -2.4 Z" fill="#ffffff" opacity=".9"/><path d="M52 372 l1.8 5 5 1.8 -5 1.8 -1.8 5 -1.8 -5 -5 -1.8 5 -1.8 Z" fill="#ffffff" opacity=".8"/><circle cx="312" cy="180" r="56" fill="url(#bgP)"/><ellipse cx="312" cy="190" rx="98" ry="19" fill="none" stroke="#a8c8ff" stroke-width="6" opacity=".55" transform="rotate(-14 312 190)"/><path d="M0 800 V722 Q120 692 220 716 T400 706 V800 Z" fill="#070a24"/></svg>',
+ temple:'<img src="bg-temple.jpg" alt="">',
+ wasteland:'<img src="bg-wasteland.jpg" alt="">',
+ volcano:'<img src="bg-volcano.jpg" alt="">',
+ ice:'<img src="bg-ice.jpg" alt="">',
+ sea:'<img src="bg-sea.jpg" alt="">',
+ space:'<img src="bg-space.jpg" alt="">',
 };
 const STAGE_BG = {1:"temple",2:"wasteland",3:"volcano",4:"ice",5:"sea",6:"volcano",7:"sea",8:"space",9:"temple",10:"ice",11:"wasteland"};
 
@@ -360,7 +366,7 @@ let AC=null, seOn=true, bgmOn=false, bgmTimer=null, bgmStep=0, curStage=1;
 function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==="suspended")AC.resume(); return AC; }
 function tone(f,t0,d,type,g){ if(!seOn&&type!=="bgm")return; const c=ac(),o=c.createOscillator(),v=c.createGain();
   o.type=type==="bgm"?"triangle":"sine"; o.frequency.value=f; o.connect(v); v.connect(c.destination);
-  const s=c.currentTime+t0; v.gain.setValueAtTime(0,s); v.gain.linearRampToValueAtTime(g||.42,s+.015); v.gain.exponentialRampToValueAtTime(.001,s+d);
+  const s=c.currentTime+t0; v.gain.setValueAtTime(0,s); v.gain.linearRampToValueAtTime(g||.62,s+.015); v.gain.exponentialRampToValueAtTime(.001,s+d);
   o.start(s); o.stop(s+d+.05); }
 function comboSE(combo){ const base=520*Math.pow(1.122,Math.min(combo-1,10)); tone(base,0,.14); tone(base*1.5,.05,.16); }
 function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.sampleRate*0.52);
@@ -371,7 +377,7 @@ function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.
   const t=c.currentTime; const f0=480+Math.min(combo-1,10)*90;
   /* パラメータが上がっていく感じの、ゆっくりした上昇スイープ */
   f.frequency.setValueAtTime(f0,t); f.frequency.exponentialRampToValueAtTime(f0*4.2,t+0.44);
-  const g=c.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.68,t+.07); g.gain.exponentialRampToValueAtTime(.001,t+.52);
+  const g=c.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.95,t+.07); g.gain.exponentialRampToValueAtTime(.001,t+.52);
   src.connect(f); f.connect(g); g.connect(c.destination); src.start(t); src.stop(t+.54); }
 function swapSE(){ tone(660,0,.07); }
 function skillSE(){ [523,659,784,1046].forEach((f,i)=>tone(f,i*.06,.16)); }
@@ -800,6 +806,9 @@ function tapOrb(i){
   swapSE(); B.busy=true; renderBoard();
   resolveBoard().then(()=>{ if(!B||B.over)return; endTurn(); });
 }
+/* コンボ倍率：コンボが進むほど加速して伸びるカーブ（爽快感重視）。
+   1コンボ×1.0 → 3コンボ×1.96 → 5コンボ×3.64 → 8コンボ×7.51 → 10コンボ×10.99 */
+function comboMult(n){ const k=Math.max(0,n-1); return 1 + 0.30*k + 0.09*k*k; }
 async function resolveBoard(){
   let combo=0;
   const tags=[]; // コンボ表示はコンボが終わるまで残す
@@ -814,14 +823,14 @@ async function resolveBoard(){
       // 攻撃の蓄積（この段階ではコンボ倍率なしの初期値をキャラに表示）
       if(g.type==="heal"){
         const bonus=save().party.some(id=>{const c=charById(id);return c.passive.includes("かいふく");})?1.5:1;
-        B.partyHp=Math.min(PARTY_HP, B.partyHp + g.cells.length*4*bonus*(1+0.25*(combo-1)));
+        B.partyHp=Math.min(PARTY_HP, B.partyHp + g.cells.length*4*bonus*comboMult(combo));
       } else {
         save().party.forEach((id,idx)=>{
           const c=charById(id); if(c.attr!==g.type)return;
           const pb=c.passive.includes("+35")?1.35:c.passive.includes("+25")?1.25:1.1;
           const raw=c.atk * g.cells.length * 0.34 * pb;
           B.accRaw[idx]+=raw;
-          B.acc[idx]+=raw * (1+0.25*(combo-1));
+          B.acc[idx]+=raw * comboMult(combo);
         });
         B.accDisp=B.accRaw.slice(); // 初期値（倍率なし）を表示
       }
@@ -878,7 +887,7 @@ function showComboTag(g, combo){
   let r=0,c=0; g.cells.forEach(ci=>{ r+=Math.floor(ci/N); c+=ci%N; });
   r/=g.cells.length; c/=g.cells.length;
   const el=document.createElement("div");
-  el.className="combo-tag"; el.textContent="COMBO "+combo;
+  el.className="combo-tag"; el.textContent="COMBO "+combo+(combo>1?" ×"+comboMult(combo).toFixed(1):"");
   el.style.left=((c+0.5)/N*100)+"%"; el.style.top=((r+0.5)/N*100)+"%";
   layer.appendChild(el);
   return el;
@@ -940,13 +949,13 @@ function boomSE(attr){
     for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,1.4);
     const src=c.createBufferSource(); src.buffer=buf;
     const f=c.createBiquadFilter(); f.type=attr==="water"?"bandpass":"lowpass"; f.frequency.value=attr==="fire"?900:attr==="water"?1400:1100; f.Q.value=.7;
-    const g=c.createGain(); g.gain.setValueAtTime(attr==="fire"?.88:.65,t); g.gain.exponentialRampToValueAtTime(.001,t+.42);
+    const g=c.createGain(); g.gain.setValueAtTime(attr==="fire"?1.0:.78,t); g.gain.exponentialRampToValueAtTime(.001,t+.42);
     src.connect(f); f.connect(g); g.connect(c.destination); src.start(t);
     if(attr==="fire"){ /* 炎のゴォーという吹き上がり */
       const src2=c.createBufferSource(); src2.buffer=buf;
       const f2=c.createBiquadFilter(); f2.type="bandpass"; f2.Q.value=1.2;
       f2.frequency.setValueAtTime(400,t); f2.frequency.exponentialRampToValueAtTime(1800,t+.3);
-      const g2=c.createGain(); g2.gain.setValueAtTime(.5,t); g2.gain.exponentialRampToValueAtTime(.001,t+.5);
+      const g2=c.createGain(); g2.gain.setValueAtTime(.68,t); g2.gain.exponentialRampToValueAtTime(.001,t+.5);
       src2.connect(f2); f2.connect(g2); g2.connect(c.destination); src2.start(t+.03);
     }
   }catch(e){}
