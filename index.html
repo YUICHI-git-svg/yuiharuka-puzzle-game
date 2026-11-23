@@ -66,6 +66,11 @@
   .tag{display:inline-block;font-size:.6rem;font-weight:800;border-radius:999px;padding:.08rem .45rem;color:#fff;}
   .tag.fire{background:var(--fire);} .tag.water{background:var(--water);}
   .tag.forest{background:var(--forest);} .tag.heal{background:var(--heal);}
+  .stars{font-size:.82rem;letter-spacing:.12em;line-height:1.2;}
+  .stars .on{color:var(--gold);text-shadow:0 0 5px rgba(255,211,77,.55);}
+  .stars .off{color:#57538a;}
+  .rank-title{font-size:1rem;font-weight:900;color:var(--gold);margin:1rem 0 .45rem;letter-spacing:.06em;}
+  .rank-title:first-child{margin-top:.2rem;}
   .msg{min-height:1.4em;text-align:center;font-size:.85rem;font-weight:700;color:var(--gold);margin:.5rem 0 0;}
 
   /* ---------- バトル ---------- */
@@ -226,8 +231,19 @@
     <div class="char-grid" id="partyGrid"></div>
     <p class="msg" id="homeMsg"></p>
 
-    <div class="sec-title">ずかん ― スキルいちらん</div>
-    <div class="char-grid" id="zukanGrid"></div>
+    <button class="btn ghost" id="zukanBtn" style="margin-top:1rem;">📖 ずかんを みる</button>
+  </div>
+</div>
+
+<!-- ============ ずかん（別ページ） ============ -->
+<div id="zukan" class="hidden">
+  <div class="topbar">
+    <button class="icon-btn" id="zukanBack">← もどる</button>
+    <span style="flex:1"></span>
+  </div>
+  <div class="wrap">
+    <h1>ずかん ― スキルいちらん</h1>
+    <div id="zukanBody"></div>
   </div>
 </div>
 
@@ -245,7 +261,7 @@
       <div class="atk-badge" id="atkBadge">こうげきまで<span class="num" id="atkNum">3</span>ターン</div>
     </div>
     <div class="enemy-meta">
-      <div class="enemy-name"><span id="enemyName"></span><span class="tag" id="enemyTag"></span></div>
+      <div class="enemy-name"><span id="enemyName"></span><span id="enemyStars"></span><span class="tag" id="enemyTag"></span></div>
       <div class="hp-row">
         <div class="hp-bar"><div class="hp-fill" id="enemyHpFill"></div></div>
         <div class="hp-num" id="enemyHpNum"></div>
@@ -323,6 +339,14 @@ const CHARS = [
 ];
 function imgArt(src, filter){ return '<img src="'+src+'" alt=""'+(filter?' style="filter:'+filter+'"':"")+">"; }
 const charById = id => CHARS.find(c=>c.id===id);
+/* キャラの☆ランク（1〜5）：スライムは☆1、つよいキャラほど☆が多い */
+const STAR_RANK = { slime_fire:1, slime_water:1, slime_forest:1,
+  fairy_flower:2, fairy_star:2,
+  dragon_fire:3, dragon_water:3, dragon_forest:3,
+  dragon_change_forest:4, fairy_change_water:4, dragon_change_fire:4,
+  phoenix:5, dragon_sea:5 };
+CHARS.forEach(c=>{ c.stars = STAR_RANK[c.id] || 1; });
+function starHTML(c){ let s='<span class="stars">'; for(let i=0;i<5;i++) s+='<span class="'+(i<c.stars?"on":"off")+'">'+(i<c.stars?"★":"☆")+'</span>'; return s+'</span>'; }
 /* 盤面を 7×7 にしたぶん 1ターンの火力が下がるので、敵HPは
    8×8時代の約0.8倍に下げて難易度をそろえた */
 const STAGES = [
@@ -662,21 +686,38 @@ function renderHome(){
     const inP=save().party.includes(c.id);
     const d=document.createElement("button");
     d.className="char-card"+(inP?" inparty":"");
-    d.innerHTML='<div class="art">'+c.art()+'</div><div class="nm">'+c.name+'</div>'+
+    d.innerHTML='<div class="art">'+c.art()+'</div><div class="nm">'+c.name+'</div><div>'+starHTML(c)+'</div>'+
       '<div class="sk"><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'<br><b>スキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'（'+c.skill.turns+'ターン）</div>';
     d.onclick=()=>toggleParty(c.id);
     $("partyGrid").appendChild(d);
   });
-  $("zukanGrid").innerHTML="";
-  CHARS.forEach(c=>{
-    const owned=save().owned.includes(c.id);
-    const d=document.createElement("div");
-    d.className="char-card"+(owned?"":" notowned");
-    d.innerHTML='<div class="art">'+c.art()+'</div><div class="nm">'+(owned?c.name:"？？？")+'</div>'+
-      '<div class="sk"><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'<br>いつもスキル：'+c.passive+'<br><b>タップスキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'（'+c.skill.turns+'ターンで たまる）</div>';
-    $("zukanGrid").appendChild(d);
+}
+/* ずかんは別ページ：☆ランクごとにグループ分けして表示する */
+function renderZukan(){
+  const body=$("zukanBody"); body.innerHTML="";
+  [5,4,3,2,1].forEach(rank=>{
+    const list=CHARS.filter(c=>c.stars===rank);
+    if(!list.length)return;
+    const t=document.createElement("div");
+    t.className="rank-title"; t.textContent="★".repeat(rank)+" の なかま";
+    body.appendChild(t);
+    const grid=document.createElement("div");
+    grid.className="char-grid";
+    list.forEach(c=>{
+      const owned=save().owned.includes(c.id);
+      const d=document.createElement("div");
+      d.className="char-card"+(owned?"":" notowned");
+      d.innerHTML='<div class="art">'+c.art()+'</div><div class="nm">'+(owned?c.name:"？？？")+'</div><div>'+starHTML(c)+'</div>'+
+        '<div class="sk"><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'<br>いつもスキル：'+c.passive+'<br><b>タップスキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'（'+c.skill.turns+'ターンで たまる）</div>';
+      grid.appendChild(d);
+    });
+    body.appendChild(grid);
   });
 }
+function openZukan(){ renderZukan(); $("home").classList.add("hidden"); $("zukan").classList.remove("hidden"); window.scrollTo(0,0); }
+function closeZukan(){ $("zukan").classList.add("hidden"); $("home").classList.remove("hidden"); window.scrollTo(0,0); }
+$("zukanBtn").onclick=openZukan;
+$("zukanBack").onclick=closeZukan;
 function toggleParty(id){
   const s=save(), i=s.party.indexOf(id);
   if(i>=0){ if(s.party.length<=1){ $("homeMsg").textContent="パーティは 1にんは 必要だよ"; return; } s.party.splice(i,1); }
@@ -724,6 +765,7 @@ function startBattle(st){
   $("enemyArt").innerHTML=enemy.art();
   $("enemyArt").firstChild.classList.toggle("boss",!!st.boss);
   $("enemyName").textContent=enemy.name;
+  $("enemyStars").innerHTML=starHTML(enemy);
   const tag=$("enemyTag"); tag.textContent=ATTR[enemy.attr].name; tag.className="tag "+enemy.attr;
   buildPartyRow(); renderBattle(); fitBoard();
   setTimeout(fitBoard, 80);
@@ -807,8 +849,9 @@ function tapOrb(i){
   resolveBoard().then(()=>{ if(!B||B.over)return; endTurn(); });
 }
 /* コンボ倍率：コンボが進むほど加速して伸びるカーブ（爽快感重視）。
-   1コンボ×1.0 → 3コンボ×1.96 → 5コンボ×3.64 → 8コンボ×7.51 → 10コンボ×10.99 */
-function comboMult(n){ const k=Math.max(0,n-1); return 1 + 0.30*k + 0.09*k*k; }
+   前回よりさらに引き上げ：1コンボ×1.0 → 3コンボ×2.64 → 5コンボ×5.56
+   → 8コンボ×12.34 → 10コンボ×18.46 */
+function comboMult(n){ const k=Math.max(0,n-1); return 1 + 0.50*k + 0.16*k*k; }
 async function resolveBoard(){
   let combo=0;
   const tags=[]; // コンボ表示はコンボが終わるまで残す
@@ -1058,7 +1101,7 @@ function useSkill(i){
 function showSkillPanel(i){
   if(!B)return;
   const c=charById(save().party[i]), ready=B.charges[i]>=c.skill.turns;
-  showSheet('<div class="art">'+c.art()+'</div><h2>'+c.name+'</h2>'+
+  showSheet('<div class="art">'+c.art()+'</div><h2>'+c.name+'</h2><div>'+starHTML(c)+'</div>'+
    '<p><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'</p>'+
    '<p>いつもスキル：'+c.passive+'</p>'+
    '<p><b>タップスキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'<br><span class="sub">'+c.skill.turns+'ターンで たまる（いま '+B.charges[i]+'）</span></p>'+
