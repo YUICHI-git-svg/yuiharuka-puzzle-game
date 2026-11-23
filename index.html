@@ -122,12 +122,18 @@
   #comboLayer{position:absolute;pointer-events:none;z-index:6;}
   .combo-tag{position:absolute;transform:translate(-50%,-50%);font-size:.82rem;font-weight:900;letter-spacing:.05em;
     background:linear-gradient(90deg,#ff5a4e,#ffb35c,#ffd34d,#3ecf6e,#3fa9f5,#c07fe8,#ff5a4e);
+    background-size:220% 100%;
     -webkit-background-clip:text;background-clip:text;color:transparent;
-    filter:drop-shadow(0 1px 1px rgba(0,0,0,.9)) drop-shadow(0 0 3px rgba(0,0,0,.65));
-    white-space:nowrap;pointer-events:none;animation:ctag .25s ease-out;}
+    white-space:nowrap;pointer-events:none;animation:ctag .25s ease-out,rainbowblink .55s linear infinite;}
   @keyframes ctag{0%{opacity:0;transform:translate(-50%,-50%) scale(.5);}60%{opacity:1;transform:translate(-50%,-50%) scale(1.18);}100%{opacity:1;transform:translate(-50%,-50%) scale(1);}}
-  .combo-tag.vanish{animation:ctagout .22s ease-in forwards;}
-  @keyframes ctagout{0%{opacity:1;transform:translate(-50%,-50%) scale(1);}40%{opacity:1;transform:translate(-50%,-50%) scale(1.35);}100%{opacity:0;transform:translate(-50%,-80%) scale(1.5);}}
+  /* パズドラ風：虹色が流れながら明滅する */
+  @keyframes rainbowblink{
+    0%{background-position:0% 50%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.9)) drop-shadow(0 0 3px rgba(0,0,0,.65)) brightness(1);}
+    50%{background-position:110% 50%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.9)) drop-shadow(0 0 7px rgba(255,255,255,.55)) brightness(1.6);}
+    100%{background-position:220% 50%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.9)) drop-shadow(0 0 3px rgba(0,0,0,.65)) brightness(1);}
+  }
+  .combo-tag.vanish{animation:ctagout .95s ease-out forwards,rainbowblink .55s linear infinite;}
+  @keyframes ctagout{0%{opacity:1;transform:translate(-50%,-50%) scale(1);}55%{opacity:.85;transform:translate(-50%,-56%) scale(1.32);}100%{opacity:0;transform:translate(-50%,-66%) scale(1.55);}}
   .member .acc.bump{animation:none;}
   .fx{position:absolute;left:50%;top:46%;width:0;height:0;pointer-events:none;z-index:9;}
   .fx i{position:absolute;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;opacity:0;animation:fxburst .78s cubic-bezier(.12,.7,.3,1) forwards;}
@@ -150,13 +156,19 @@
   .board-wrap{position:relative;display:flex;justify-content:center;padding:.45rem .5rem .5rem;}
   #board{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:#0d0b22;
     border:1px solid var(--line);border-radius:14px;padding:5px;}
-  .orb{aspect-ratio:1;border-radius:50%;border:none;padding:0;position:relative;min-height:0;
+  .orb{aspect-ratio:1;border-radius:50%;border:none;padding:0;position:relative;min-height:0;overflow:hidden;
     display:flex;align-items:center;justify-content:center;transition:transform .12s, box-shadow .12s;}
-  .orb svg{width:62%;height:62%;pointer-events:none;}
-  .orb.fire{background:radial-gradient(circle at 32% 28%,#ffb1a6,#ff5a4e 55%,#c22e24);}
-  .orb.water{background:radial-gradient(circle at 32% 28%,#bfe6ff,#3fa9f5 55%,#1668ad);}
-  .orb.forest{background:radial-gradient(circle at 32% 28%,#c2f7cf,#3ecf6e 55%,#1d8f43);}
-  .orb.heal{background:radial-gradient(circle at 32% 28%,#ffd3e6,#ff7eb0 55%,#d14d85);}
+  .orb svg{width:60%;height:60%;pointer-events:none;position:relative;z-index:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
+  /* ガラス玉のような透明感：上部の強いハイライト＋内側の陰影と縁の光 */
+  .orb::before{content:"";position:absolute;left:11%;top:5%;width:54%;height:36%;border-radius:50%;z-index:2;pointer-events:none;
+    background:radial-gradient(ellipse at center,rgba(255,255,255,.98),rgba(255,255,255,.35) 55%,rgba(255,255,255,0) 75%);
+    transform:rotate(-16deg);}
+  .orb::after{content:"";position:absolute;inset:0;border-radius:50%;z-index:1;pointer-events:none;
+    box-shadow:inset 0 -9px 13px rgba(0,0,0,.4),inset 0 7px 11px rgba(255,255,255,.5),inset 3px 0 8px rgba(255,255,255,.2),inset -3px 0 8px rgba(0,0,0,.2),inset 0 0 0 2px rgba(255,255,255,.28);}
+  .orb.fire{background:radial-gradient(circle at 50% 92%,rgba(255,190,160,.5),rgba(255,190,160,0) 55%),radial-gradient(circle at 34% 26%,rgba(255,232,222,.96) 0%,rgba(255,138,120,.86) 30%,rgba(255,82,66,.8) 60%,rgba(196,34,22,.92) 100%);}
+  .orb.water{background:radial-gradient(circle at 50% 92%,rgba(190,230,255,.55),rgba(190,230,255,0) 55%),radial-gradient(circle at 34% 26%,rgba(230,247,255,.96) 0%,rgba(120,195,255,.84) 30%,rgba(55,160,245,.8) 60%,rgba(18,96,170,.92) 100%);}
+  .orb.forest{background:radial-gradient(circle at 50% 92%,rgba(200,255,205,.55),rgba(200,255,205,0) 55%),radial-gradient(circle at 34% 26%,rgba(233,255,236,.96) 0%,rgba(120,235,150,.84) 30%,rgba(55,205,105,.8) 60%,rgba(24,140,64,.92) 100%);}
+  .orb.heal{background:radial-gradient(circle at 50% 92%,rgba(255,205,230,.55),rgba(255,205,230,0) 55%),radial-gradient(circle at 34% 26%,rgba(255,238,246,.96) 0%,rgba(255,160,200,.86) 30%,rgba(255,120,175,.8) 60%,rgba(205,72,132,.92) 100%);}
   .orb.sel{box-shadow:0 0 0 3px #fff,0 0 14px rgba(255,255,255,.8);transform:scale(1.1);z-index:2;}
   .orb.clearing{animation:clr .3s forwards;}
   @keyframes clr{to{transform:scale(.2);opacity:0;}}
@@ -330,15 +342,16 @@ function tone(f,t0,d,type,g){ if(!seOn&&type!=="bgm")return; const c=ac(),o=c.cr
   const s=c.currentTime+t0; v.gain.setValueAtTime(0,s); v.gain.linearRampToValueAtTime(g||.12,s+.015); v.gain.exponentialRampToValueAtTime(.001,s+d);
   o.start(s); o.stop(s+d+.05); }
 function comboSE(combo){ const base=520*Math.pow(1.122,Math.min(combo-1,10)); tone(base,0,.14); tone(base*1.5,.05,.16); }
-function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.sampleRate*0.2);
+function whooshSE(combo){ if(!seOn)return; const c=ac(); const len=Math.floor(c.sampleRate*0.52);
   const buf=c.createBuffer(1,len,c.sampleRate); const d=buf.getChannelData(0);
   for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
   const src=c.createBufferSource(); src.buffer=buf;
   const f=c.createBiquadFilter(); f.type="bandpass"; f.Q.value=1.1;
   const t=c.currentTime; const f0=480+Math.min(combo-1,10)*90;
-  f.frequency.setValueAtTime(f0,t); f.frequency.exponentialRampToValueAtTime(f0*4.2,t+0.16);
-  const g=c.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.22,t+.03); g.gain.exponentialRampToValueAtTime(.001,t+.2);
-  src.connect(f); f.connect(g); g.connect(c.destination); src.start(t); src.stop(t+.22); }
+  /* パラメータが上がっていく感じの、ゆっくりした上昇スイープ */
+  f.frequency.setValueAtTime(f0,t); f.frequency.exponentialRampToValueAtTime(f0*4.2,t+0.44);
+  const g=c.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.22,t+.07); g.gain.exponentialRampToValueAtTime(.001,t+.52);
+  src.connect(f); f.connect(g); g.connect(c.destination); src.start(t); src.stop(t+.54); }
 function swapSE(){ tone(660,0,.07); }
 function skillSE(){ [523,659,784,1046].forEach((f,i)=>tone(f,i*.06,.16)); }
 function winSE(){ [523,659,784,1046,1318].forEach((f,i)=>tone(f,i*.1,.25)); }
@@ -641,16 +654,16 @@ async function resolveBoard(){
   // そのたびに攻撃値がコンボ倍率ぶんバウンドしながら増えていく
   const totalBonus=B.acc.map((v,i)=>v-B.accRaw[i]);
   if(tags.length){
-    await wait(220);
+    await wait(440);
     for(let k=1;k<=tags.length;k++){
       if(!B)return;
       whooshSE(k);
       const tag=tags[k-1];
-      if(tag){ tag.classList.add("vanish"); setTimeout(()=>tag.remove(),240); }
+      if(tag){ tag.classList.add("vanish"); setTimeout(()=>tag.remove(),980); }
       const targets=B.accRaw.map((raw,i)=>raw + totalBonus[i]*(k/tags.length));
       bumpAccLabels(targets);
-      await tweenAcc(targets,250);
-      await wait(70);
+      await tweenAcc(targets,500);
+      await wait(140);
     }
     B.accDisp=B.acc.slice(); updateAccLabels();
   }
@@ -722,7 +735,7 @@ function tweenAcc(to, dur){
         document.querySelectorAll(".member .acc").forEach(el=>el.classList.remove("counting"));
         res();
       }
-    }, 16);
+    }, 32);
   });
 }
 const FX_ICON={ fire:'<svg viewBox="0 0 24 24"><path d="M12 2 C15 7 19 9 17.5 15 C16.5 18.5 14 20 12 20 C10 20 7.5 18.5 6.5 15 C5 9 9 7 12 2Z" fill="#ff8a3c"/></svg>',
