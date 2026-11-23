@@ -314,15 +314,15 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.41</div>
+    <div class="ver-line">ver 1.0.43</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
-    <p class="hint">ぞくせいの さんすくみ：<b style="color:var(--fire)">ひ</b> は <b style="color:var(--forest)">もり</b>に、<b style="color:var(--forest)">もり</b> は <b style="color:var(--water)">みず</b>に、<b style="color:var(--water)">みず</b> は <b style="color:var(--fire)">ひ</b>に つよいよ。<br><b style="color:var(--light)">ひかり</b> と <b style="color:var(--dark)">やみ</b> は おたがいに つよいよ（ひかり↔やみ）。<br>ステージごとに <b>おちるオーブ</b> が 決まっているよ：ボタンの 色の丸が そのステージで おちるオーブ。<b style="color:var(--light)">きいろ＝ひかり</b> は <b>サタンのダンジョンでだけ</b> おちるよ。ゼウスは そこで オーブ攻撃できるよ！ <b>やみオーブは どこにも おちない</b>から、サタンは スキルで こうげきするよ。</p>
+    <p class="hint">ぞくせいの さんすくみ：<b style="color:var(--fire)">ひ</b> は <b style="color:var(--forest)">もり</b>に、<b style="color:var(--forest)">もり</b> は <b style="color:var(--water)">みず</b>に、<b style="color:var(--water)">みず</b> は <b style="color:var(--fire)">ひ</b>に つよいよ。<br><b style="color:var(--light)">ひかり</b> と <b style="color:var(--dark)">やみ</b> は おたがいに つよいよ（ひかり↔やみ）。<br>ステージごとに <b>おちるオーブ</b> が 決まっているよ：ボタンの 色の丸が そのステージで おちるオーブ。<b style="color:var(--light)">きいろ＝ひかり</b> は <b>サタンのダンジョンでだけ</b> おちるよ。ゼウスは そこで オーブ攻撃できるよ！ <b>やみオーブは どこにも おちない</b>から、サタンは スキルで こうげきするよ。<br>限定ステージ12の <b style="color:var(--light)">スーパーでんきドラゴン</b> を なかまにすると、スキルで <b>どのステージでも オーブ全部を ひかりに</b> かえられるよ！</p>
 
     <div class="sec-title">限定ステージ</div>
     <div class="stages" id="extraGrid"></div>
-    <p class="hint">オーブの いろを かえる とくべつな なかまが いるよ。いつでも あそべるよ！</p>
+    <p class="hint">オーブの いろを かえる とくべつな なかまが いるよ。いつでも あそべるよ！<br>ステージ12には、オーブ全部を ひかりに かえる <b style="color:var(--light)">スーパーでんきドラゴン</b> が あらわれたよ！</p>
 
     <div class="sec-title">⚡ チャレンジステージ ⚡</div>
     <div class="stages challenge" id="challengeGrid"></div>
@@ -446,6 +446,14 @@ const CHARS = [
  {id:"dragon_change_forest", name:"エメラルドドラゴン", attr:"forest", atk:38, art:()=>imgArt("dragon-emerald.png"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・もり", desc:"あかオーブ 全部 → みどり に かえる", turns:5, type:"change", from:"fire", to:"forest"}},
  {id:"fairy_change_water", name:"サファイアフェアリー", attr:"water", atk:36, art:()=>imgArt("fairy-sapphire.png"), passive:"コンボの いりょく +25%", skill:{name:"へんげの こな・みず", desc:"みどりオーブ 全部 → あお に かえる", turns:5, type:"change", from:"forest", to:"water"}},
  {id:"dragon_change_fire", name:"ルビードラゴン", attr:"fire", atk:40, art:()=>imgArt("dragon-ruby.png"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・ほのお", desc:"あおオーブ 全部 → あか に かえる", turns:5, type:"change", from:"water", to:"fire"}},
+ /* スーパーでんきドラゴン：娘のリクエストで追加した ひかり属性のドラゴン。
+    黄色い体に全身ビリビリと電気をまとった姿（assets/dragon-light.png）。
+    スキルは盤面のオーブ「全部」を ひかりに変える changeAll 型：
+    ひかりオーブは通常サタンのダンジョンでしか落ちないが、このスキルを
+    使えば どのステージでも盤面を ひかりだらけにして、ひかり属性の
+    仲間（スーパーでんきドラゴン自身とゼウス）の大コンボにつなげられる。
+    盤面全部を変える分、たまるまでのターンは長め（7）にした */
+ {id:"dragon_light", name:"スーパーでんきドラゴン", attr:"light", atk:46, art:()=>imgArt("dragon-light.png"), passive:"コンボの いりょく +35%", skill:{name:"ぜんぶ ひかりへんげ", desc:"オーブ 全部 → きいろ（ひかり）に かえる", turns:7, type:"changeAll", to:"light"}},
  /* ゼウス：チャレンジステージの神。ひかり属性は三すくみの外で、
     対抗の「やみ」属性にだけ強い（やみも ひかりに強い）。
     ひかりオーブはサタンのダンジョンでだけ落ちるので、そこで
@@ -464,7 +472,7 @@ const STAR_RANK = { slime_fire:1, slime_water:1, slime_forest:1,
   fairy_flower:2, fairy_star:2,
   dragon_fire:3, dragon_water:3, dragon_forest:3,
   dragon_change_forest:4, fairy_change_water:4, dragon_change_fire:4,
-  phoenix:5, dragon_sea:5, zeus:6, satan:6 };
+  phoenix:5, dragon_sea:5, dragon_light:5, zeus:6, satan:6 };
 CHARS.forEach(c=>{ c.stars = STAR_RANK[c.id] || 1; });
 function starHTML(c){ let s='<span class="stars">'; const slots=Math.max(5,c.stars); for(let i=0;i<slots;i++) s+='<span class="'+(i<c.stars?"on":"off")+'">'+(i<c.stars?"★":"☆")+'</span>'; return s+'</span>'; }
 /* 盤面を 7×7 にしたぶん 1ターンの火力が下がるので、敵HPは
@@ -482,11 +490,14 @@ function starHTML(c){ let s='<span class="stars">'; const slots=Math.max(5,c.sta
    自分の属性オーブが orbs に入っているステージでのみオーブ攻撃
    できる。キャラ追加時はキャラ定義と、この orbs 設定だけで済む
    汎用構造にしてある（盤面生成・落下補充・表示は全てここを参照）。
-   ※ステージ1〜12（通常＋限定＋ゼウス戦）は基本4種（ひ・みず・
-   もり・かいふく）のみ。ひかりオーブはサタンのダンジョン（13）
-   だけに落ち、やみオーブは全ステージで一切落ちない（ユーザーの
-   指定による）。サタンの属性・スキルは やみのままだが、オーブと
-   しては出現しない。 */
+   ※ステージ1〜12（通常＋限定＋ゼウス戦）と限定ステージ12
+   （内部番号14・スーパーでんきドラゴン戦）は基本4種（ひ・みず・もり・
+   かいふく）のみ。ひかりオーブはサタンのダンジョン（13）だけに
+   落ち、やみオーブは全ステージで一切落ちない（ユーザーの指定に
+   よる）。サタンの属性・スキルは やみのままだが、オーブとしては
+   出現しない。なお「落ちるオーブ」とは別に、スーパーでんきドラゴンの
+   スキルは盤面のオーブ全部を ひかりに変換できる（落下補充は
+   そのステージの orbs のまま）。 */
 const ORB_BASE = ["fire","water","forest","heal"];
 const STAGES = [
  {n:1, enemy:"fairy_star", hp:1840, atk:38, cd:3, recruit:.4, orbs:[...ORB_BASE]},
@@ -500,6 +511,17 @@ const STAGES = [
  {n:9, enemy:"dragon_change_forest", hp:3040, atk:56, cd:3, recruit:.4, extra:true, orbs:[...ORB_BASE]},
  {n:10, enemy:"fairy_change_water", hp:3360, atk:60, cd:3, recruit:.4, extra:true, orbs:[...ORB_BASE]},
  {n:11, enemy:"dragon_change_fire", hp:3680, atk:64, cd:3, recruit:.4, extra:true, orbs:[...ORB_BASE]},
+ /* 限定ステージ12（娘のリクエスト）：ひかり属性のスーパーでんきドラゴン。
+    画面に出る番号は disp:12。内部番号 n は 14 にしてある：12は
+    チャレンジステージ（ゼウス）、13はサタンのダンジョンがすでに
+    使っていて、クリア記録（cleared）は内部番号で管理しているため、
+    番号を重ねるとゼウス戦と記録が混ざってしまう。ゼウスとサタンの
+    ボタンは番号ではなく名前で出るので、プレイヤーから見える番号は
+    1〜11 の続きで「12」になる。限定ステージの並び（HP 3040→3360→
+    3680、攻撃 56→60→64）の続きとして HP 4000・攻撃 68 に設定。
+    落ちるオーブは他の限定ステージと同じ基本4種（ひかりは落ちない）。
+    仲間にした後のスキルで盤面全部を ひかりに変えられるのが売り */
+ {n:14, disp:12, enemy:"dragon_light", hp:4000, atk:68, cd:3, recruit:.4, extra:true, orbs:[...ORB_BASE]},
  /* チャレンジ：ゼウス。最終ボス（ステージ8：HP8800/攻130/2ターン）の
     約2倍のHP 18000、攻撃140（パーティHP150なので一撃で残り10まで
     追い込まれる）を3ターンごとに放つ。フル編成＋回復を回せば
@@ -556,7 +578,7 @@ const BG_SCENES = {
    スターフェアリーは星空の宇宙、ゼウスは天界、サタンは魔界。
    以前は森ドラゴンが荒野、フェアリーが神殿、フェニックス（ボス）が
    宇宙など、キャラと合わない組み合わせが多かったので揃えた */
-const STAGE_BG = {1:"space",2:"volcano",3:"forest",4:"sea",5:"volcano",6:"forest",7:"sea",8:"volcano",9:"forest",10:"sea",11:"volcano",12:"heaven",13:"demon"};
+const STAGE_BG = {1:"space",2:"volcano",3:"forest",4:"sea",5:"volcano",6:"forest",7:"sea",8:"volcano",9:"forest",10:"sea",11:"volcano",12:"heaven",13:"demon",14:"heaven"};
 /* シーン名→背景ファイル名（ホームのステージボタンのサムネイル用） */
 const SCENE_FILE = {temple:"bg-temple.jpg",wasteland:"bg-wasteland.jpg",volcano:"bg-volcano.jpg",ice:"bg-ice.jpg",sea:"bg-sea.jpg",space:"bg-space.jpg",heaven:"bg-heaven.jpg",demon:"bg-demon.jpg",forest:"bg-forest.jpg"};
 
@@ -586,7 +608,7 @@ function sanitizeSave(p){
   let party=Array.isArray(p.party)?p.party.filter(id=>own.indexOf(id)>=0):[];
   party=party.filter((id,i)=>party.indexOf(id)===i).slice(0,5);
   if(!party.length) party=own.slice(0,3);
-  const cleared=Array.isArray(p.cleared)?p.cleared.filter(n=>typeof n==="number"&&n>=1&&n<=13):[];
+  const cleared=Array.isArray(p.cleared)?p.cleared.filter(n=>typeof n==="number"&&n>=1&&n<=14):[];
   return { owned:own, party:party, cleared:cleared };
 }
 function saveScore(s){ return s.owned.length*100+s.cleared.length*10+s.party.length; }
@@ -1072,7 +1094,7 @@ const TRACKS=[
 const curTrack=0; /* ホーム（タイトル）の曲は TRACKS[0]「そよかぜのこもりうた」 */
 /* ステージ番号→曲（TRACKSの番号）。背景シーンと対応させている：
    宇宙=6、火山=2、森=3（笛の曲が森の空気に合う）、深海=4、天界=7、魔界=8 */
-const STAGE_TRACK={1:6,2:2,3:3,4:4,5:2,6:3,7:4,8:2,9:3,10:4,11:2,12:7,13:8};
+const STAGE_TRACK={1:6,2:2,3:3,4:4,5:2,6:3,7:4,8:2,9:3,10:4,11:2,12:7,13:8,14:7};
 function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
   const shifts=[0,2,-3,5,0,3,-2,5,0,2,-3], shift=shifts[(curStage-1)%shifts.length]||0;
   const isBoss=(curStage===3||curStage===8||curStage===12||curStage===13);
@@ -1243,7 +1265,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.41";
+const APP_VER="1.0.43";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1265,7 +1287,7 @@ function renderHome(){
     } else if(st.challenge){
       b.innerHTML='<span class="crown">⚡</span>'+(un?"ゼウス":"？？？")+"<small>"+(un?"ひかり・HP 18000・さいきょうの神":"ステージ8 クリアで 出現")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
     } else {
-      b.innerHTML=(st.boss?'<span class="crown">👑</span>':"")+st.n+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
+      b.innerHTML=(st.boss?'<span class="crown">👑</span>':"")+(st.disp||st.n)+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
     }
     b.disabled=!un; b.onclick=()=>startBattle(st);
     $(st.extra?"extraGrid":st.satan?"satanGrid":st.challenge?"challengeGrid":"stageGrid").appendChild(b);
@@ -1374,7 +1396,7 @@ function startBattle(st){
   $("home").classList.add("hidden"); $("battle").classList.remove("hidden");
   $("battle").classList.toggle("challenge",!!st.challenge);
   $("battle").classList.toggle("satan",!!st.satan);
-  $("stageTitle").textContent=st.satan?"👿 サタンのダンジョン":st.challenge?"⚡ チャレンジステージ":"ステージ "+st.n;
+  $("stageTitle").textContent=st.satan?"👿 サタンのダンジョン":st.challenge?"⚡ チャレンジステージ":"ステージ "+(st.disp||st.n);
   $("orbInfo").innerHTML="おちるオーブ "+orbDotsHTML(st)+" "+orbNamesText(st);
   $("enemyArt").innerHTML=enemy.art();
   $("enemyArt").firstChild.classList.toggle("boss",!!st.boss);
@@ -1393,6 +1415,7 @@ function shortSkill(c){
   if(sk.type==="dmg") return an+" ダメージ"+sk.power;
   if(sk.type==="dmgheal") return an+"ダメ"+sk.power+"+HP"+sk.heal;
   if(sk.type==="change"){ return (ORB_COLOR_NAME[sk.from]||sk.from)+"→"+(ORB_COLOR_NAME[sk.to]||sk.to)+" へんげ"; }
+  if(sk.type==="changeAll"){ return "全部→"+(ORB_COLOR_NAME[sk.to]||sk.to)+" へんげ"; }
   return sk.desc;
 }
 /* スキルがたまった時にキャラの周りへ出すエネルギーのキラキラ */
@@ -1817,6 +1840,20 @@ function tapMember(i){
 }
 function useSkill(i){
   const c=charById(save().party[i]), sk=c.skill;
+  if(sk.type==="changeAll"){
+    /* 盤面のオーブ全部を sk.to に変える（スーパーでんきドラゴンの
+       「ぜんぶ ひかりへんげ」）。全部すでにその色なら消費しない。
+       へんげ自体ではコンボは始まらず、次の入れかえで始まる点は
+       通常の change スキルと同じ */
+    const count=B.board.filter(t=>t!==sk.to).length;
+    if(count===0){ showSheet('<h2>つかえないよ</h2><p>オーブは もう全部 '+(ORB_COLOR_NAME[sk.to]||sk.to)+'だよ。<br>スキルは そのまま たまっているよ。</p><button class="btn primary" onclick="closeSheet()">とじる</button>'); return; }
+    B.charges[i]=0; skillSE();
+    const changedAll=[];
+    B.board=B.board.map((t,idx)=>{ if(t!==sk.to){changedAll.push(idx);return sk.to;} return t; });
+    renderBoard(changedAll); renderBattle();
+    showSheet('<h2>'+sk.name+'</h2><p>オーブが 全部 '+(ORB_COLOR_NAME[sk.to]||sk.to)+'（'+(ATTR[sk.to]?ATTR[sk.to].name:sk.to)+'）に かわったよ！<br>つぎの 入れかえで 大コンボが はじまるよ。</p><button class="btn primary" onclick="closeSheet()">とじる</button>');
+    return;
+  }
   if(sk.type==="change"){
     const count=B.board.filter(t=>t===sk.from).length;
     if(count===0){ showSheet('<h2>つかえないよ</h2><p>'+(ORB_COLOR_NAME[sk.from]||sk.from)+'オーブが 盤面に ないよ。<br>スキルは そのまま たまっているよ。</p><button class="btn primary" onclick="closeSheet()">とじる</button>'); return; }
@@ -1876,7 +1913,7 @@ function winBattle(){
      '<p class="sub">サタンは スキル「ダークノヴァ」で つよく こうげきできるよ。<br>あつめた なかまたちと、また あそんでね！</p>'+
      '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
   } else {
-    showSheet('<h2>🎉 クリア！</h2><p>ステージ '+st.n+' の '+ec.name+' を たおしたよ！</p>'+recruitMsg+
+    showSheet('<h2>🎉 クリア！</h2><p>ステージ '+(st.disp||st.n)+' の '+ec.name+' を たおしたよ！</p>'+recruitMsg+
      '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
   }
   try{ winSE(); }catch(e){}
