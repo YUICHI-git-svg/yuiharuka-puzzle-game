@@ -311,7 +311,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.36</div>
+    <div class="ver-line">ver 1.0.37</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
@@ -439,10 +439,10 @@ const CHARS = [
  {id:"fairy_flower", name:"フラワーフェアリー", attr:"forest", atk:26, art:()=>imgArt("fairy-flower.png"), passive:"かいふくオーブの こうか +50%", skill:{name:"はなびらヒール", desc:"HP 160 かいふく", turns:4, type:"heal", power:160}},
  {id:"fairy_star", name:"スターフェアリー", attr:"water", atk:28, art:()=>imgArt("fairy-star.png"), passive:"かいふくオーブの こうか +50%", skill:{name:"ほしの ひかり", desc:"みずの ダメージ 300", turns:4, type:"dmg", power:300}},
  {id:"phoenix", name:"フェニックス", attr:"fire", atk:48, art:()=>imgArt("phoenix.png"), passive:"コンボの いりょく +35%", skill:{name:"ほうおうの炎", desc:"ひの ダメージ 480 と HP 50 かいふく", turns:5, type:"dmgheal", power:480, heal:50}},
- {id:"dragon_sea", name:"エンシェントドラゴン", attr:"water", atk:52, art:()=>imgArt("dragon-water.png","saturate(1.3) brightness(.85)"), passive:"コンボの いりょく +35%", skill:{name:"おおなみ", desc:"みずの ダメージ 520", turns:6, type:"dmg", power:520}},
- {id:"dragon_change_forest", name:"エメラルドドラゴン", attr:"forest", atk:38, art:()=>imgArt("dragon-forest.png","hue-rotate(-12deg) saturate(1.35)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・もり", desc:"あかオーブ 全部 → みどり に かえる", turns:5, type:"change", from:"fire", to:"forest"}},
- {id:"fairy_change_water", name:"サファイアフェアリー", attr:"water", atk:36, art:()=>imgArt("fairy-star.png","hue-rotate(-16deg) saturate(1.3)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの こな・みず", desc:"みどりオーブ 全部 → あお に かえる", turns:5, type:"change", from:"forest", to:"water"}},
- {id:"dragon_change_fire", name:"ルビードラゴン", attr:"fire", atk:40, art:()=>imgArt("dragon-fire.png","hue-rotate(14deg) saturate(1.3)"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・ほのお", desc:"あおオーブ 全部 → あか に かえる", turns:5, type:"change", from:"water", to:"fire"}},
+ {id:"dragon_sea", name:"エンシェントドラゴン", attr:"water", atk:52, art:()=>imgArt("dragon-ancient.png"), passive:"コンボの いりょく +35%", skill:{name:"おおなみ", desc:"みずの ダメージ 520", turns:6, type:"dmg", power:520}},
+ {id:"dragon_change_forest", name:"エメラルドドラゴン", attr:"forest", atk:38, art:()=>imgArt("dragon-emerald.png"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・もり", desc:"あかオーブ 全部 → みどり に かえる", turns:5, type:"change", from:"fire", to:"forest"}},
+ {id:"fairy_change_water", name:"サファイアフェアリー", attr:"water", atk:36, art:()=>imgArt("fairy-sapphire.png"), passive:"コンボの いりょく +25%", skill:{name:"へんげの こな・みず", desc:"みどりオーブ 全部 → あお に かえる", turns:5, type:"change", from:"forest", to:"water"}},
+ {id:"dragon_change_fire", name:"ルビードラゴン", attr:"fire", atk:40, art:()=>imgArt("dragon-ruby.png"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・ほのお", desc:"あおオーブ 全部 → あか に かえる", turns:5, type:"change", from:"water", to:"fire"}},
  /* ゼウス：チャレンジステージの神。ひかり属性は三すくみの外で、
     対抗の「やみ」属性にだけ強い（やみも ひかりに強い）。
     ひかりオーブはサタンのダンジョンでだけ落ちるので、そこで

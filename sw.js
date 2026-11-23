@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yuiharuka-puzzle-v36';
+const CACHE_NAME = 'yuiharuka-puzzle-v37';
 const ASSETS = [
   './',
   'index.html',
@@ -13,6 +13,10 @@ const ASSETS = [
   'phoenix.png',
   'zeus.png',
   'satan.png',
+  'dragon-ancient.png',
+  'dragon-emerald.png',
+  'dragon-ruby.png',
+  'fairy-sapphire.png',
   'bg-temple.jpg',
   'bg-wasteland.jpg',
   'bg-volcano.jpg',
