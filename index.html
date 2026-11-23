@@ -80,6 +80,48 @@
   .stage-btn.satan small{font-size:.66rem;}
   #battle.satan .enemy-stage{height:23vh;height:23dvh;max-height:208px;}
   #battle.satan #enemyArt img{max-height:23vh;max-height:23dvh;max-width:80vw;}
+  /* スコアアタック：ルシファー専用の大きな紫枠ボタン＋バトルで大きく見せる */
+  .stages.score{grid-template-columns:1fr;}
+  .stage-btn.score{border-color:#9d6bff;background:linear-gradient(180deg,#2a1052,var(--panel) 78%);
+    font-size:1.05rem;padding:.65rem .05rem .55rem;box-shadow:0 0 14px rgba(157,107,255,.5);}
+  .stage-btn.score small{font-size:.66rem;}
+  .stage-btn.score .stage-thumb{height:58px;margin-top:-.65rem;}
+  #battle.score .enemy-stage{height:23vh;height:23dvh;max-height:208px;}
+  #battle.score #enemyArt img{max-height:23vh;max-height:23dvh;max-width:80vw;}
+  /* ルシファーのオーラ：スコアが伸びるほど大きく・強く光る（見た目変化）。
+     #enemyArt は overflow:hidden なので、オーラは兄弟要素として
+     敵ステージ側に置き、はみ出して見せる */
+  #luciAura{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(circle,rgba(196,166,255,.55) 0%,rgba(124,77,255,.30) 45%,rgba(124,77,255,0) 70%);
+    opacity:0;pointer-events:none;transition:width .8s ease,height .8s ease,opacity .8s ease;}
+  #enemyArt{position:relative;}
+  #battle.score #luciAura{opacity:.5;}
+  #battle.score-p2 #luciAura{width:235px;height:235px;opacity:.85;}
+  #battle.score-p3 #luciAura{width:330px;height:330px;opacity:1;}
+  #enemyArt img{transition:filter .8s ease,transform .8s ease;}
+  #battle.score-p2 #enemyArt img{filter:drop-shadow(0 10px 18px rgba(0,0,0,.45)) brightness(1.1) saturate(1.22);}
+  #battle.score-p3 #enemyArt img{filter:drop-shadow(0 0 22px rgba(157,107,255,.85)) brightness(1.16) saturate(1.35);transform:scale(1.05);}
+  .phase-pop{position:absolute;left:50%;top:4%;transform:translateX(-50%);z-index:11;white-space:nowrap;
+    font-size:1rem;font-weight:900;color:#e9dfff;pointer-events:none;
+    text-shadow:0 0 12px rgba(157,107,255,.95),2px 2px 0 #000,-1px 1px 0 #000;
+    animation:phasepop 1.6s ease-out forwards;}
+  @keyframes phasepop{0%{opacity:0;transform:translateX(-50%) translateY(8px) scale(.7);}18%{opacity:1;transform:translateX(-50%) translateY(0) scale(1.08);}30%{transform:translateX(-50%) scale(1);}75%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-10px);}}
+  /* スコアアタック中のHUD（のこりターン・スコア・さいだいコンボ） */
+  #scoreHud{display:flex;align-items:flex-start;justify-content:space-between;gap:.4rem;margin:.2rem .45rem 0;
+    background:rgba(10,8,28,.74);border:1px solid #7c4dff;border-radius:12px;padding:.34rem .65rem;}
+  #scoreHud .cell{font-size:.7rem;font-weight:800;color:var(--sub);text-align:center;line-height:1.3;min-width:4.2em;}
+  #scoreHud .cell b{display:block;font-size:1.12rem;color:var(--ink);line-height:1.2;}
+  #scoreHud .cell.score b{color:var(--gold);font-size:1.38rem;}
+  /* スコアランキング（ホームのTOP5・結果画面 共通） */
+  .score-list{display:flex;flex-direction:column;gap:.35rem;margin-top:.15rem;}
+  .score-row{display:flex;align-items:center;gap:.55rem;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.42rem .6rem;font-weight:800;text-align:left;}
+  .score-row .pos{font-size:.8rem;color:var(--sub);min-width:2.3em;}
+  .score-row .pts{flex:1;font-size:1.02rem;}
+  .score-row .rk{font-size:1.05rem;font-weight:900;min-width:1.5em;text-align:center;}
+  .score-row.new{border-color:var(--gold);box-shadow:0 0 10px rgba(255,211,77,.45);}
+  .rk-S{color:#ffd34d;} .rk-A{color:#ff8a5c;} .rk-B{color:#3fa9f5;} .rk-C{color:#3ecf6e;} .rk-D{color:#b9b4e6;}
+  .rank-letter{font-size:4.2rem;font-weight:900;line-height:1.05;text-shadow:0 3px 0 rgba(0,0,0,.55),0 0 26px rgba(255,211,77,.3);}
+  .score-break{font-size:.92rem;line-height:1.75;}
 
   /* キャラカード（編成・ずかん） */
   .char-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;}
@@ -322,7 +364,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.53</div>
+    <div class="ver-line">ver 1.0.54</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <p class="recruit-legend"><span class="recruit yes">✓ なかま</span><span>は もう なかまに なってるよ。</span></p>
@@ -340,6 +382,12 @@
     <div class="sec-title">👿 サタンのダンジョン（第1章 最終決戦）</div>
     <div class="stages satan" id="satanGrid"></div>
     <p class="hint">ゼウスを なかまにすると 追加される、魔王サタンの ダンジョン。<br>ひかりオーブが 多めに おちるから、ゼウスが オーブ攻撃できるよ（ひかりは やみに つよい！）。<br>HP 22000・こうげき 580 の 第1章 さいごの ボス。たおすと 50%の かくりつで サタンが なかまに なるよ！</p>
+
+    <div class="sec-title">🏆 スコアアタック（とくべつダンジョン）</div>
+    <div class="stages score" id="scoreGrid"></div>
+    <p class="hint">ルシファーは たおせないし、こうげきも してこないよ。<br>10ターンで あたえた ダメージが スコアになる、とくべつな ダンジョン！<br>オーブは ひ・みず・もり・ひかり・やみの 5しょく（かいふくは なし）。<br>ひかりも やみも おちるから、ゼウスも サタンも オーブで こうげきできるよ！<br>スコアが ふえると ルシファーの オーラが つよくなっていくよ。<br>さいだいコンボ ボーナス（コンボ数 × 100てん）も つくよ。</p>
+    <div class="sec-title">🏅 スコア TOP5（この端末の 記録）</div>
+    <div id="scoreRankBox"></div>
 
     <div class="sec-title">パーティ（5にんまで）― タップで 入れかえ</div>
     <div class="char-grid" id="partyGrid"></div>
@@ -374,6 +422,7 @@
   <div id="orbInfo"></div>
   <div class="enemy-zone">
     <div class="enemy-stage" id="enemyStage">
+      <div id="luciAura"></div>
       <div id="enemyArt"></div>
       <div class="atk-badge" id="atkBadge">こうげきまで<span class="num" id="atkNum">3</span>ターン</div>
     </div>
@@ -386,11 +435,16 @@
     </div>
   </div>
   <div class="party-row" id="partyRow"></div>
-  <div class="enemy-meta party-hp" style="padding-top:.12rem;">
+  <div class="enemy-meta party-hp" id="partyHpRow" style="padding-top:.12rem;">
     <div class="hp-row">
       <div class="hp-bar"><div class="hp-fill" id="partyHpFill"></div></div>
       <div class="hp-num" id="partyHpNum"></div>
     </div>
+  </div>
+  <div id="scoreHud" class="hidden">
+    <span class="cell">のこり<b><span id="turnsNum">10</span> ターン</b></span>
+    <span class="cell score">スコア<b id="scoreNum">0</b></span>
+    <span class="cell">さいだいコンボ<b id="maxComboNum">0</b></span>
   </div>
   <div class="board-wrap"><div id="board"></div><div id="comboLayer"></div></div>
   <div id="resultPanel" class="hidden"><div class="sheet" id="sheet2"></div></div>
@@ -477,6 +531,11 @@ const CHARS = [
     ひかり攻撃が勝負の鍵になる。やみオーブは全ステージで落ちない
     ため、仲間時はスキル「ダークノヴァ」が主力になる */
  {id:"satan", name:"サタン", attr:"dark", atk:66, hp:600, art:()=>imgArt("satan.png"), passive:"コンボの いりょく +35%", skill:{name:"ダークノヴァ", desc:"やみの ダメージ 900", turns:6, type:"dmg", power:900}},
+ /* ルシファー：スコアアタック（特別ダンジョン）専用の敵。堕天使で
+    やみ属性・☆6。たおすことはできず（HPは実質無限）、こうげきも
+    してこない。なかまにはならないので、atk/hp は図鑑表示用の目安値
+    （こうげき 0＝攻撃してこない、たいりょくは「たおせない」扱い） */
+ {id:"lucifer", name:"ルシファー", attr:"dark", atk:0, hp:9999, art:()=>imgArt("lucifer.png"), passive:"スコアアタック専用の てき", skill:{name:"しんえんの つばさ", desc:"スコアアタックでのみ あらわれる", turns:99, type:"dmg", power:0}},
 ];
 function imgArt(src, filter){ return '<img src="'+src+'" alt=""'+(filter?' style="filter:'+filter+'"':"")+">"; }
 const charById = id => CHARS.find(c=>c.id===id);
@@ -485,7 +544,7 @@ const STAR_RANK = { slime_fire:1, slime_water:1, slime_forest:1,
   fairy_flower:2, fairy_star:2,
   dragon_fire:3, dragon_water:3, dragon_forest:3,
   dragon_change_forest:4, fairy_change_water:4, dragon_change_fire:4,
-  phoenix:5, dragon_sea:5, dragon_light:6, zeus:6, satan:6 };
+  phoenix:5, dragon_sea:5, dragon_light:6, zeus:6, satan:6, lucifer:6 };
 CHARS.forEach(c=>{ c.stars = STAR_RANK[c.id] || 1; });
 function starHTML(c){ let s='<span class="stars">'; const slots=Math.max(5,c.stars); for(let i=0;i<slots;i++) s+='<span class="'+(i<c.stars?"on":"off")+'">'+(i<c.stars?"★":"☆")+'</span>'; return s+'</span>'; }
 /* 盤面を 7×7 にしたぶん 1ターンの火力が下がるので、敵HPは
@@ -552,6 +611,15 @@ const STAGES = [
     仲間になる確率は他のキャラと同じ50%（recruit:.5）で、専用の「第1章ゲームクリア！」
     ダイアログが出る（winBattle で satan フラグを判定） */
  {n:13, enemy:"satan", hp:22000, atk:580, cd:3, recruit:.5, boss:true, satan:true, orbs:[...ORB_BASE,"light"], bonus:"light"},
+ /* スコアアタック（特別ダンジョン）：ルシファー戦。10ターンで
+    あたえたダメージの合計＋最大コンボボーナスがスコアになる。
+    ルシファーは たおせない（HPは実質無限）し、こうげきもしない
+    （atk:0・endTurn のスコア分岐で敵攻撃自体を行わない）。
+    オーブは ひ・みず・もり・ひかり・やみの5色で、かいふくは無し。
+    ひかりと やみが両方落ちる唯一の場所なので、ゼウスもサタンも
+    ここではオーブ攻撃できる。内部番号は 15（14は限定ステージ12が
+    使用中）。クリア扱いにはせず、記録は scores（TOP5）に残す */
+ {n:15, enemy:"lucifer", hp:999999999, atk:0, cd:99, recruit:0, boss:true, score:true, orbs:["fire","water","forest","light","dark"]},
 ];
 /* ステージのオーブ種（重複なし）と、抽選プール（bonusぶん重み付き） */
 function stageOrbTypes(st){ return (st && st.orbs && st.orbs.length) ? st.orbs.slice() : ORB_BASE.slice(); }
@@ -587,6 +655,7 @@ const BG_SCENES = {
  heaven:'<img src="bg-heaven.jpg" alt="">',
  forest:'<img src="bg-forest.jpg" alt="">',
  demon:'<img src="bg-demon.jpg" alt="">',
+ fallen:'<img src="bg-fallen.jpg" alt="">',
 };
 /* ゼウス戦（12）は雲の上の天界神殿、サタン戦（13）は魔界の魔城が専用背景 */
 /* ステージ背景は「敵キャラの属性・姿」に合わせて割り当てる（全体見直し）：
@@ -597,9 +666,9 @@ const BG_SCENES = {
    スターフェアリーは星空の宇宙、ゼウスは天界、サタンは魔界。
    以前は森ドラゴンが荒野、フェアリーが神殿、フェニックス（ボス）が
    宇宙など、キャラと合わない組み合わせが多かったので揃えた */
-const STAGE_BG = {1:"space",2:"volcano",3:"forest",4:"sea",5:"volcano",6:"forest",7:"sea",8:"volcano",9:"forest",10:"sea",11:"volcano",12:"heaven",13:"demon",14:"heaven"};
+const STAGE_BG = {1:"space",2:"volcano",3:"forest",4:"sea",5:"volcano",6:"forest",7:"sea",8:"volcano",9:"forest",10:"sea",11:"volcano",12:"heaven",13:"demon",14:"heaven",15:"fallen"};
 /* シーン名→背景ファイル名（ホームのステージボタンのサムネイル用） */
-const SCENE_FILE = {temple:"bg-temple.jpg",wasteland:"bg-wasteland.jpg",volcano:"bg-volcano.jpg",ice:"bg-ice.jpg",sea:"bg-sea.jpg",space:"bg-space.jpg",heaven:"bg-heaven.jpg",demon:"bg-demon.jpg",forest:"bg-forest.jpg"};
+const SCENE_FILE = {temple:"bg-temple.jpg",wasteland:"bg-wasteland.jpg",volcano:"bg-volcano.jpg",ice:"bg-ice.jpg",sea:"bg-sea.jpg",space:"bg-space.jpg",heaven:"bg-heaven.jpg",demon:"bg-demon.jpg",forest:"bg-forest.jpg",fallen:"bg-fallen.jpg"};
 
 /* ================= セーブ（端末に保存・共通ひとつ） =================
    人ごとのデータ保持は不要になったため、記録は全員で共通のひとつだけ。
@@ -616,7 +685,7 @@ const SCENE_FILE = {temple:"bg-temple.jpg",wasteland:"bg-wasteland.jpg",volcano:
 const SAVE_KEY="yuiharuka-puzzle-save-v2";
 const SAVE_BAK_KEY="yuiharuka-puzzle-save-v2.bak";
 const LEGACY_SAVE_KEYS=["yuiharuka-puzzle-save-v1","yuiharuka-puzzle-save"];
-function newSave(){ return { owned:["slime_fire","slime_water","slime_forest"], party:["slime_fire","slime_water","slime_forest"], cleared:[] }; }
+function newSave(){ return { owned:["slime_fire","slime_water","slime_forest"], party:["slime_fire","slime_water","slime_forest"], cleared:[], scores:[] }; }
 const singleSave = newSave();
 const save = () => singleSave;
 function sanitizeSave(p){
@@ -628,21 +697,29 @@ function sanitizeSave(p){
   party=party.filter((id,i)=>party.indexOf(id)===i).slice(0,5);
   if(!party.length) party=own.slice(0,3);
   const cleared=Array.isArray(p.cleared)?p.cleared.filter(n=>typeof n==="number"&&n>=1&&n<=14):[];
-  return { owned:own, party:party, cleared:cleared };
+  /* スコアアタックの記録：正の数だけを残し、高い順に上位5件まで */
+  const scores=Array.isArray(p.scores)?p.scores.filter(v=>typeof v==="number"&&isFinite(v)&&v>0).map(v=>Math.floor(v)).sort((a,b)=>b-a).slice(0,5):[];
+  return { owned:own, party:party, cleared:cleared, scores:scores };
 }
 function saveScore(s){ return s.owned.length*100+s.cleared.length*10+s.party.length; }
 function loadStoredSave(){
   let best=null;
+  const allScores=[];
   try{
     [SAVE_KEY,SAVE_BAK_KEY].concat(LEGACY_SAVE_KEYS).forEach(k=>{
       try{
         const raw=localStorage.getItem(k); if(!raw) return;
         const s=sanitizeSave(JSON.parse(raw)); if(!s) return;
+        /* スコア記録は「いちばん進んだ記録」の採用とは別に、
+           残っている全ての保存先から集めて上位5件を残す
+           （記録がバックアップ側にだけ残っていても消えない） */
+        s.scores.forEach(v=>allScores.push(v));
         if(!best||saveScore(s)>saveScore(best)) best=s;
       }catch(e){}
     });
   }catch(e){}
   if(best){ singleSave.owned=best.owned; singleSave.party=best.party; singleSave.cleared=best.cleared; }
+  if(allScores.length) singleSave.scores=allScores.sort((a,b)=>b-a).slice(0,5);
 }
 function persistSave(){
   try{
@@ -667,7 +744,7 @@ addEventListener("beforeunload",persistSave);
    初期状態を保存し直す（次回起動で復元されないようにするため） */
 function resetSave(){
   const f=newSave();
-  singleSave.owned=f.owned; singleSave.party=f.party; singleSave.cleared=f.cleared;
+  singleSave.owned=f.owned; singleSave.party=f.party; singleSave.cleared=f.cleared; singleSave.scores=f.scores;
   try{ [SAVE_KEY,SAVE_BAK_KEY].concat(LEGACY_SAVE_KEYS).forEach(k=>localStorage.removeItem(k)); }catch(e){}
   persistSave();
 }
@@ -1113,10 +1190,10 @@ const TRACKS=[
 const curTrack=0; /* ホーム（タイトル）の曲は TRACKS[0]「そよかぜのこもりうた」 */
 /* ステージ番号→曲（TRACKSの番号）。背景シーンと対応させている：
    宇宙=6、火山=2、森=3（笛の曲が森の空気に合う）、深海=4、天界=7、魔界=8 */
-const STAGE_TRACK={1:6,2:2,3:3,4:4,5:2,6:3,7:4,8:2,9:3,10:4,11:2,12:7,13:8,14:7};
+const STAGE_TRACK={1:6,2:2,3:3,4:4,5:2,6:3,7:4,8:2,9:3,10:4,11:2,12:7,13:8,14:7,15:8};
 function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
   const shifts=[0,2,-3,5,0,3,-2,5,0,2,-3], shift=shifts[(curStage-1)%shifts.length]||0;
-  const isBoss=(curStage===3||curStage===8||curStage===12||curStage===13);
+  const isBoss=(curStage===3||curStage===8||curStage===12||curStage===13||curStage===15);
   let CHD={
     Am:{bass:33,pad:[57,60,64],ost:[45,52,57,60,64]},
     F:{bass:29,pad:[53,57,60],ost:[41,48,53,57,60]},
@@ -1284,19 +1361,25 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.53";
+const APP_VER="1.0.54";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
-function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
+function stageUnlocked(st){ if(st.score) return true; if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
+/* スコアアタック：10ターン制。スコア＝与ダメージ合計＋最大コンボ×100。
+   ランクは S/A/B/C/D の5段階（強い仲間を集めるほど上のランクに届く） */
+const SCORE_TURNS=10;
+function scoreRank(total){ if(total>=30000)return "S"; if(total>=20000)return "A"; if(total>=12000)return "B"; if(total>=6000)return "C"; return "D"; }
+function fmtNum(n){ return Math.round(n).toLocaleString("ja-JP"); }
 function renderHome(){
   $("stageGrid").innerHTML="";
   $("extraGrid").innerHTML="";
   $("challengeGrid").innerHTML="";
   $("satanGrid").innerHTML="";
+  $("scoreGrid").innerHTML="";
   STAGES.forEach(st=>{
     const e=charById(st.enemy), un=stageUnlocked(st), cl=save().cleared.includes(st.n);
     const b=document.createElement("button");
-    b.className="stage-btn"+(st.boss?" boss":"")+(st.challenge?" challenge":"")+(st.satan?" satan":"")+(cl?" cleared":"")+(!un?" locked":"");
+    b.className="stage-btn"+(st.boss?" boss":"")+(st.challenge?" challenge":"")+(st.satan?" satan":"")+(st.score?" score":"")+(cl?" cleared":"")+(!un?" locked":"");
     /* ボタンの地にも、そのステージの背景イラストを薄く敷いて、
        入る前から「どんな場所で・誰と戦うか」が合うように見せる */
     const scFile=SCENE_FILE[STAGE_BG[st.n]];
@@ -1306,7 +1389,9 @@ function renderHome(){
        しているかどうか（save().owned に敵のIDが含まれるか）で出し分ける */
     const isOwned=save().owned.includes(st.enemy);
     const recruitHtml=isOwned?'<span class="recruit yes">✓ なかま</span>':"";
-    if(st.satan){
+    if(st.score){
+      b.innerHTML=thumbHtml+'<span class="crown">🏆</span>'+"ルシファー"+"<small>やみ・たおせない・10ターンで スコアを かせごう！</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
+    } else if(st.satan){
       b.innerHTML=thumbHtml+'<span class="crown">👿</span>'+(un?"サタン":"？？？")+"<small>"+(un?"やみ・HP 22000・第1章 最終ボス":"ゼウスを なかまにすると 追加される")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
     } else if(st.challenge){
       b.innerHTML=thumbHtml+'<span class="crown">⚡</span>'+(un?"ゼウス":"？？？")+"<small>"+(un?"ひかり・HP 18000・さいきょうの神":"ステージ8 クリアで 出現")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
@@ -1314,7 +1399,7 @@ function renderHome(){
       b.innerHTML=thumbHtml+(st.boss?'<span class="crown">👑</span>':"")+(st.disp||st.n)+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
     }
     b.disabled=!un; b.onclick=()=>startBattle(st);
-    $(st.extra?"extraGrid":st.satan?"satanGrid":st.challenge?"challengeGrid":"stageGrid").appendChild(b);
+    $(st.score?"scoreGrid":st.extra?"extraGrid":st.satan?"satanGrid":st.challenge?"challengeGrid":"stageGrid").appendChild(b);
   });
   $("partyGrid").innerHTML="";
   CHARS.filter(c=>save().owned.includes(c.id)).forEach(c=>{
@@ -1327,6 +1412,13 @@ function renderHome(){
     $("partyGrid").appendChild(d);
   });
   $("partyHpLine").textContent="パーティの ごうけい たいりょく："+partyMaxHp()+" ― バトルでは この数字が パーティの HPに なるよ。たいりょくの 多い なかまを 入れると、てきの こうげきに ながく たえられるよ！";
+  /* スコアアタックの TOP5 ランキング（この端末に残っている記録） */
+  const sc=(save().scores||[]);
+  if(!sc.length){
+    $("scoreRankBox").innerHTML='<p class="hint">まだ スコアの 記録が ないよ。チャレンジして TOP5に 入ろう！</p>';
+  } else {
+    $("scoreRankBox").innerHTML='<div class="score-list">'+sc.map((v,i)=>'<div class="score-row"><span class="pos">'+(i+1)+'い</span><span class="pts">'+fmtNum(v)+' てん</span><span class="rk rk-'+scoreRank(v)+'">'+scoreRank(v)+'</span></div>').join("")+'</div>';
+  }
 }
 /* ずかんは別ページ：☆ランクごとにグループ分けして表示する */
 function renderZukan(){
@@ -1415,13 +1507,21 @@ function startBattle(st){
   const enemy=charById(st.enemy);
   const dropPool=stageDropPool(st);
   B={ stage:st, enemy, enemyHp:st.hp, partyHp:partyMaxHp(), maxHp:partyMaxHp(), cd:st.cd, board:newBoard(dropPool), dropPool:dropPool, orbTypes:stageOrbTypes(st),
-      charges:save().party.map(()=>0), acc:save().party.map(()=>0), accRaw:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false };
+      charges:save().party.map(()=>0), acc:save().party.map(()=>0), accRaw:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false,
+      scoreMode:!!st.score, score:0, turnsLeft:SCORE_TURNS, maxCombo:0, luciPhase:1 };
   $("comboLayer").innerHTML="";
   $("bgLayer").innerHTML=BG_SCENES[STAGE_BG[st.n]||"temple"];
   $("home").classList.add("hidden"); $("battle").classList.remove("hidden");
   $("battle").classList.toggle("challenge",!!st.challenge);
   $("battle").classList.toggle("satan",!!st.satan);
-  $("stageTitle").textContent=st.satan?"👿 サタンのダンジョン":st.challenge?"⚡ チャレンジステージ":"ステージ "+(st.disp||st.n);
+  $("battle").classList.toggle("score",!!st.score);
+  $("battle").classList.remove("score-p2","score-p3");
+  /* スコアアタックでは敵は攻撃しないので攻撃カウントとパーティHPを
+     隠し、代わりにスコアHUD（のこりターン・スコア・最大コンボ）を出す */
+  $("atkBadge").style.display=st.score?"none":"";
+  $("partyHpRow").classList.toggle("hidden",!!st.score);
+  $("scoreHud").classList.toggle("hidden",!st.score);
+  $("stageTitle").textContent=st.score?"🏆 スコアアタック":st.satan?"👿 サタンのダンジョン":st.challenge?"⚡ チャレンジステージ":"ステージ "+(st.disp||st.n);
   $("orbInfo").innerHTML="おちるオーブ "+orbDotsHTML(st)+" "+orbNamesText(st);
   $("enemyArt").innerHTML=enemy.art();
   $("enemyArt").firstChild.classList.toggle("boss",!!st.boss);
@@ -1461,11 +1561,39 @@ function buildPartyRow(){
     $("partyRow").appendChild(d);
   });
 }
+/* ルシファーの見た目変化：スコアが伸びるほどオーラが強くなる
+   （8000点で第2段階、20000点で第3段階）。段階が上がった瞬間だけ
+   メッセージを出して、達成感を目に見える形にする */
+function updateLuciPhase(){
+  if(!B||!B.scoreMode)return;
+  const p=B.score>=20000?3:B.score>=8000?2:1;
+  if(p===(B.luciPhase||1))return;
+  B.luciPhase=p;
+  const bt=$("battle");
+  bt.classList.toggle("score-p2",p===2);
+  bt.classList.toggle("score-p3",p===3);
+  const stage=$("enemyStage"); if(!stage)return;
+  const el=document.createElement("div");
+  el.className="phase-pop";
+  el.textContent=p===3?"ルシファーの オーラが あふれだした！！":"ルシファーの つばさが ひろがった！";
+  stage.appendChild(el);
+  setTimeout(()=>el.remove(),1650);
+}
 function renderBattle(skipBoard){
   if(!B)return;
   const st=B.stage;
-  $("enemyHpFill").style.width=Math.max(0,B.enemyHp/st.hp*100)+"%";
-  $("enemyHpNum").textContent="HP "+Math.max(0,Math.ceil(B.enemyHp))+" / "+st.hp;
+  if(B.scoreMode){
+    /* スコアアタック：敵HPは減らない見た目（バー満タン＋「たおせない」） */
+    $("enemyHpFill").style.width="100%";
+    $("enemyHpNum").textContent="HP ∞（たおせない）";
+    $("scoreNum").textContent=fmtNum(B.score);
+    $("turnsNum").textContent=B.turnsLeft;
+    $("maxComboNum").textContent=B.maxCombo;
+    updateLuciPhase();
+  } else {
+    $("enemyHpFill").style.width=Math.max(0,B.enemyHp/st.hp*100)+"%";
+    $("enemyHpNum").textContent="HP "+Math.max(0,Math.ceil(B.enemyHp))+" / "+st.hp;
+  }
   $("partyHpFill").style.width=Math.max(0,B.partyHp/B.maxHp*100)+"%";
   $("partyHpNum").textContent="パーティ HP "+Math.max(0,Math.ceil(B.partyHp))+" / "+B.maxHp;
   $("atkNum").textContent=B.cd;
@@ -1642,6 +1770,9 @@ async function resolveBoard(){
       await wait(fast()?0:Math.max(130, B.fallMs||0));
     }
   }
+  /* スコアアタック：このターンのコンボ数が過去最大なら記録する
+     （最大コンボボーナスは結果発表で コンボ数×100点 として加算） */
+  if(B.scoreMode&&combo>B.maxCombo)B.maxCombo=combo;
   // コンボ終了：コンボ表示が1から順にシュンシュンと消えて、
   // そのたびに攻撃値がコンボ倍率ぶんバウンドしながら増えていく
   const totalBonus=B.acc.map((v,i)=>v-B.accRaw[i]);
@@ -1672,6 +1803,8 @@ async function resolveBoard(){
   if(total>0){
     await wait(150);
     let dmg=0; save().party.forEach((id,idx)=>{ const c=charById(id); const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1; dmg+=B.acc[idx]*m; });
+    /* スコアアタック：属性相性まで含めた最終ダメージをそのままスコアに加算 */
+    if(B.scoreMode)B.score+=Math.round(dmg);
     const attackers=[];
     save().party.forEach((id,idx)=>{ if(B.acc[idx]>0)attackers.push(charById(id).attr); });
     for(let j=0;j<attackers.length;j++){
@@ -1915,6 +2048,13 @@ function dropOrbs(){
 function endTurn(){
   if(!B||B.over)return;
   save().party.forEach((id,i)=>{ const c=charById(id); B.charges[i]=Math.min(c.skill.turns,B.charges[i]+1); });
+  if(B.scoreMode){
+    /* スコアアタック：敵は攻撃しない。のこりターンだけ数えて、
+       0になったら結果発表へ進む */
+    B.turnsLeft--;
+    if(B.turnsLeft<=0){ B.turnsLeft=0; renderBattle(); finishScoreAttack(); return; }
+    B.busy=false; renderBattle(); return;
+  }
   B.cd--;
   if(B.cd<=0){
     B.partyHp-=B.stage.atk; B.cd=B.stage.cd;
@@ -1963,6 +2103,8 @@ function useSkill(i){
     const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1;
     const dmg=Math.round(sk.power*m*(c.attr==="light"&&lightBoostOn()?2:1));
     B.enemyHp-=dmg;
+    /* スコアアタック：スキルのダメージもスコアに加算する */
+    if(B.scoreMode)B.score+=dmg;
     attackEffect(c.attr);
     showDmgPop(dmg);
   }
@@ -2012,6 +2154,46 @@ function winBattle(){
 function loseBattle(){
   if(!B||B.over)return; B.over=true; B.busy=false;
   showSheet('<h2>💦 まけちゃった…</h2><p>パーティを つよくして、もう一度 チャレンジしよう！<br>なかまを あつめると つよくなれるよ。</p><button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
+}
+/* スコアアタックの結果発表：内訳（ダメージ＋最大コンボボーナス）・
+   ランク・この端末のTOP5を出す。記録はセーブの scores に上位5件だけ
+   残す。winBattle と同じく、後片付けの失敗で結果画面が巻き込まれ
+   ないよう try で隔離し、ダイアログ表示を優先する */
+function finishScoreAttack(){
+  if(!B||B.over)return; B.over=true; B.busy=false;
+  try{
+    if(accRes)accRes();
+    if(accTimer){clearInterval(accTimer);accTimer=null;}
+    if(accAnim)cancelAnimationFrame(accAnim);
+    $("comboLayer").innerHTML="";
+    document.querySelectorAll(".fx,.dmg-pop,.efx-proj").forEach(el=>el.remove());
+  }catch(e){}
+  const dmgScore=Math.round(B.score);
+  const comboBonus=B.maxCombo*100;
+  const total=dmgScore+comboBonus;
+  const rank=scoreRank(total);
+  const s=save();
+  const prevBest=s.scores.length?s.scores[0]:0;
+  const isRecord=total>prevBest;
+  s.scores.push(total); s.scores.sort((a,b)=>b-a); s.scores=s.scores.slice(0,5);
+  persistSave();
+  const rows=s.scores.map((v,i)=>'<div class="score-row'+(v===total?" new":"")+'"><span class="pos">'+(i+1)+'い</span><span class="pts">'+fmtNum(v)+' てん</span><span class="rk rk-'+scoreRank(v)+'">'+scoreRank(v)+'</span></div>').join("");
+  showSheet('<h2>🏆 スコアアタック 結果</h2>'+
+   '<div class="rank-letter rk-'+rank+'">'+rank+'</div>'+
+   (isRecord?'<p><b>🎉 新記録！</b></p>':'')+
+   '<p class="score-break">ダメージ スコア：<b>'+fmtNum(dmgScore)+'</b> てん<br>'+
+   'さいだいコンボ：<b>'+B.maxCombo+' コンボ</b> → ボーナス <b>+'+fmtNum(comboBonus)+'</b> てん<br>'+
+   'ごうけい：<b style="font-size:1.3rem;color:var(--gold)">'+fmtNum(total)+' てん</b></p>'+
+   '<div class="sec-title" style="text-align:left;margin-top:.4rem;">これまでの TOP5</div><div class="score-list">'+rows+'</div>'+
+   '<button class="btn primary" onclick="retryScore()">もう一回 チャレンジ</button>'+
+   '<button class="btn ghost" onclick="backHome()">ホームへ もどる</button>');
+  try{ winSE(); }catch(e){}
+}
+/* 結果画面からそのまま再戦する（B はまだ生きているので stage を使う） */
+function retryScore(){
+  const st=B?B.stage:STAGES.find(s=>s.score);
+  closeSheet();
+  if(st)startBattle(st);
 }
 /* ================= 結果表示 =================
    実機で確定した事実：winBattle は完了し、overlay の hidden クラスも

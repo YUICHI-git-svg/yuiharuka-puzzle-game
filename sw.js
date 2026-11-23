@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yuiharuka-puzzle-v53';
+const CACHE_NAME = 'yuiharuka-puzzle-v54';
 const ASSETS = [
   './',
   'index.html',
@@ -13,6 +13,7 @@ const ASSETS = [
   'phoenix.png',
   'zeus.png',
   'satan.png',
+  'lucifer.png',
   'dragon-ancient.png',
   'dragon-emerald.png',
   'dragon-ruby.png',
@@ -26,7 +27,8 @@ const ASSETS = [
   'bg-space.jpg',
   'bg-heaven.jpg',
   'bg-demon.jpg',
-  'bg-forest.jpg'
+  'bg-forest.jpg',
+  'bg-fallen.jpg'
 ];
 
 self.addEventListener('install', (event) => {
