@@ -311,7 +311,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.37</div>
+    <div class="ver-line">ver 1.0.38</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <div class="stages" id="stageGrid"></div>
@@ -546,22 +546,75 @@ const BG_SCENES = {
 /* ゼウス戦（12）は雲の上の天界神殿、サタン戦（13）は魔界の魔城が専用背景 */
 const STAGE_BG = {1:"ice",2:"volcano",3:"wasteland",4:"sea",5:"volcano",6:"temple",7:"sea",8:"space",9:"temple",10:"ice",11:"wasteland",12:"heaven",13:"demon"};
 
-/* ================= セーブ（メモリ内・共通ひとつ） =================
-   人ごとのデータ保持は不要になったため、記録は全員で共通のひとつだけ */
+/* ================= セーブ（端末に保存・共通ひとつ） =================
+   人ごとのデータ保持は不要になったため、記録は全員で共通のひとつだけ。
+   記録は端末の localStorage に保存し、起動時に読み戻す。
+   以前は保存・読み込みを公開PWA側の後付けコードだけが担っていて、
+   ゲーム本体には読み込み処理が無かった。そのため、その後付けが
+   付かない形で新しい版が配信されると、端末に残っている記録を
+   読み込めず、集めた仲間が消えたように見えた（ver 1.0.37 の不具合）。
+   そこで保存・読み込みをゲーム本体に組み込み、最初の描画の前に
+   必ず読み込むようにした。
+   読み込みでは、メインの保存先・そのバックアップ・旧キーのうち
+   「いちばん進んでいる記録」を採用する。メインが何かの拍子に
+   初期状態で上書きされていても、残っている記録から自動で復元する。 */
+const SAVE_KEY="yuiharuka-puzzle-save-v2";
+const SAVE_BAK_KEY="yuiharuka-puzzle-save-v2.bak";
+const LEGACY_SAVE_KEYS=["yuiharuka-puzzle-save-v1","yuiharuka-puzzle-save"];
 function newSave(){ return { owned:["slime_fire","slime_water","slime_forest"], party:["slime_fire","slime_water","slime_forest"], cleared:[] }; }
 const singleSave = newSave();
 const save = () => singleSave;
+function sanitizeSave(p){
+  if(!p||typeof p!=="object") return null;
+  const ids={}; CHARS.forEach(c=>{ ids[c.id]=true; });
+  const own=Array.isArray(p.owned)?p.owned.filter(id=>ids[id]):[];
+  ["slime_fire","slime_water","slime_forest"].forEach(id=>{ if(own.indexOf(id)<0) own.push(id); });
+  let party=Array.isArray(p.party)?p.party.filter(id=>own.indexOf(id)>=0):[];
+  party=party.filter((id,i)=>party.indexOf(id)===i).slice(0,5);
+  if(!party.length) party=own.slice(0,3);
+  const cleared=Array.isArray(p.cleared)?p.cleared.filter(n=>typeof n==="number"&&n>=1&&n<=13):[];
+  return { owned:own, party:party, cleared:cleared };
+}
+function saveScore(s){ return s.owned.length*100+s.cleared.length*10+s.party.length; }
+function loadStoredSave(){
+  let best=null;
+  try{
+    [SAVE_KEY,SAVE_BAK_KEY].concat(LEGACY_SAVE_KEYS).forEach(k=>{
+      try{
+        const raw=localStorage.getItem(k); if(!raw) return;
+        const s=sanitizeSave(JSON.parse(raw)); if(!s) return;
+        if(!best||saveScore(s)>saveScore(best)) best=s;
+      }catch(e){}
+    });
+  }catch(e){}
+  if(best){ singleSave.owned=best.owned; singleSave.party=best.party; singleSave.cleared=best.cleared; }
+}
+function persistSave(){
+  try{
+    const next=JSON.stringify(singleSave);
+    const cur=localStorage.getItem(SAVE_KEY);
+    /* 上書きする前の記録をバックアップに残す（復元用） */
+    if(cur&&cur!==next){ try{ localStorage.setItem(SAVE_BAK_KEY,cur); }catch(e){} }
+    localStorage.setItem(SAVE_KEY,next);
+  }catch(e){}
+}
+loadStoredSave();
+persistSave();
+setInterval(persistSave,1000);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") persistSave(); });
+addEventListener("beforeunload",persistSave);
 /* ================= セーブ初期化（手動ボタンのみ） =================
    初期化は、その端末でホーム画面の「データを初期化」ボタンを押した
    ときだけ行う。新しい版が読み込まれても、記録を自動で消すことは
    一切しない（他の端末の記録に影響しないようにするため）。
    resetSave() は手動ボタン専用：メモリ内の記録を初期状態に戻し、
-   公開PWA版で使われる旧セーブキーもその端末分だけ消す */
-const LEGACY_SAVE_KEYS=["yuiharuka-puzzle-save-v1","yuiharuka-puzzle-save-v2","yuiharuka-puzzle-save"];
+   その端末に保存された記録（バックアップ・旧キー含む）も消して、
+   初期状態を保存し直す（次回起動で復元されないようにするため） */
 function resetSave(){
   const f=newSave();
   singleSave.owned=f.owned; singleSave.party=f.party; singleSave.cleared=f.cleared;
-  try{ LEGACY_SAVE_KEYS.forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  try{ [SAVE_KEY,SAVE_BAK_KEY].concat(LEGACY_SAVE_KEYS).forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  persistSave();
 }
 
 /* ================= おと・おんがく ================= */
@@ -850,7 +903,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.36";
+const APP_VER="1.0.38";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1557,16 +1610,6 @@ renderHome();
 </script>
 <script>
 if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch(e) {} }
-try {
-  var saveObj = (typeof save === 'function') ? save() : save;
-  var raw = localStorage.getItem('yuiharuka-puzzle-save-v2');
-  if (raw) { var p = JSON.parse(raw); if (p) { for (var k in p) { if (Object.prototype.hasOwnProperty.call(p, k)) saveObj[k] = p[k]; } } }
-  var persist = function(){ try { localStorage.setItem('yuiharuka-puzzle-save-v2', JSON.stringify(saveObj)); } catch(e) {} };
-  persist();
-  setInterval(persist, 1000);
-  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') persist(); });
-  addEventListener('beforeunload', persist);
-} catch(e) {}
 </script>
 </body>
 </html>
