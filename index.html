@@ -181,6 +181,32 @@
   .stars .off{color:#57538a;}
   .rank-title{font-size:1rem;font-weight:900;color:var(--gold);margin:1rem 0 .45rem;letter-spacing:.06em;}
   .rank-title:first-child{margin-top:.2rem;}
+  /* リーダースキル表示（編成ページ・図鑑・バトル共通） */
+  .ls-box{margin-top:.3rem;text-align:left;padding:.32rem .4rem;border-radius:8px;background:rgba(255,211,77,.14);border:1px solid rgba(255,211,77,.65);font-size:.68rem;font-weight:800;line-height:1.45;color:#fff3c4;}
+  .ls-box .ls-tag{display:inline-block;background:var(--gold);color:#3a2c00;border-radius:999px;padding:.05rem .45rem;font-size:.6rem;font-weight:900;margin-right:.3rem;}
+  .leader-badge{display:inline-block;background:var(--gold);color:#3a2c00;border-radius:999px;padding:.1rem .5rem;font-size:.62rem;font-weight:900;letter-spacing:.04em;box-shadow:0 1px 6px rgba(0,0,0,.45);}
+  .char-card.isleader{border-color:var(--gold);box-shadow:0 0 12px rgba(255,211,77,.45);}
+  /* 編成ページ：いまのパーティ枠（左端＝リーダー） */
+  .slot-row{display:flex;gap:.35rem;margin:.2rem 0 .4rem;}
+  .slot{flex:1;min-width:0;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:.35rem .15rem .4rem;text-align:center;color:var(--ink);}
+  .slot.leader{border-color:var(--gold);background:linear-gradient(180deg,#4a3a10,var(--panel) 82%);box-shadow:0 0 10px rgba(255,211,77,.35);}
+  .slot.empty{opacity:.45;border-style:dashed;}
+  .slot .art{height:52px;display:flex;align-items:flex-end;justify-content:center;}
+  .slot .art svg{height:52px;width:auto;max-width:100%;}
+  .slot .art img{height:52px;width:auto;max-width:100%;object-fit:contain;}
+  .slot .nm{font-size:.58rem;font-weight:800;line-height:1.25;margin-top:.15rem;word-break:break-all;}
+  .slot .pos{font-size:.58rem;font-weight:900;color:var(--sub);letter-spacing:.05em;}
+  .slot.leader .pos{color:var(--gold);}
+  .active-ls{background:rgba(10,8,28,.55);border:1px solid var(--gold);border-radius:14px;padding:.55rem .7rem;font-size:.85rem;font-weight:800;line-height:1.55;text-align:center;}
+  .active-ls .who{color:var(--gold);}
+  .active-ls.none{border-color:var(--line);color:var(--sub);}
+  /* ホームのパーティ要約 */
+  .party-summary{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:.6rem .7rem;font-size:.82rem;font-weight:700;line-height:1.6;}
+  .party-summary .who{color:var(--gold);font-weight:900;}
+  /* バトルのリーダースキル表示バー */
+  #leaderBar{margin:.14rem .45rem 0;background:rgba(10,8,28,.78);border:1px solid rgba(255,211,77,.7);border-radius:10px;padding:.22rem .6rem;font-size:.72rem;font-weight:800;line-height:1.4;text-align:center;color:#fff3c4;text-shadow:0 1px 3px rgba(0,0,0,.9);}
+  #leaderBar.none{border-color:var(--line);color:var(--sub);}
+  .member .leader-crown{position:absolute;top:-.55rem;left:50%;transform:translateX(-50%);z-index:8;font-size:.85rem;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));}
   .msg{min-height:1.4em;text-align:center;font-size:.85rem;font-weight:700;color:var(--gold);margin:.5rem 0 0;}
   .hint{font-size:.75rem;color:var(--sub);text-align:center;margin:.5rem 0 0;line-height:1.55;}
 
@@ -402,7 +428,7 @@
   </div>
   <div class="wrap">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.60</div>
+    <div class="ver-line">ver 1.0.61</div>
 
     <div class="sec-title">ステージを えらんでね</div>
     <p class="recruit-legend"><span class="recruit yes">✓ なかま</span><span>は もう なかまに なってるよ。</span></p>
@@ -411,15 +437,15 @@
 
     <div class="sec-title">限定ステージ</div>
     <div class="stages" id="extraGrid"></div>
-    <p class="hint">オーブの いろを かえる とくべつな なかまが いるよ。いつでも あそべるよ！<br>ステージ12には、オーブ全部を ひかりに かえる <b style="color:var(--light)">スーパーでんきドラゴン</b> が あらわれたよ！ なかまにすると、<b style="color:var(--light)">ひかりの こうげきが 2ばい</b>に なるよ！</p>
+    <p class="hint">オーブの いろを かえる とくべつな なかまが いるよ。いつでも あそべるよ！<br>ステージ12には、オーブ全部を ひかりに かえる <b style="color:var(--light)">スーパーでんきドラゴン</b> が あらわれたよ！ リーダーにすると、<b style="color:var(--light)">ひかりの こうげきが 2.5ばい</b>に なる リーダースキルを もっているよ！</p>
 
     <div class="sec-title">⚡ チャレンジステージ ⚡</div>
     <div class="stages challenge" id="challengeGrid"></div>
-    <p class="hint">ステージ8を クリアすると あらわれる、でんせつの 神さま ゼウス。<br>HP 18000・こうげき 520 の さいきょうの てき！ パーティを そろえて たたかおう。<br>たおすと 50%の かくりつで なかまに なるよ！</p>
+    <p class="hint">ステージ8を クリアすると あらわれる、でんせつの 神さま ゼウス。<br>HP 16200・こうげき 520 の さいきょうの てき！ パーティを そろえて たたかおう。<br>たおすと 50%の かくりつで なかまに なるよ！ なかまにすると、リーダーで <b>コンボの いりょく +75%</b>の リーダースキルが つかえるよ！</p>
 
     <div class="sec-title">👿 サタンのダンジョン（第1章 最終決戦）</div>
     <div class="stages satan" id="satanGrid"></div>
-    <p class="hint">ゼウスを なかまにすると 追加される、魔王サタンの ダンジョン。<br>ひかりオーブが 多めに おちるから、ゼウスが オーブ攻撃できるよ（ひかりは やみに つよい！）。<br>HP 22000・こうげき 580 の 第1章 さいごの ボス。たおすと 50%の かくりつで サタンが なかまに なるよ！</p>
+    <p class="hint">ゼウスを なかまにすると 追加される、魔王サタンの ダンジョン。<br>ひかりオーブが 多めに おちるから、ゼウスが オーブ攻撃できるよ（ひかりは やみに つよい！）。<br>HP 19800・こうげき 580 の 第1章 さいごの ボス。たおすと 50%の かくりつで サタンが なかまに なるよ！ なかまにすると、リーダーで <b style="color:var(--dark)">やみの こうげき 2.5ばい</b>の リーダースキルが つかえるよ！</p>
 
     <div class="sec-title">🏆 スコアアタック（とくべつダンジョン）</div>
     <div class="stages score" id="scoreGrid"></div>
@@ -427,9 +453,9 @@
     <div class="sec-title">🏅 スコア TOP5（この端末の 記録）</div>
     <div id="scoreRankBox"></div>
 
-    <div class="sec-title">パーティ（5にんまで）― タップで 入れかえ</div>
-    <div class="char-grid" id="partyGrid"></div>
-    <p class="hint" id="partyHpLine"></p>
+    <div class="sec-title">パーティ</div>
+    <div class="party-summary" id="partySummary"></div>
+    <button class="btn primary" id="partyBtn" style="margin-top:.6rem;">👥 パーティを へんせいする</button>
     <p class="msg" id="homeMsg"></p>
 
     <button class="btn ghost" id="zukanBtn" style="margin-top:1rem;">📖 ずかんを みる</button>
@@ -446,6 +472,25 @@
   <div class="wrap">
     <h1>ずかん ― スキルいちらん</h1>
     <div id="zukanBody"></div>
+  </div>
+</div>
+
+<!-- ============ パーティ編成（別ページ） ============ -->
+<div id="partyPage" class="hidden">
+  <div class="topbar">
+    <button class="icon-btn" id="partyBack">← もどる</button>
+    <span style="flex:1"></span>
+  </div>
+  <div class="wrap">
+    <h1>パーティ へんせい</h1>
+    <p class="hint" style="margin-top:0;">いちばん ひだりの なかまが <b style="color:var(--gold)">👑 リーダー</b>だよ。<br>リーダースキルは、リーダーのもの <b>だけ</b>が はつどうするよ。<br>上の わくの なかまを タップすると、その子が リーダーに なるよ。<br>下の カードを タップすると、パーティへの 出入りが できるよ（5にんまで）。</p>
+    <div class="sec-title">いまの パーティ（ひだりが リーダー）</div>
+    <div class="slot-row" id="partySlots"></div>
+    <div class="active-ls" id="activeLsBox"></div>
+    <p class="hint" id="partyHpLine"></p>
+    <p class="msg" id="partyMsg"></p>
+    <div class="sec-title">なかま いちらん ― タップで 入れかえ</div>
+    <div class="char-grid" id="partyGrid"></div>
   </div>
 </div>
 
@@ -470,6 +515,7 @@
       </div>
     </div>
   </div>
+  <div id="leaderBar" class="hidden"></div>
   <div class="party-row" id="partyRow"></div>
   <div class="enemy-meta party-hp" id="partyHpRow" style="padding-top:.12rem;">
     <div class="hp-row">
@@ -540,19 +586,19 @@ function fairySVG(dress, hair){
   '<circle cx="50" cy="6" r="2.6" fill="#ffd34d"/><path d="M42 88 L40 96 M58 88 L60 96" stroke="#e8b98d" stroke-width="3.4" stroke-linecap="round"/></svg>';
 }
 const CHARS = [
- {id:"slime_fire", name:"フレイムスライム", attr:"fire", atk:9, hp:120, art:()=>slimeSVG("#ff7a5c","#c22e24","flame"), passive:"コンボの いりょく +10%", skill:{name:"ちいさな かえん", desc:"ひの ダメージ 120", turns:4, type:"dmg", power:120}},
- {id:"slime_water", name:"アクアスライム", attr:"water", atk:9, hp:120, art:()=>slimeSVG("#5cb8ff","#1668ad","drop"), passive:"コンボの いりょく +10%", skill:{name:"みずの しずく", desc:"HP 200 かいふく", turns:4, type:"heal", power:200}},
- {id:"slime_forest", name:"リーフスライム", attr:"forest", atk:9, hp:120, art:()=>slimeSVG("#63dd7e","#1d8f43","bud"), passive:"コンボの いりょく +10%", skill:{name:"はっぱカッター", desc:"もりの ダメージ 120", turns:4, type:"dmg", power:120}},
- {id:"dragon_fire", name:"インフェルノドラゴン", attr:"fire", atk:34, hp:300, art:()=>imgArt("dragon-fire.png"), passive:"コンボの いりょく +25%", skill:{name:"かえんブレス", desc:"ひの ダメージ 340", turns:5, type:"dmg", power:340}},
- {id:"dragon_water", name:"アビスドラゴン", attr:"water", atk:32, hp:310, art:()=>imgArt("dragon-water.png"), passive:"コンボの いりょく +25%", skill:{name:"うずしお", desc:"みずの ダメージ 320 と HP 130 かいふく", turns:5, type:"dmgheal", power:320, heal:130}},
- {id:"dragon_forest", name:"グリーンドラゴン", attr:"forest", atk:33, hp:320, art:()=>imgArt("dragon-forest.png"), passive:"コンボの いりょく +25%", skill:{name:"もりの いぶき", desc:"HP 420 かいふく", turns:5, type:"heal", power:420}},
- {id:"fairy_flower", name:"フラワーフェアリー", attr:"forest", atk:26, hp:210, art:()=>imgArt("fairy-flower.png"), passive:"かいふくオーブの こうか +50%", skill:{name:"はなびらヒール", desc:"HP 500 かいふく", turns:4, type:"heal", power:500}},
- {id:"fairy_star", name:"スターフェアリー", attr:"water", atk:28, hp:200, art:()=>imgArt("fairy-star.png"), passive:"かいふくオーブの こうか +50%", skill:{name:"ほしの ひかり", desc:"みずの ダメージ 300", turns:4, type:"dmg", power:300}},
- {id:"phoenix", name:"フェニックス", attr:"fire", atk:48, hp:430, art:()=>imgArt("phoenix.png"), passive:"コンボの いりょく +35%", skill:{name:"ほうおうの炎", desc:"ひの ダメージ 480 と HP 160 かいふく", turns:5, type:"dmgheal", power:480, heal:160}},
- {id:"dragon_sea", name:"エンシェントドラゴン", attr:"water", atk:52, hp:460, art:()=>imgArt("dragon-ancient.png"), passive:"コンボの いりょく +35%", skill:{name:"おおなみ", desc:"みずの ダメージ 520", turns:6, type:"dmg", power:520}},
- {id:"dragon_change_forest", name:"エメラルドドラゴン", attr:"forest", atk:38, hp:340, art:()=>imgArt("dragon-emerald.png"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・もり", desc:"あかオーブ 全部 → みどり に かえる", turns:5, type:"change", from:"fire", to:"forest"}},
- {id:"fairy_change_water", name:"サファイアフェアリー", attr:"water", atk:36, hp:330, art:()=>imgArt("fairy-sapphire.png"), passive:"コンボの いりょく +25%", skill:{name:"へんげの こな・みず", desc:"みどりオーブ 全部 → あお に かえる", turns:5, type:"change", from:"forest", to:"water"}},
- {id:"dragon_change_fire", name:"ルビードラゴン", attr:"fire", atk:40, hp:350, art:()=>imgArt("dragon-ruby.png"), passive:"コンボの いりょく +25%", skill:{name:"へんげの じゅつ・ほのお", desc:"あおオーブ 全部 → あか に かえる", turns:5, type:"change", from:"water", to:"fire"}},
+ {id:"slime_fire", name:"フレイムスライム", attr:"fire", atk:9, hp:120, art:()=>slimeSVG("#ff7a5c","#c22e24","flame"), skill:{name:"ちいさな かえん", desc:"ひの ダメージ 120", turns:4, type:"dmg", power:120}},
+ {id:"slime_water", name:"アクアスライム", attr:"water", atk:9, hp:120, art:()=>slimeSVG("#5cb8ff","#1668ad","drop"), skill:{name:"みずの しずく", desc:"HP 200 かいふく", turns:4, type:"heal", power:200}},
+ {id:"slime_forest", name:"リーフスライム", attr:"forest", atk:9, hp:120, art:()=>slimeSVG("#63dd7e","#1d8f43","bud"), skill:{name:"はっぱカッター", desc:"もりの ダメージ 120", turns:4, type:"dmg", power:120}},
+ {id:"dragon_fire", name:"インフェルノドラゴン", attr:"fire", atk:34, hp:300, art:()=>imgArt("dragon-fire.png"), skill:{name:"かえんブレス", desc:"ひの ダメージ 340", turns:5, type:"dmg", power:340}},
+ {id:"dragon_water", name:"アビスドラゴン", attr:"water", atk:32, hp:310, art:()=>imgArt("dragon-water.png"), skill:{name:"うずしお", desc:"みずの ダメージ 320 と HP 130 かいふく", turns:5, type:"dmgheal", power:320, heal:130}},
+ {id:"dragon_forest", name:"グリーンドラゴン", attr:"forest", atk:33, hp:320, art:()=>imgArt("dragon-forest.png"), skill:{name:"もりの いぶき", desc:"HP 420 かいふく", turns:5, type:"heal", power:420}},
+ {id:"fairy_flower", name:"フラワーフェアリー", attr:"forest", atk:26, hp:210, art:()=>imgArt("fairy-flower.png"), skill:{name:"はなびらヒール", desc:"HP 500 かいふく", turns:4, type:"heal", power:500}},
+ {id:"fairy_star", name:"スターフェアリー", attr:"water", atk:28, hp:200, art:()=>imgArt("fairy-star.png"), skill:{name:"ほしの ひかり", desc:"みずの ダメージ 300", turns:4, type:"dmg", power:300}},
+ {id:"phoenix", name:"フェニックス", attr:"fire", atk:48, hp:430, art:()=>imgArt("phoenix.png"), skill:{name:"ほうおうの炎", desc:"ひの ダメージ 480 と HP 160 かいふく", turns:5, type:"dmgheal", power:480, heal:160}},
+ {id:"dragon_sea", name:"エンシェントドラゴン", attr:"water", atk:52, hp:460, art:()=>imgArt("dragon-ancient.png"), skill:{name:"おおなみ", desc:"みずの ダメージ 520", turns:6, type:"dmg", power:520}},
+ {id:"dragon_change_forest", name:"エメラルドドラゴン", attr:"forest", atk:38, hp:340, art:()=>imgArt("dragon-emerald.png"), skill:{name:"へんげの じゅつ・もり", desc:"あかオーブ 全部 → みどり に かえる", turns:5, type:"change", from:"fire", to:"forest"}},
+ {id:"fairy_change_water", name:"サファイアフェアリー", attr:"water", atk:36, hp:330, art:()=>imgArt("fairy-sapphire.png"), skill:{name:"へんげの こな・みず", desc:"みどりオーブ 全部 → あお に かえる", turns:5, type:"change", from:"forest", to:"water"}},
+ {id:"dragon_change_fire", name:"ルビードラゴン", attr:"fire", atk:40, hp:350, art:()=>imgArt("dragon-ruby.png"), skill:{name:"へんげの じゅつ・ほのお", desc:"あおオーブ 全部 → あか に かえる", turns:5, type:"change", from:"water", to:"fire"}},
  /* スーパーでんきドラゴン：娘のリクエストで追加した ひかり属性のドラゴン。
     黄色い体に全身ビリビリと電気をまとった姿（assets/dragon-light.png）。
     スキルは盤面のオーブ「全部」を ひかりに変える changeAll 型：
@@ -560,15 +606,16 @@ const CHARS = [
     使えば どのステージでも盤面を ひかりだらけにして、ひかり属性の
     仲間（スーパーでんきドラゴン自身とゼウス）の大コンボにつなげられる。
     盤面全部を変える分、たまるまでのターンは長め（7）にした。
-    いつもスキルには「ひかりの こうげき 2ばい」も持つ（追加リクエスト）：
-    パーティにいる間、ひかり属性の攻撃が全部2倍になる（lightBoostOn で
-    判定し、オーブ攻撃の蓄積とスキルダメージの両方に適用する） */
- {id:"dragon_light", name:"スーパーでんきドラゴン", attr:"light", atk:60, hp:520, art:()=>imgArt("dragon-light.png"), passive:"コンボの いりょく +35%・ひかりの こうげき 2ばい", skill:{name:"ぜんぶ ひかりへんげ", desc:"オーブ 全部 → きいろ（ひかり）に かえる", turns:7, type:"changeAll", to:"light"}},
+    リーダースキル「ひかりの こうげき 2.5ばい」を持つ：このキャラを
+    リーダー枠（パーティの先頭）に置いたときだけ、ひかり属性の攻撃が
+    全部2.5倍になる（leaderAttrMult で判定し、オーブ攻撃とスキル
+    ダメージの両方に適用する）。リーダーでない場合は発動しない */
+ {id:"dragon_light", name:"スーパーでんきドラゴン", attr:"light", atk:60, hp:520, art:()=>imgArt("dragon-light.png"), leaderSkill:{type:"attr", attr:"light", mult:2.5, text:"ひかりの こうげき 2.5ばい"}, skill:{name:"ぜんぶ ひかりへんげ", desc:"オーブ 全部 → きいろ（ひかり）に かえる", turns:7, type:"changeAll", to:"light"}},
  /* ゼウス：チャレンジステージの神。ひかり属性は三すくみの外で、
     対抗の「やみ」属性にだけ強い（やみも ひかりに強い）。
     ひかりオーブはサタンのダンジョンでだけ落ちるので、そこで
     オーブ攻撃でき、それ以外ではスキル「てんくうの らいめい」が主力 */
- {id:"zeus", name:"ゼウス", attr:"light", atk:60, hp:560, art:()=>imgArt("zeus.png"), passive:"コンボの いりょく +35%", skill:{name:"てんくうの らいめい", desc:"ひかりの ダメージ 800", turns:6, type:"dmg", power:800}},
+ {id:"zeus", name:"ゼウス", attr:"light", atk:60, hp:560, art:()=>imgArt("zeus.png"), leaderSkill:{type:"combo", mult:1.75, text:"コンボの いりょく +75%"}, skill:{name:"てんくうの らいめい", desc:"ひかりの ダメージ 800", turns:6, type:"dmg", power:800}},
  /* サタン：ゼウスの対抗となる やみ属性の魔王。第1章の最終ボス。
     ひかりに弱く・ひかりに強い（相互×1.6）ので、仲間にしたゼウスの
     ひかり攻撃が勝負の鍵になる。やみオーブは通常ステージで落ちない
@@ -576,20 +623,41 @@ const CHARS = [
     ダークノヴァは最強スキル（追加リクエスト）：やみダメージ2000に
     加えて盤面のオーブ全部を やみに変える dmgChangeAll 型。変えた
     盤面で次の入れかえから やみの大コンボにつなげられる。
-    いつもスキルには「やみの こうげき 2ばい」も持つ（追加リクエスト）：
-    スーパーでんきドラゴンの ひかり2ばいと同じ形式で、パーティに
-    いる間 やみ属性の攻撃が全部2倍になる（darkBoostOn で判定し、
-    オーブ攻撃の蓄積とスキルダメージの両方に適用する。そのため
-    ダークノヴァ自身のダメージも2000→4000になる） */
- {id:"satan", name:"サタン", attr:"dark", atk:66, hp:600, art:()=>imgArt("satan.png"), passive:"コンボの いりょく +35%・やみの こうげき 2ばい", skill:{name:"ダークノヴァ", desc:"やみの ダメージ 2000 と オーブ全部 → むらさき（やみ）に かえる さいきょうスキル", turns:6, type:"dmgChangeAll", power:2000, to:"dark"}},
+    リーダースキル「やみの こうげき 2.5ばい」を持つ：このキャラを
+    リーダー枠（パーティの先頭）に置いたときだけ、やみ属性の攻撃が
+    全部2.5倍になる（leaderAttrMult で判定し、オーブ攻撃とスキル
+    ダメージの両方に適用する。そのためリーダー時はダークノヴァ
+    自身のダメージも2000→5000になる）。リーダーでない場合は発動しない */
+ {id:"satan", name:"サタン", attr:"dark", atk:66, hp:600, art:()=>imgArt("satan.png"), leaderSkill:{type:"attr", attr:"dark", mult:2.5, text:"やみの こうげき 2.5ばい"}, skill:{name:"ダークノヴァ", desc:"やみの ダメージ 2000 と オーブ全部 → むらさき（やみ）に かえる さいきょうスキル", turns:6, type:"dmgChangeAll", power:2000, to:"dark"}},
  /* ルシファー：スコアアタック（特別ダンジョン）専用の敵。堕天使で
     やみ属性・☆6。たおすことはできず（HPは実質無限）、こうげきも
     してこない。なかまにはならないので、atk/hp は図鑑表示用の目安値
     （こうげき 0＝攻撃してこない、たいりょくは「たおせない」扱い） */
- {id:"lucifer", name:"ルシファー", attr:"dark", atk:0, hp:9999, art:()=>imgArt("lucifer.png"), passive:"スコアアタック専用の てき", skill:{name:"しんえんの つばさ", desc:"スコアアタックでのみ あらわれる", turns:99, type:"dmg", power:0}},
+ {id:"lucifer", name:"ルシファー", attr:"dark", atk:0, hp:9999, art:()=>imgArt("lucifer.png"), skill:{name:"しんえんの つばさ", desc:"スコアアタックでのみ あらわれる", turns:99, type:"dmg", power:0}},
 ];
 function imgArt(src, filter){ return '<img src="'+src+'" alt=""'+(filter?' style="filter:'+filter+'"':"")+">"; }
 const charById = id => CHARS.find(c=>c.id===id);
+/* ================= リーダースキル =================
+   旧「いつもスキル」（常時パッシブ）は廃止。代わりに、パーティの
+   先頭（リーダー枠）に置いたキャラの leaderSkill だけが発動する。
+   leaderSkill の形式：
+     {type:"combo", mult:1.75, text:"コンボの いりょく +75%"} …ゼウス
+        → 全員のオーブ攻撃に mult を掛ける（leaderComboMult）
+     {type:"attr", attr:"dark", mult:2.5, text:"やみの こうげき 2.5ばい"} …サタン
+     {type:"attr", attr:"light", mult:2.5, text:"ひかりの こうげき 2.5ばい"} …スーパーでんきドラゴン
+        → その属性のオーブ攻撃とスキルダメージに mult を掛ける（leaderAttrMult）
+   リーダースキルを持つのは☆6キャラだけ（上記3体）。他のキャラを
+   リーダーにしてもボーナスは無い。
+   ※ガチャ限定サンタ3人はガチャ実装時に同じ形式で追加する：
+     あかサンタ {type:"attr",attr:"fire",mult:2}、あおサンタ
+     {type:"attr",attr:"water",mult:2}、みどりサンタ
+     {type:"attr",attr:"forest",mult:2}（各属性の攻撃×2）。
+     仕組み側はこの形式をそのまま扱えるので、データ追加だけで済む */
+function leaderChar(){ const p=save().party; return p&&p.length?charById(p[0]):null; }
+function activeLeaderSkill(){ const lc=leaderChar(); return (lc&&lc.leaderSkill)?lc.leaderSkill:null; }
+function leaderComboMult(){ const ls=activeLeaderSkill(); return (ls&&ls.type==="combo")?ls.mult:1; }
+function leaderAttrMult(attr){ const ls=activeLeaderSkill(); return (ls&&ls.type==="attr"&&ls.attr===attr)?ls.mult:1; }
+function leaderSkillHTML(c){ if(!c||!c.leaderSkill)return ""; return '<div class="ls-box"><span class="ls-tag">👑 リーダースキル</span>'+c.leaderSkill.text+'<br><span style="font-weight:600;color:#e8e4ff;">リーダーの ときだけ はつどう</span></div>'; }
 /* キャラの☆ランク（1〜5）：スライムは☆1、つよいキャラほど☆が多い */
 const STAR_RANK = { slime_fire:1, slime_water:1, slime_forest:1,
   fairy_flower:2, fairy_star:2,
@@ -621,19 +689,33 @@ function starHTML(c){ let s='<span class="stars">'; const slots=Math.max(5,c.sta
    出現しない。なお「落ちるオーブ」とは別に、スーパーでんきドラゴンの
    スキルは盤面のオーブ全部を ひかりに変換できる（落下補充は
    そのステージの orbs のまま）。 */
+/* ===== リーダースキル化に伴う敵HPの再調整（ver 1.0.61） =====
+   旧仕様では全員の常時パッシブ（コンボ+10〜35%、回復+50%、光/闇×2）が
+   重なっていた。リーダースキル化で重ねがけが無くなり、推奨編成の
+   与ダメージは序盤で約-10%、中盤で約-15%、終盤で約-16%下がる
+   （盤面カスケードのモンテカルロ試算＋攻撃力加重の平均倍率で算出）。
+   その分だけ敵HPを下げて、倒すまでのターン数と爽快感を旧仕様と
+   そろえた：ステージ1-2 ×0.90、3-4 ×0.87、5-8 ×0.84、限定 ×0.85。
+   ゼウス戦・サタン戦は推奨リーダー（でんきドラゴン／ゼウス等）の
+   リーダースキルで火力がほぼ戻るため ×0.90 にとどめた。
+   スコアアタックは最適リーダーでも総スコアが約-22%になるため、
+   ランク基準（S 30000→24000 等）とルシファーのセリフ節目も
+   同じ比率で下げて、到達感が変わらないようにした。
+   敵の攻撃力は据え置き：戦闘が短くなる分、被弾回数と回復需要が
+   減り、回復パッシブ廃止の影響を相殺する */
 const ORB_BASE = ["fire","water","forest","heal"];
 const STAGES = [
- {n:1, enemy:"fairy_star", hp:1840, atk:90, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:2, enemy:"dragon_fire", hp:2560, atk:120, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:3, enemy:"dragon_forest", hp:3680, atk:170, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
- {n:4, enemy:"dragon_water", hp:4320, atk:200, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:5, enemy:"phoenix", hp:5120, atk:240, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:6, enemy:"fairy_flower", hp:6080, atk:280, cd:2, recruit:.5, orbs:[...ORB_BASE]},
- {n:7, enemy:"dragon_sea", hp:7200, atk:320, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:8, enemy:"phoenix", hp:8800, atk:380, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
- {n:9, enemy:"dragon_change_forest", hp:3040, atk:150, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
- {n:10, enemy:"fairy_change_water", hp:3360, atk:160, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
- {n:11, enemy:"dragon_change_fire", hp:3680, atk:175, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
+ {n:1, enemy:"fairy_star", hp:1650, atk:90, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:2, enemy:"dragon_fire", hp:2300, atk:120, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:3, enemy:"dragon_forest", hp:3200, atk:170, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
+ {n:4, enemy:"dragon_water", hp:3750, atk:200, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:5, enemy:"phoenix", hp:4300, atk:240, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:6, enemy:"fairy_flower", hp:5100, atk:280, cd:2, recruit:.5, orbs:[...ORB_BASE]},
+ {n:7, enemy:"dragon_sea", hp:6050, atk:320, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:8, enemy:"phoenix", hp:7400, atk:380, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
+ {n:9, enemy:"dragon_change_forest", hp:2600, atk:150, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
+ {n:10, enemy:"fairy_change_water", hp:2850, atk:160, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
+ {n:11, enemy:"dragon_change_fire", hp:3150, atk:175, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
  /* 限定ステージ12（娘のリクエスト）：ひかり属性のスーパーでんきドラゴン。
     画面に出る番号は disp:12。内部番号 n は 14 にしてある：12は
     チャレンジステージ（ゼウス）、13はサタンのダンジョンがすでに
@@ -644,24 +726,24 @@ const STAGES = [
     3680、攻撃 56→60→64）の続きとして HP 4000・攻撃 68 に設定。
     落ちるオーブは他の限定ステージと同じ基本4種（ひかりは落ちない）。
     仲間にした後のスキルで盤面全部を ひかりに変えられるのが売り */
- {n:14, disp:12, enemy:"dragon_light", hp:4000, atk:190, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
+ {n:14, disp:12, enemy:"dragon_light", hp:3400, atk:190, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
  /* チャレンジ：ゼウス。最終ボス（ステージ8：HP8800/攻130/2ターン）の
-    約2倍のHP 18000、攻撃520を3ターンごとに放つ。パーティ総HP制に
+    約2.2倍のHP 16200、攻撃520を3ターンごとに放つ。パーティ総HP制に
     なったので、終盤のフル編成（総HP 約2000）でも約4発で落とされる
     最終試練のまま。フル編成＋回復を回せばいい勝負になる。
     仲間になる確率は他のキャラと同じ50%（recruit:.5）。
     ここも基本4種のみ（ひかり／やみオーブは落ちない）。仲間にした
     ゼウスが ひかりオーブで攻撃できるのはサタンのダンジョンだけ */
- {n:12, enemy:"zeus", hp:18000, atk:520, cd:3, recruit:.5, boss:true, challenge:true, orbs:[...ORB_BASE]},
+ {n:12, enemy:"zeus", hp:16200, atk:520, cd:3, recruit:.5, boss:true, challenge:true, orbs:[...ORB_BASE]},
  /* サタンのダンジョン：第1章の最終決戦。解放条件は「ゼウスを仲間に
     していること」（stageUnlocked で判定）。通常オーブ＋ひかりオーブが
     多めに落ちるので、ゼウスがオーブ攻撃でき、しかも ひかりは やみに
-    ×1.6 で刺さる。サタンは HP 22000（ゼウスの約1.2倍）・攻撃580
+    ×1.6 で刺さる。サタンは HP 19800（ゼウスの約1.2倍）・攻撃580
     （ゼウス入りのフル編成＝総HP 約2300 でも約4発で落とされる）を3ターンごと。
     ゼウス入りのフル編成＋回復を回して、いい勝負になる最終ボス設定。
     仲間になる確率は他のキャラと同じ50%（recruit:.5）で、専用の「第1章ゲームクリア！」
     ダイアログが出る（winBattle で satan フラグを判定） */
- {n:13, enemy:"satan", hp:22000, atk:580, cd:3, recruit:.5, boss:true, satan:true, orbs:[...ORB_BASE,"light"], bonus:"light"},
+ {n:13, enemy:"satan", hp:19800, atk:580, cd:3, recruit:.5, boss:true, satan:true, orbs:[...ORB_BASE,"light"], bonus:"light"},
  /* スコアアタック（特別ダンジョン）：ルシファー戦。10ターンで
     あたえたダメージの合計＋最大コンボボーナスがスコアになる。
     ルシファーは たおせない（HPは実質無限）し、こうげきもしない
@@ -1418,14 +1500,14 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.55";
+const APP_VER="1.0.61";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.score) return true; if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
 /* スコアアタック：10ターン制。スコア＝与ダメージ合計＋最大コンボ×100。
    ランクは S/A/B/C/D の5段階（強い仲間を集めるほど上のランクに届く） */
 const SCORE_TURNS=10;
-function scoreRank(total){ if(total>=30000)return "S"; if(total>=20000)return "A"; if(total>=12000)return "B"; if(total>=6000)return "C"; return "D"; }
+function scoreRank(total){ if(total>=24000)return "S"; if(total>=16000)return "A"; if(total>=10000)return "B"; if(total>=5000)return "C"; return "D"; }
 function fmtNum(n){ return Math.round(n).toLocaleString("ja-JP"); }
 function renderHome(){
   $("stageGrid").innerHTML="";
@@ -1449,26 +1531,17 @@ function renderHome(){
     if(st.score){
       b.innerHTML=thumbHtml+'<span class="crown">🏆</span>'+"ルシファー"+"<small>やみ・たおせない・10ターンで スコアを かせごう！</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>';
     } else if(st.satan){
-      b.innerHTML=thumbHtml+'<span class="crown">👿</span>'+(un?"サタン":"？？？")+"<small>"+(un?"やみ・HP 22000・第1章 最終ボス":"ゼウスを なかまにすると 追加される")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
+      b.innerHTML=thumbHtml+'<span class="crown">👿</span>'+(un?"サタン":"？？？")+"<small>"+(un?"やみ・HP "+st.hp+"・第1章 最終ボス":"ゼウスを なかまにすると 追加される")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
     } else if(st.challenge){
-      b.innerHTML=thumbHtml+'<span class="crown">⚡</span>'+(un?"ゼウス":"？？？")+"<small>"+(un?"ひかり・HP 18000・さいきょうの神":"ステージ8 クリアで 出現")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
+      b.innerHTML=thumbHtml+'<span class="crown">⚡</span>'+(un?"ゼウス":"？？？")+"<small>"+(un?"ひかり・HP "+st.hp+"・さいきょうの神":"ステージ8 クリアで 出現")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
     } else {
       b.innerHTML=thumbHtml+(st.boss?'<span class="crown">👑</span>':"")+(st.disp||st.n)+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
     }
     b.disabled=!un; b.onclick=()=>startBattle(st);
     $(st.score?"scoreGrid":st.extra?"extraGrid":st.satan?"satanGrid":st.challenge?"challengeGrid":"stageGrid").appendChild(b);
   });
-  $("partyGrid").innerHTML="";
-  CHARS.filter(c=>save().owned.includes(c.id)).forEach(c=>{
-    const inP=save().party.includes(c.id);
-    const d=document.createElement("button");
-    d.className="char-card"+(inP?" inparty":"");
-    d.innerHTML='<div class="art">'+c.art()+'</div><div class="nm">'+c.name+'</div><div>'+starHTML(c)+'</div>'+
-      '<div class="sk"><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'・たいりょく '+c.hp+'<br><b>スキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'（'+c.skill.turns+'ターン）</div>';
-    d.onclick=()=>toggleParty(c.id);
-    $("partyGrid").appendChild(d);
-  });
-  $("partyHpLine").textContent="パーティの ごうけい たいりょく："+partyMaxHp()+" ― バトルでは この数字が パーティの HPに なるよ。たいりょくの 多い なかまを 入れると、てきの こうげきに ながく たえられるよ！";
+  /* ホームには編成そのものは置かず、要約だけ出す（編成は専用ページ） */
+  renderPartySummary();
   /* スコアアタックの TOP5 ランキング（この端末に残っている記録） */
   const sc=(save().scores||[]);
   if(!sc.length){
@@ -1493,7 +1566,7 @@ function renderZukan(){
       const d=document.createElement("div");
       d.className="char-card"+(owned?"":" notowned");
       d.innerHTML='<div class="art">'+c.art()+'</div><div class="nm">'+(owned?c.name:"？？？")+'</div><div>'+starHTML(c)+'</div>'+
-        '<div class="sk"><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'・たいりょく '+c.hp+'<br>いつもスキル：'+c.passive+'<br><b>タップスキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'（'+c.skill.turns+'ターンで たまる）</div>';
+        '<div class="sk"><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'・たいりょく '+c.hp+'<br><b>タップスキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'（'+c.skill.turns+'ターンで たまる）</div>'+(owned?leaderSkillHTML(c):"");
       grid.appendChild(d);
     });
     body.appendChild(grid);
@@ -1517,10 +1590,70 @@ function doResetSave(){
 }
 function toggleParty(id){
   const s=save(), i=s.party.indexOf(id);
-  if(i>=0){ if(s.party.length<=1){ $("homeMsg").textContent="パーティは 1にんは 必要だよ"; return; } s.party.splice(i,1); }
-  else { if(s.party.length>=5){ $("homeMsg").textContent="パーティは 5にんまでだよ"; return; } s.party.push(id); }
-  $("homeMsg").textContent=""; renderHome();
+  if(i>=0){ if(s.party.length<=1){ $("partyMsg").textContent="パーティは 1にんは 必要だよ"; return; } s.party.splice(i,1); }
+  else { if(s.party.length>=5){ $("partyMsg").textContent="パーティは 5にんまでだよ"; return; } s.party.push(id); }
+  $("partyMsg").textContent=""; persistSave(); renderPartyPage();
 }
+/* リーダー交代：選んだ仲間をパーティの先頭（リーダー枠）へ移す。
+   並び順（save.party[0]）がそのままリーダーを表すので、既存セーブの
+   形式は変えずに済む（先頭が常にリーダーという意味付けだけ追加） */
+function setLeader(id){
+  const s=save(), i=s.party.indexOf(id);
+  if(i<0)return;
+  if(i===0){ $("partyMsg").textContent=""; return; }
+  s.party.splice(i,1); s.party.unshift(id);
+  $("partyMsg").textContent=""; persistSave(); renderPartyPage();
+}
+/* ホームの要約：リーダー・発動中のリーダースキル・総HPだけを出す */
+function renderPartySummary(){
+  const box=$("partySummary"); if(!box)return;
+  const lc=leaderChar(), ls=activeLeaderSkill();
+  const names=save().party.map(id=>{ const c=charById(id); return c?c.name:""; }).join("・");
+  box.innerHTML='👑 リーダー：<span class="who">'+(lc?lc.name:"―")+'</span><br>'+
+    (ls?('リーダースキル：<b>'+ls.text+'</b> はつどう中！'):('リーダースキル：なし（☆6の なかまを リーダーにすると はつどうするよ）'))+
+    '<br>メンバー：'+names+'<br>ごうけい たいりょく：'+partyMaxHp();
+}
+function renderPartyPage(){
+  /* 上段スロット：5枠を並べ、先頭をリーダーとして金枠＋王冠で示す。
+     空き枠は点線で出す。タップでその仲間がリーダーになる */
+  const slots=$("partySlots"); slots.innerHTML="";
+  for(let i=0;i<5;i++){
+    const id=save().party[i];
+    const d=document.createElement("button");
+    if(id){
+      const c=charById(id);
+      d.className="slot"+(i===0?" leader":"");
+      d.innerHTML='<div class="pos">'+(i===0?"👑 リーダー":""+(i+1)+"ばんめ")+'</div><div class="art">'+c.art()+'</div><div class="nm">'+c.name+'</div>';
+      d.onclick=()=>setLeader(id);
+    } else {
+      d.className="slot empty";
+      d.innerHTML='<div class="pos">'+(i+1)+'ばんめ</div><div class="art"></div><div class="nm">あき</div>';
+      d.disabled=true;
+    }
+    slots.appendChild(d);
+  }
+  const lc=leaderChar(), ls=activeLeaderSkill(), box=$("activeLsBox");
+  if(ls){ box.className="active-ls"; box.innerHTML='👑 はつどう中の リーダースキル<br><span class="who">'+lc.name+'</span>：<b>'+ls.text+'</b>'; }
+  else { box.className="active-ls none"; box.innerHTML='いまの リーダー（'+(lc?lc.name:"―")+'）は リーダースキルを もっていないよ。<br>☆6の なかまを リーダーにすると はつどうするよ。'; }
+  $("partyHpLine").textContent="パーティの ごうけい たいりょく："+partyMaxHp()+" ― バトルでは この数字が パーティの HPに なるよ。たいりょくの 多い なかまを 入れると、てきの こうげきに ながく たえられるよ！";
+  $("partyGrid").innerHTML="";
+  CHARS.filter(c=>save().owned.includes(c.id)).forEach(c=>{
+    const inP=save().party.includes(c.id);
+    const isLeader=inP&&save().party[0]===c.id;
+    const d=document.createElement("button");
+    d.className="char-card"+(inP?" inparty":"")+(isLeader?" isleader":"");
+    d.innerHTML='<div class="art">'+c.art()+'</div><div class="nm">'+c.name+'</div><div>'+starHTML(c)+'</div>'+
+      (isLeader?'<div><span class="leader-badge">👑 リーダー</span></div>':"")+
+      '<div class="sk"><span class="tag '+c.attr+'">'+ATTR[c.attr].name+'</span> こうげき '+c.atk+'・たいりょく '+c.hp+'<br><b>スキル「'+c.skill.name+'」</b><br>'+c.skill.desc+'（'+c.skill.turns+'ターン）</div>'+
+      leaderSkillHTML(c);
+    d.onclick=()=>toggleParty(c.id);
+    $("partyGrid").appendChild(d);
+  });
+}
+function openParty(){ renderPartyPage(); $("home").classList.add("hidden"); $("partyPage").classList.remove("hidden"); window.scrollTo(0,0); }
+function closeParty(){ $("partyPage").classList.add("hidden"); $("home").classList.remove("hidden"); renderHome(); window.scrollTo(0,0); }
+$("partyBtn").onclick=openParty;
+$("partyBack").onclick=closeParty;
 /* ================= バトル ================= */
 const N=7;
 /* 全オーブ種マスタ：新しい属性オーブを足すときはここ・ORB_ICON・
@@ -1591,6 +1724,11 @@ function startBattle(st){
   $("enemyName").textContent=enemy.name;
   $("enemyStars").innerHTML=starHTML(enemy);
   const tag=$("enemyTag"); tag.textContent=ATTR[enemy.attr].name; tag.className="tag "+enemy.attr;
+  /* 発動中のリーダースキルをバトル中も常時表示する */
+  { const lc=leaderChar(), ls=activeLeaderSkill(), lb=$("leaderBar");
+    lb.classList.remove("hidden");
+    if(ls){ lb.className=""; lb.id="leaderBar"; lb.innerHTML='👑 リーダースキル はつどう中：'+lc.name+' ― '+ls.text; }
+    else { lb.className="none"; lb.id="leaderBar"; lb.textContent='👑 リーダースキル：なし'; } }
   buildPartyRow(); renderBattle(); fitBoard();
   setTimeout(fitBoard, 80);
   /* 画像やフォントの読み込みで後からレイアウトが伸びた場合に、
@@ -1625,7 +1763,7 @@ function buildPartyRow(){
     d.className="member"; d.dataset.i=i;
     /* 長押しは廃止（iPhone 7で効かなかった）。タップ＝スキル使用のみ。
        スキルの内容は下の簡易表記で最初から見えるようにする */
-    d.innerHTML='<div class="acc" id="acc'+i+'"></div>'+sparkHTML()+'<div class="art">'+c.art()+'</div><div class="charge"><i id="chg'+i+'"></i></div><div class="skill-txt">'+shortSkill(c)+'</div>';
+    d.innerHTML='<div class="acc" id="acc'+i+'"></div>'+(i===0?'<div class="leader-crown">👑</div>':"")+sparkHTML()+'<div class="art">'+c.art()+'</div><div class="charge"><i id="chg'+i+'"></i></div><div class="skill-txt">'+shortSkill(c)+'</div>';
     d.onclick=()=>tapMember(i);
     $("partyRow").appendChild(d);
   });
@@ -1635,11 +1773,11 @@ function buildPartyRow(){
    との声で廃止し、反応が言葉で伝わる形に変えた）。
    一度出した節目は同じバトル中には繰り返さない */
 const LUCI_COMMENTS=[
-  [2500,"ふん、その ちょうしか"],
-  [5000,"なかなかやるな"],
-  [10000,"おもしろい… もっと みせてみろ"],
-  [18000,"まさか、ここまでとは…！"],
-  [26000,"わたしを こえる つもりか…！"]
+  [2000,"ふん、その ちょうしか"],
+  [4000,"なかなかやるな"],
+  [8000,"おもしろい… もっと みせてみろ"],
+  [14000,"まさか、ここまでとは…！"],
+  [20000,"わたしを こえる つもりか…！"]
 ];
 function showLuciComment(text){
   /* 喋るのはルシファーだけ：スコアアタック以外・敵がルシファー
@@ -1867,19 +2005,13 @@ function tapOrb(i){
    前回よりさらに引き上げ：1コンボ×1.0 → 3コンボ×2.64 → 5コンボ×5.56
    → 8コンボ×12.34 → 10コンボ×18.46 */
 function comboMult(n){ const k=Math.max(0,n-1); return 1 + 0.50*k + 0.16*k*k; }
-/* ひかり攻撃2倍パッシブ（スーパーでんきドラゴンの いつもスキル）：
-   パーティに「ひかりの こうげき 2ばい」を持つ仲間がいると、
-   ひかり属性の攻撃（オーブ攻撃・スキルダメージ）が全部2倍になる。
-   かいふくオーブ+50%パッシブと同じ「パーティ全員に効く」方式 */
-function lightBoostOn(){ return save().party.some(id=>{ const c=charById(id); return c && c.passive.includes("ひかりの こうげき 2ばい"); }); }
-/* やみ攻撃2倍パッシブ（サタンの いつもスキル）：ひかり版と同形式。
-   パーティに「やみの こうげき 2ばい」を持つ仲間（サタン）がいると、
-   やみ属性の攻撃（オーブ攻撃・スキルダメージ）が全部2倍になる */
-function darkBoostOn(){ return save().party.some(id=>{ const c=charById(id); return c && c.passive.includes("やみの こうげき 2ばい"); }); }
+/* 属性ブーストは旧「いつもスキル」からリーダースキルへ移行した：
+   倍率は leaderAttrMult(attr)（キャラ定義側のヘルパー）が一元管理し、
+   リーダー枠のキャラのスキルだけが効く。ここではターン開始時点の
+   倍率を固定して使う（ターン中にリーダーは変わらないため） */
 async function resolveBoard(){
   let combo=0, guard=0;
-  const lBoost=lightBoostOn(); // ひかりの こうげき 2ばい が有効か（このターン中は不変）
-  const dBoost=darkBoostOn(); // やみの こうげき 2ばい が有効か（このターン中は不変）
+  const lsCombo=leaderComboMult(); // リーダースキルのコンボ倍率（ゼウスがリーダーのとき 1.75、それ以外 1）
   const tags=[]; // コンボ表示はコンボが終わるまで残す
   /* 演出全体の時間予算（連鎖フェーズの非常ブレーキ）：開始から
      10秒を超えたら、残りの連鎖の待ちだけを畳んで攻撃へ進む。
@@ -1905,13 +2037,14 @@ async function resolveBoard(){
       tags.push(showComboTag(g, combo));
       // 攻撃の蓄積（この段階ではコンボ倍率なしの初期値をキャラに表示）
       if(g.type==="heal"){
-        const bonus=save().party.some(id=>{const c=charById(id);return c.passive.includes("かいふく");})?1.5:1;
-        B.partyHp=Math.min(B.maxHp, B.partyHp + g.cells.length*12*bonus*comboMult(combo));
+        /* 旧フェアリーの回復+50%パッシブは廃止。回復はコンボ倍率のみ */
+        B.partyHp=Math.min(B.maxHp, B.partyHp + g.cells.length*12*comboMult(combo));
       } else {
         save().party.forEach((id,idx)=>{
           const c=charById(id); if(c.attr!==g.type)return;
-          const pb=c.passive.includes("+35")?1.35:c.passive.includes("+25")?1.25:1.1;
-          const raw=c.atk * g.cells.length * 0.34 * pb * ((c.attr==="light"&&lBoost)||(c.attr==="dark"&&dBoost)?2:1);
+          /* リーダースキルだけを掛ける：コンボ型（ゼウス）は全員に、
+             属性型（サタン／でんきドラゴン）は一致する属性にだけ */
+          const raw=c.atk * g.cells.length * 0.34 * lsCombo * leaderAttrMult(c.attr);
           B.accRaw[idx]+=raw;
           B.acc[idx]+=raw * comboMult(combo);
         });
@@ -2259,11 +2392,11 @@ function useSkill(i){
        ので、盤面がすでに全部その色でも消費して発動する（へんげ
        単体スキルのような「つかえない」にはしない）。
        ダメージ計算は通常のスキルダメージと同じ：属性相性と
-       自分の属性の2倍パッシブ（サタン自身の やみ2ばい）を適用する。
+       自分の属性のリーダースキル倍率（サタンがリーダーなら やみ2.5ばい）を適用する。
        へんげ自体ではコンボは始まらず、次の入れかえで始まる */
     B.charges[i]=0; skillSE();
     const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1;
-    const dmg=Math.round(sk.power*m*((c.attr==="light"&&lightBoostOn())||(c.attr==="dark"&&darkBoostOn())?2:1));
+    const dmg=Math.round(sk.power*m*leaderAttrMult(c.attr));
     B.enemyHp-=dmg;
     /* スコアアタック：スキルのダメージもスコアに加算する */
     if(B.scoreMode)B.score+=dmg;
@@ -2282,7 +2415,7 @@ function useSkill(i){
        属性相性を適用し、自分の属性のエフェクトとダメージ表示を出す。
        以前は属性なしの固定ダメージで、攻撃の属性が見えなかった */
     const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1;
-    const dmg=Math.round(sk.power*m*((c.attr==="light"&&lightBoostOn())||(c.attr==="dark"&&darkBoostOn())?2:1));
+    const dmg=Math.round(sk.power*m*leaderAttrMult(c.attr));
     B.enemyHp-=dmg;
     /* スコアアタック：スキルのダメージもスコアに加算する */
     if(B.scoreMode)B.score+=dmg;
@@ -2324,7 +2457,7 @@ function winBattle(){
   if(st.satan){
     /* 第1章の最終ボス撃破専用ダイアログ：サタンも他のキャラと同じ50%で仲間になる */
     showSheet('<h2>🏆 第1章 ゲームクリア！</h2><p>魔王サタンを たおしたよ！<br>ゆいと はるかの 大ぼうけん 第1章、クリア！</p>'+recruitMsg+
-     '<p class="sub">サタンは さいきょうスキル「ダークノヴァ」（やみダメージ＋オーブ全部を やみに かえる）と、やみの こうげき 2ばいの いつもスキルを もっているよ。<br>あつめた なかまたちと、また あそんでね！</p>'+
+     '<p class="sub">サタンは さいきょうスキル「ダークノヴァ」（やみダメージ＋オーブ全部を やみに かえる）と、リーダーで やみの こうげき 2.5ばいの リーダースキルを もっているよ。<br>あつめた なかまたちと、また あそんでね！</p>'+
      '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
   } else {
     showSheet('<h2>🎉 クリア！</h2><p>ステージ '+(st.disp||st.n)+' の '+ec.name+' を たおしたよ！</p>'+recruitMsg+
