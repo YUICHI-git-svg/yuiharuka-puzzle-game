@@ -18,7 +18,7 @@
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:radial-gradient(130% 55% at 50% 0%, #2c2563 0%, var(--bg) 62%) fixed, var(--bg);color:var(--ink);
     font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;}
-  html{overscroll-behavior:none;}
+  html{overscroll-behavior:none;scroll-padding-bottom:calc(5.6rem + env(safe-area-inset-bottom));}
   body{overscroll-behavior:none;touch-action:manipulation;min-height:100vh;min-height:100dvh;}
   /* ---------- バトル中の画面固定・縦固定 ---------- */
   /* バトル中はページ自体をスクロールさせない（タップのたびに画面が
@@ -438,13 +438,21 @@
   .tab-btn .tic{font-size:1.12rem;line-height:1.15;}
   .tab-btn.on{background:linear-gradient(180deg,#4a3a10,var(--panel2) 85%);border-color:var(--gold);color:var(--gold);
     box-shadow:0 0 10px rgba(255,211,77,.35);}
-  /* 通常ステージページ：12ボタン（通常8＋旧限定4）を3行×5列に
-     並べる。行ごとに高さをそろえ（grid-auto-rows:1fr）、ボタン内の
-     要素は枠いっぱいに広げて、名前ラベルが枠からはみ出して隣と
-     重ならないようにする */
-  #pageStage .stages{grid-auto-rows:1fr;}
-  #pageStage .stage-btn{display:flex;flex-direction:column;align-items:stretch;text-align:center;justify-content:flex-start;}
-  #pageStage .stage-btn .stage-thumb{height:64px;width:100%;margin:-.5rem 0 .3rem;}
+  /* 通常ステージページ：12ボタン（通常8＋旧限定4）は各ダンジョンを
+     横長カードにして縦に並べる。チャレンジページと同じ横並び
+     レイアウト（左に背景画サムネイル、右に名前・説明・オーブ）で、
+     サムネイルは 96×68px の固定サイズ＋枠線つきにそろえる */
+  #pageStage .stages{display:flex;flex-direction:column;gap:.5rem;}
+  #pageStage .stage-btn{width:100%;min-height:84px;display:flex;flex-direction:row;align-items:center;gap:.55rem;
+    text-align:left;padding:.5rem .55rem;}
+  #pageStage .stage-btn .stage-thumb{flex:0 0 96px;width:96px;height:68px;margin:0;
+    border-radius:10px;border:2px solid rgba(255,255,255,.4);}
+  #pageStage .stage-btn .stage-thumb img{height:100%;}
+  #pageStage .stage-info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:.1rem;}
+  #pageStage .stage-name{font-size:1rem;font-weight:900;line-height:1.2;}
+  #pageStage .stage-btn small{font-size:.68rem;}
+  #pageStage .orb-drops{justify-content:flex-start;margin-top:.08rem;}
+  #pageStage .stage-btn .recruit{margin-top:.14rem;align-self:flex-start;}
   /* チャレンジページ：大きな3ボタンは横並びレイアウト（左に背景画、
      右に名前・説明・オーブ）。サムネイルは 96×76px の固定サイズ＋
      枠線つきにして、ゼウス・サタン・ルシファーで大きさと位置が
@@ -497,7 +505,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.63</div>
+    <div class="ver-line">ver 1.0.64</div>
   </div>
   <div id="pageArea">
 
@@ -540,8 +548,6 @@
     <p class="msg" id="partyMsg"></p>
     <div class="party-tools">
       <button class="icon-btn" id="zukanBtn">📖 ずかんを みる</button>
-      <span style="flex:1"></span>
-      <button class="icon-btn" id="resetBtn">🔄 データを さいしょから はじめる</button>
     </div>
     <div class="sec-title">なかま いちらん ― タップで 入れかえ</div>
     <div class="party-scroll"><div class="char-grid" id="partyGrid"></div></div>
@@ -948,13 +954,12 @@ persistSave();
 setInterval(persistSave,1000);
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") persistSave(); });
 addEventListener("beforeunload",persistSave);
-/* ================= セーブ初期化（手動ボタンのみ） =================
-   初期化は、その端末でホーム画面の「データを初期化」ボタンを押した
-   ときだけ行う。新しい版が読み込まれても、記録を自動で消すことは
-   一切しない（他の端末の記録に影響しないようにするため）。
-   resetSave() は手動ボタン専用：メモリ内の記録を初期状態に戻し、
-   その端末に保存された記録（バックアップ・旧キー含む）も消して、
-   初期状態を保存し直す（次回起動で復元されないようにするため） */
+/* ================= セーブ初期化 =================
+   新しい版が読み込まれても、記録を自動で消すことは一切しない
+   （他の端末の記録に影響しないようにするため）。
+   ※「データを さいしょから はじめる」ボタンは ver 1.0.64 で廃止した。
+   resetSave() は現在UIからは呼ばれないが、記録リセットが必要に
+   なったときのために残してある内部関数 */
 function resetSave(){
   const f=newSave();
   singleSave.owned=f.owned; singleSave.party=f.party; singleSave.cleared=f.cleared; singleSave.scores=f.scores;
@@ -1574,7 +1579,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.63";
+const APP_VER="1.0.64";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.score) return true; if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1608,7 +1613,7 @@ function renderHome(){
     } else if(st.challenge){
       b.innerHTML=thumbHtml+'<span class="crown">⚡</span><span class="stage-info"><span class="stage-name">'+(un?"ゼウス":"？？？")+'</span><small>'+(un?"ひかり・HP "+st.hp+"・さいきょうの神":"ステージ8 クリアで 出現")+'</small><span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml+'</span>';
     } else {
-      b.innerHTML=thumbHtml+(st.boss?'<span class="crown">👑</span>':"")+(st.disp||st.n)+"<small>"+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+"</small>"+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml;
+      b.innerHTML=thumbHtml+'<span class="stage-info"><span class="stage-name">ステージ'+(st.disp||st.n)+'</span><small>'+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+'</small><span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml+'</span>';
     }
     b.disabled=!un; b.onclick=()=>startBattle(st);
     $(st.score?"scoreGrid":st.satan?"satanGrid":st.challenge?"challengeGrid":"stageGrid").appendChild(b);
@@ -1649,19 +1654,6 @@ function openZukan(){ renderZukan(); $("home").classList.add("hidden"); $("zukan
 function closeZukan(){ $("zukan").classList.add("hidden"); $("home").classList.remove("hidden"); window.scrollTo(0,0); }
 $("zukanBtn").onclick=openZukan;
 $("zukanBack").onclick=closeZukan;
-/* データ初期化：確認ダイアログ（ページ内モーダル）を出してから消す */
-$("resetBtn").onclick=()=>{
-  showSheet('<h2>データを さいしょから？</h2><p>なかま・クリア記録が 全部 消えて、<br>最初の 3にんだけの 状態に もどるよ。</p>'+
-   '<button class="btn primary" onclick="doResetSave()">初期化する</button>'+
-   '<button class="btn ghost" onclick="closeSheet()">やめる</button>');
-};
-function doResetSave(){
-  resetSave();
-  closeSheet();
-  renderHome();
-  renderPartyPage();
-  $("partyMsg").textContent="データを 初期化したよ。さいしょから あそべるよ！";
-}
 function toggleParty(id){
   const s=save(), i=s.party.indexOf(id);
   if(i>=0){ if(s.party.length<=1){ $("partyMsg").textContent="パーティは 1にんは 必要だよ"; return; } s.party.splice(i,1); }
