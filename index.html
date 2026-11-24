@@ -18,8 +18,8 @@
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;background:radial-gradient(130% 55% at 50% 0%, #2c2563 0%, var(--bg) 62%) fixed, var(--bg);color:var(--ink);
     font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;}
-  html{height:100%;overscroll-behavior:none;overflow:hidden;}
-  body{overscroll-behavior:none;touch-action:manipulation;height:100%;overflow:hidden;}
+  html{overscroll-behavior:none;}
+  body{overscroll-behavior:none;touch-action:manipulation;min-height:100vh;min-height:100dvh;}
   /* ---------- バトル中の画面固定・縦固定 ---------- */
   /* バトル中はページ自体をスクロールさせない（タップのたびに画面が
      上下にズレたり、引っ張って更新されたりしないようにする）。
@@ -73,16 +73,18 @@
   .stage-btn .stage-thumb{display:block;height:34px;margin:-.5rem -.05rem .28rem;border-radius:12px 12px 0 0;overflow:hidden;}
   .stage-btn .stage-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
   .stage-btn.challenge .stage-thumb,.stage-btn.satan .stage-thumb{height:58px;margin-top:-.65rem;}
-  .stage-btn small{display:block;font-size:.58rem;color:var(--sub);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* 名前ラベルは濃いチップ地の上に白文字で出し、背景イラストの上でも
+     ぼやけず読めるようにする。max-width:100% で枠内に必ず収める */
+  .stage-btn small{display:block;font-size:.62rem;color:#fff;font-weight:800;line-height:1.3;white-space:normal;word-break:break-all;max-width:100%;background:rgba(8,6,24,.55);border-radius:6px;padding:.08rem .25rem;text-shadow:none;}
   .stage-btn.boss{border-color:#ff8a5c;}
   .stage-btn.cleared{border-color:var(--forest);}
   .stage-btn.locked{opacity:.38;}
   .stage-btn .crown{position:absolute;top:-7px;right:-2px;font-size:.68rem;color:var(--gold);}
   /* なかま済みアイコン：そのステージの敵が もう仲間のときだけ、
      ボタン下部に みどりのピルを出す（まだのときは何も出さない） */
-  .recruit{display:inline-flex;align-items:center;justify-content:center;gap:.15rem;font-size:.58rem;font-weight:900;line-height:1.15;padding:.18rem .34rem;border-radius:999px;white-space:nowrap;letter-spacing:.02em;}
+  .recruit{display:inline-flex;align-items:center;justify-content:center;gap:.15rem;font-size:.66rem;font-weight:900;line-height:1.15;padding:.18rem .34rem;border-radius:999px;white-space:nowrap;letter-spacing:.02em;text-shadow:none;}
   .recruit.yes{background:var(--forest);color:#07331a;border:1px solid #a8f5bc;box-shadow:0 1px 6px rgba(0,0,0,.45);}
-  .stage-btn .recruit{margin-top:.3rem;}
+  .stage-btn .recruit{margin-top:.3rem;align-self:center;}
   .stage-btn.challenge .recruit,.stage-btn.satan .recruit{font-size:.7rem;padding:.26rem .55rem;}
   .recruit-legend{display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--sub);font-weight:700;margin:-.1rem 0 .5rem;line-height:1.4;}
   /* チャレンジステージ：ゼウス専用の大きな金枠ボタン */
@@ -150,7 +152,7 @@
   #scoreHud .cell{font-size:.68rem;font-weight:800;color:var(--sub);text-align:center;line-height:1.25;min-width:4.2em;}
   #scoreHud .cell b{display:block;font-size:1.02rem;color:var(--ink);line-height:1.15;}
   #scoreHud .cell.score b{color:var(--gold);font-size:1.24rem;}
-  /* スコアランキング（ホームのTOP5・結果画面 共通） */
+  /* スコア表示（チャレンジの最高スコア・結果画面のTOP5 共通） */
   .score-list{display:flex;flex-direction:column;gap:.35rem;margin-top:.15rem;}
   .score-row{display:flex;align-items:center;gap:.55rem;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.42rem .6rem;font-weight:800;text-align:left;}
   .score-row .pos{font-size:.8rem;color:var(--sub);min-width:2.3em;}
@@ -412,24 +414,23 @@
   /* バージョン表記：タイトル下に小さく常時表示（公開のたびに末尾を+1） */
   /* ホーム画面の背景：最初の仲間（森・水・炎のスライムたち）の世界に
      合わせて、森と花畑のイラストを濃い暗幕の下に敷く */
-  #home{background:linear-gradient(rgba(17,15,38,.85),rgba(17,15,38,.94)),url("bg-forest.jpg") center top/cover no-repeat;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+  #home{background:linear-gradient(rgba(17,15,38,.85),rgba(17,15,38,.94)),url("bg-forest.jpg") center top/cover no-repeat;min-height:100vh;min-height:100dvh;padding-bottom:calc(4.9rem + env(safe-area-inset-bottom));}
   .ver-line{text-align:center;font-size:.78rem;color:#a49fd0;margin:.05rem 0 .4rem;letter-spacing:.08em;}
   /* ---------- タブ式ホーム（パズドラ式・下部タブバー） ----------
-     ページ全体は一切スクロールさせない：#home を画面いっぱいの
-     flex 縦並びにし、上バー＋タイトル＋ページ領域＋タブバーで
-     画面内に収める。各タブページは残り高さいっぱいに広がり、
-     中身（ステージボタン等）が伸縮して収まる。なかま一覧と
-     ずかんのリストだけは、枠の中だけでスクロールする */
+     各タブページは通常通りページ全体が縦スクロールする。
+     タブバーだけを画面下に position:fixed で固定し、スクロール
+     しても常に見えるようにする（#home の下パディングで、末尾の
+     内容がタブバーに隠れないようにしている） */
   .title-row{display:flex;align-items:baseline;justify-content:center;gap:.55rem;width:100%;max-width:560px;margin:0 auto;padding:0 .8rem;}
   .title-row h1{margin:.25rem 0 .3rem;}
   .title-row .ver-line{margin:0;}
-  #pageArea{flex:1;min-height:0;display:flex;flex-direction:column;width:100%;}
-  .tabpage{flex:1;min-height:0;display:flex;flex-direction:column;width:100%;max-width:560px;margin:0 auto;padding:0 .8rem .45rem;}
+  #pageArea{width:100%;}
+  .tabpage{width:100%;max-width:560px;margin:0 auto;padding:0 .8rem .45rem;}
   .tabpage .sec-title{margin:.5rem 0 .3rem;font-size:.9rem;}
   .tabpage .sec-title:first-child{margin-top:.15rem;}
   .tabpage .hint{font-size:.72rem;margin:.4rem 0 0;}
-  /* 下部タブバー：画面下に固定（flex の末尾に置くので常に見える） */
-  #tabbar{display:flex;justify-content:center;gap:.45rem;background:rgba(11,9,30,.94);border-top:2px solid var(--line);
+  /* 下部タブバー：画面下に固定（スクロールしても常に見える） */
+  #tabbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;justify-content:center;gap:.45rem;background:rgba(11,9,30,.97);border-top:2px solid var(--line);
     padding:.45rem .6rem calc(.45rem + env(safe-area-inset-bottom));}
   .tab-btn{flex:1;max-width:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.02rem;
     background:var(--panel);border:2px solid var(--line);border-radius:14px;color:var(--sub);
@@ -437,18 +438,22 @@
   .tab-btn .tic{font-size:1.12rem;line-height:1.15;}
   .tab-btn.on{background:linear-gradient(180deg,#4a3a10,var(--panel2) 85%);border-color:var(--gold);color:var(--gold);
     box-shadow:0 0 10px rgba(255,211,77,.35);}
-  /* 通常ステージページ：12ボタン（通常8＋旧限定4）が3行に収まり、
-     残り高さに合わせてボタンとサムネイルが伸縮する */
-  #pageStage .stages{flex:1;min-height:0;grid-template-rows:repeat(3,minmax(0,1fr));}
-  #pageStage .stage-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;}
-  #pageStage .stage-btn .stage-thumb{flex:1 1 auto;min-height:26px;height:auto;width:100%;margin:-.5rem 0 .28rem;}
+  /* 通常ステージページ：12ボタン（通常8＋旧限定4）を3行×5列に
+     並べる。行ごとに高さをそろえ（grid-auto-rows:1fr）、ボタン内の
+     要素は枠いっぱいに広げて、名前ラベルが枠からはみ出して隣と
+     重ならないようにする */
+  #pageStage .stages{grid-auto-rows:1fr;}
+  #pageStage .stage-btn{display:flex;flex-direction:column;align-items:stretch;text-align:center;justify-content:flex-start;}
+  #pageStage .stage-btn .stage-thumb{height:64px;width:100%;margin:-.5rem 0 .3rem;}
   /* チャレンジページ：大きな3ボタンは横並びレイアウト（左に背景画、
-     右に名前・説明・オーブ）にして縦を圧縮し、TOP5まで収める */
-  #pageChallenge .stages{display:flex;flex:1 1 0;min-height:60px;}
-  #pageChallenge .stage-btn{flex:1;width:100%;display:flex;flex-direction:row;align-items:center;gap:.55rem;
-    text-align:left;padding:.4rem .55rem;}
-  #pageChallenge .stage-btn .stage-thumb{flex:0 0 96px;width:96px;height:auto;min-height:54px;margin:0;
-    border-radius:10px;align-self:stretch;}
+     右に名前・説明・オーブ）。サムネイルは 96×76px の固定サイズ＋
+     枠線つきにして、ゼウス・サタン・ルシファーで大きさと位置が
+     そろうようにする（以前は高さ可変で枠からズレて見えた） */
+  #pageChallenge .stages{display:block;}
+  #pageChallenge .stage-btn{width:100%;min-height:96px;display:flex;flex-direction:row;align-items:center;gap:.55rem;
+    text-align:left;padding:.5rem .55rem;}
+  #pageChallenge .stage-btn .stage-thumb{flex:0 0 96px;width:96px;height:76px;margin:0;
+    border-radius:10px;border:2px solid rgba(255,255,255,.4);}
   #pageChallenge .stage-btn .stage-thumb img{height:100%;}
   #pageChallenge .stage-info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:.1rem;}
   #pageChallenge .stage-name{font-size:1.02rem;font-weight:900;line-height:1.2;}
@@ -457,9 +462,6 @@
   #pageChallenge .stage-btn .recruit{margin-top:.14rem;}
   #pageChallenge .score-row{padding:.3rem .55rem;}
   #pageChallenge .score-row .pts{font-size:.95rem;}
-  /* 背の低い端末で万一あふれる場合は、TOP5の末尾側から枠内に
-     収める（タブバーに重なって崩れる事故の防止） */
-  #pageChallenge #scoreRankBox{flex:0 1 auto;min-height:0;overflow:hidden;}
   /* 背の低い端末（iPhone 7/8級）ではタブページ全体を少し詰める */
   @media (max-height:700px){
     .title-row h1{font-size:1.08rem;margin:.15rem 0 .2rem;}
@@ -469,22 +471,18 @@
     .tab-btn .tic{font-size:.95rem;}
     .tabpage .sec-title{margin:.32rem 0 .2rem;font-size:.85rem;}
     .tabpage .hint{font-size:.68rem;margin-top:.28rem;}
-    #pageChallenge .stages{min-height:44px;}
-    #pageChallenge .stage-btn .stage-thumb{flex-basis:76px;width:76px;min-height:40px;}
     #pageChallenge .score-row{padding:.2rem .5rem;}
     #pageChallenge .score-row .pts{font-size:.88rem;}
   }
-  /* 編成ページ：上部（枠・リーダースキル）は固定し、なかま一覧だけが
-     枠の中でスクロールする（ページ自体は動かない） */
+  /* 編成ページ：ページ全体がスクロールするので、なかま一覧の
+     カードは圧縮せず大きめに表示する */
   .party-tools{display:flex;align-items:center;gap:.5rem;margin:.35rem 0 .1rem;}
-  .party-scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.1rem 0 .3rem;}
-  #pageParty .char-card .art{height:58px;}
-  #pageParty .char-card .art svg{height:58px;}
-  #pageParty .char-card .art img{height:58px;}
-  #pageParty .char-card .sk{font-size:.64rem;}
-  /* ずかん：見出しは固定し、一覧だけが枠の中でスクロールする */
-  #zukan{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
-  .page-scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .party-scroll{padding:.1rem 0 .3rem;}
+  #pageParty .char-card .art{height:88px;}
+  #pageParty .char-card .art svg{height:88px;}
+  #pageParty .char-card .art img{height:88px;}
+  /* ずかん：ページ全体が通常スクロールする */
+  #zukan{min-height:100vh;min-height:100dvh;}
   @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
 </style>
 </head>
@@ -499,7 +497,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.62</div>
+    <div class="ver-line">ver 1.0.63</div>
   </div>
   <div id="pageArea">
 
@@ -526,14 +524,15 @@
     <div class="sec-title">🏆 スコアアタック（とくべつダンジョン）</div>
     <div class="stages score" id="scoreGrid"></div>
     <p class="hint">ルシファーは たおせないし、こうげきも してこないよ。10ターンで あたえた ダメージが スコアになるよ！<br>オーブは ひ・みず・もり・ひかり・やみの 5しょく（かいふくは なし）。さいだいコンボ ボーナス（コンボ数 × 100てん）も つくよ。</p>
-    <div class="sec-title">🏅 スコア TOP5（この端末の 記録）</div>
-    <div id="scoreRankBox"></div>
+    <div class="sec-title">🏅 最高スコア（この端末の 記録）</div>
+    <div id="scoreBestBox"></div>
+    <p class="hint">ランキング（TOP5）は、スコアアタックの 結果画面で 見られるよ。</p>
 
   </section>
 
   <!-- ===== タブ：編成 ===== -->
   <section class="tabpage hidden" id="pageParty">
-    <p class="hint" style="margin-top:.1rem;">いちばん ひだりの なかまが <b style="color:var(--gold)">👑 リーダー</b>だよ。リーダースキルは、リーダーのもの <b>だけ</b>が はつどうするよ。<br>上の わくの なかまを タップすると リーダーに なり、下の カードを タップすると パーティへの 出入りが できるよ（5にんまで）。</p>
+    <p class="hint" style="margin-top:.1rem;">いちばん ひだりが <b style="color:var(--gold)">👑 リーダー</b>。上の わくを タップで リーダー交代、下の カードを タップで 出入り（5にんまで）。</p>
     <div class="sec-title">いまの パーティ（ひだりが リーダー）</div>
     <div class="slot-row" id="partySlots"></div>
     <div class="active-ls" id="activeLsBox"></div>
@@ -1575,7 +1574,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.62";
+const APP_VER="1.0.63";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.score) return true; if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -1614,12 +1613,14 @@ function renderHome(){
     b.disabled=!un; b.onclick=()=>startBattle(st);
     $(st.score?"scoreGrid":st.satan?"satanGrid":st.challenge?"challengeGrid":"stageGrid").appendChild(b);
   });
-  /* スコアアタックの TOP5 ランキング（この端末に残っている記録） */
+  /* チャレンジページには 最高スコアだけを出す。ランキング全体（TOP5）は
+     スコアアタックの結果画面（クリア時）でのみ表示する */
   const sc=(save().scores||[]);
   if(!sc.length){
-    $("scoreRankBox").innerHTML='<p class="hint">まだ スコアの 記録が ないよ。チャレンジして TOP5に 入ろう！</p>';
+    $("scoreBestBox").innerHTML='<p class="hint">まだ スコアの 記録が ないよ。チャレンジして 記録を つくろう！</p>';
   } else {
-    $("scoreRankBox").innerHTML='<div class="score-list">'+sc.map((v,i)=>'<div class="score-row"><span class="pos">'+(i+1)+'い</span><span class="pts">'+fmtNum(v)+' てん</span><span class="rk rk-'+scoreRank(v)+'">'+scoreRank(v)+'</span></div>').join("")+'</div>';
+    const best=Math.max.apply(null,sc);
+    $("scoreBestBox").innerHTML='<div class="score-list"><div class="score-row"><span class="pos">最高</span><span class="pts">'+fmtNum(best)+' てん</span><span class="rk rk-'+scoreRank(best)+'">'+scoreRank(best)+'</span></div></div>';
   }
 }
 /* ずかんは別ページ：☆ランクごとにグループ分けして表示する */
@@ -1698,8 +1699,8 @@ function renderPartyPage(){
   }
   const lc=leaderChar(), ls=activeLeaderSkill(), box=$("activeLsBox");
   if(ls){ box.className="active-ls"; box.innerHTML='👑 はつどう中の リーダースキル<br><span class="who">'+lc.name+'</span>：<b>'+ls.text+'</b>'; }
-  else { box.className="active-ls none"; box.innerHTML='いまの リーダー（'+(lc?lc.name:"―")+'）は リーダースキルを もっていないよ。<br>☆6の なかまを リーダーにすると はつどうするよ。'; }
-  $("partyHpLine").textContent="パーティの ごうけい たいりょく："+partyMaxHp()+"（バトルでは この数字が パーティの HPに なるよ）";
+  else { box.className="active-ls none"; box.innerHTML='いまの リーダーは リーダースキルなし。<br>☆6の なかまを リーダーにすると はつどうするよ。'; }
+  $("partyHpLine").textContent="ごうけい たいりょく："+partyMaxHp()+"（バトルの HP）";
   $("partyGrid").innerHTML="";
   CHARS.filter(c=>save().owned.includes(c.id)).forEach(c=>{
     const inP=save().party.includes(c.id);
@@ -1716,7 +1717,8 @@ function renderPartyPage(){
 }
 /* ===== 下部タブ切り替え（パズドラ式） =====
    編成／通常ステージ／チャレンジの3ページを、画面下に固定した
-   タブバーで切り替える。ページ自体はスクロールしない。
+   タブバーで切り替える。各ページは通常通り縦スクロールでき、
+   切り替えたら先頭から表示する。
    バトルやずかんから戻ったときも、選んでいたタブがそのまま残る */
 let currentTab="stage";
 function showTab(name){
@@ -1725,6 +1727,7 @@ function showTab(name){
     $(t[1]).classList.toggle("hidden",t[0]!==name);
     $(t[2]).classList.toggle("on",t[0]===name);
   });
+  window.scrollTo(0,0);
   if(name==="party")renderPartyPage();
 }
 $("tabParty").onclick=()=>showTab("party");
