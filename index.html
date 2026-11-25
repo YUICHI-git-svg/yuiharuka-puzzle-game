@@ -845,7 +845,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.73</div>
+    <div class="ver-line">ver 1.0.74</div>
   </div>
   <div id="pageArea">
 
@@ -2846,10 +2846,12 @@ async function resolveBoard(){
      最後のコンボで消えた色も、同じ finalMult が乗る */
   const finalMult=comboMult(combo);
   B.acc=B.accRaw.map(raw=>raw*finalMult);
-  if(healBase>0){
-    B.partyHp=Math.min(B.maxHp, B.partyHp + healBase*finalMult);
-    renderBattle(true);
-  }
+  /* 回復はここではまだ HP に足さない。集計（コンボ計算）フェーズで
+     攻撃数字と歩調を合わせて少しずつ上がる見せ方にするため、
+     回復の総量と開始時点の HP だけを記録しておく（連鎖の最中に
+     回復が増える見せ方にはしない） */
+  const healTotal=healBase*finalMult;
+  const hpStart=B.partyHp;
   /* コンボタグにも最終倍率を全タグ同じ表示で付け直す（連鎖中は
      最終コンボ数が未確定なので、タグは倍率なしで出している） */
   if(finalMult>1) tags.forEach((tag,i)=>{ if(tag) tag.textContent="COMBO "+(i+1)+" ×"+finalMult.toFixed(1); });
@@ -2875,14 +2877,22 @@ async function resolveBoard(){
            素の値（accRaw）から最終値（acc＝素×最終倍率）へ、タグが
            1つ消えるごとに同じ割合ずつ均等に増えていく。どの色も
            同じ最終倍率が乗るので、増え方も全色そろえる */
-        const targets=B.accRaw.map((raw,i)=> raw + (B.acc[i]-raw)*(k/tags.length));
+        const frac=k/tags.length;
+        const targets=B.accRaw.map((raw,i)=> raw + (B.acc[i]-raw)*frac);
+        /* 回復の数字（パーティHP）も攻撃数字と同じ割合で、全員と
+           そろって少しずつ上がる。最後のステップで回復総量
+           （素の量×最終倍率）に一致させる */
+        const hpTarget=healTotal>0 ? Math.min(B.maxHp, hpStart + healTotal*frac) : null;
         bumpAccLabels(targets);
-        await tweenAcc(targets,stepDur);
+        await tweenAcc(targets,stepDur,hpTarget);
         await wait(Math.round(stepDur*0.28));
       }
       B.accDisp=B.acc.slice(); updateAccLabels();
+      if(healTotal>0){ B.partyHp=Math.min(B.maxHp, hpStart+healTotal); paintPartyHp(); }
     }
   }
+  /* タグが無いのに回復だけ残ることは通常起きないが、保険として即時適用 */
+  else if(healTotal>0){ B.partyHp=Math.min(B.maxHp, hpStart+healTotal); renderBattle(true); }
   if(!B)return;
   // 全てのコンボの加算が終わったら、まとめて攻撃（属性ごとのエフェクト）
   const total=B.acc.reduce((a,b)=>a+b,0);
@@ -2927,8 +2937,16 @@ function bumpAccLabels(targets){
     const acc=$("acc"+i); if(acc) acc.classList.add("counting");
   });
 }
+/* パーティHPのバーと数字だけを描き直す（集計フェーズで回復量を
+   少しずつ表示するため、renderBattle 全体より軽い専用描画） */
+function paintPartyHp(){
+  if(!B)return;
+  const f=$("partyHpFill"), n=$("partyHpNum"); if(!f||!n)return;
+  f.style.width=Math.max(0,B.partyHp/B.maxHp*100)+"%";
+  n.textContent="パーティ HP "+Math.max(0,Math.ceil(B.partyHp))+" / "+B.maxHp;
+}
 let accAnim=null, accTimer=null, accRes=null;
-function tweenAcc(to, dur){
+function tweenAcc(to, dur, hpTo){
   return new Promise(res=>{
     /* 調査版で修正した実在の不具合：前のカウントアップが終わらない
        うちに次が始まると、旧実装はタイマーだけ止めて Promise の
@@ -2943,8 +2961,12 @@ function tweenAcc(to, dur){
     const target=to.map(v=>Math.round(v));
     const start=B.accDisp.map(v=>Math.round(v));
     B.accDisp=start.slice(); updateAccLabels();
+    /* 回復も攻撃数字と同じステップで上げる場合の開始HP
+       （hpTo が null のときは回復なし：HP には触らない） */
+    const hpFrom=B.partyHp;
     let done=false, guardT=null;
     const finish=()=>{ if(done)return; done=true; accRes=null;
+      if(hpTo!=null&&B){ B.partyHp=hpTo; paintPartyHp(); }
       if(accTimer){clearInterval(accTimer);accTimer=null;}
       if(guardT){clearTimeout(guardT);guardT=null;}
       document.querySelectorAll(".member .acc").forEach(el=>el.classList.remove("counting"));
@@ -2968,6 +2990,8 @@ function tweenAcc(to, dur){
       const e=1-Math.pow(1-p,3); /* 最初は速く、着地はなめらかに */
       const cur=start.map((s,i)=> s>=target[i] ? s : s+Math.round((target[i]-s)*e));
       B.accDisp=cur; updateAccLabels();
+      /* 回復も攻撃数字と同じイーズでそろって上がる */
+      if(hpTo!=null){ B.partyHp=hpFrom+(hpTo-hpFrom)*e; paintPartyHp(); }
       if(p>=1) finish();
     }, 16);
   });
