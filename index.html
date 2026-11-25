@@ -845,7 +845,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.71</div>
+    <div class="ver-line">ver 1.0.72</div>
   </div>
   <div id="pageArea">
 
@@ -2771,8 +2771,9 @@ async function resolveBoard(){
   const tags=[]; // コンボ表示はコンボが終わるまで残す
   /* 演出全体の時間予算（連鎖フェーズの非常ブレーキ）：開始から
      10秒を超えたら、残りの連鎖の待ちだけを畳んで攻撃へ進む。
-     1グループの待ちは最大で 消去300ms＋落下540ms＝約0.84秒なので、
-     10秒は約12グループぶん。通常の連鎖では届かない範囲に置き、
+     1ウェーブの待ちは最大で タグ表示のずらし＋消去300ms＋落下540ms
+     ＝約1秒強なので、10秒は約9ウェーブぶん。通常の連鎖では届かない
+     範囲に置き、
      予算切れで途中から急に早送りになる不整合が起きないようにする。
      終盤のコンボ計算フェーズは元々コンボ数に比例せず約2秒で
      終わるよう設計されているため、予算の対象にしない（ここで
@@ -2781,16 +2782,29 @@ async function resolveBoard(){
      ウォッチドッグには収まる */
   const t0=Date.now();
   const fast=()=>Date.now()-t0>10000;
+  B.acc=B.acc.map(()=>0);
   B.accRaw=B.accRaw.map(()=>0);
+  B.accDisp=B.accDisp.map(()=>0);
+  /* コンボごとのボーナス内訳（メンバー別）：集計フェーズで
+     COMBO k のタグが消える瞬間に、そのコンボで得たボーナスぶん
+     だけ各キャラの数字が増えるようにするための記録 */
+  const stepBonus=[];
   while(true){
     /* 万一連鎖が止まらなくなっても画面が固まらないための上限 */
     if(++guard>80)break;
     const groups=findGroups(B.board);
     if(!groups.length)break;
+    /* 【コンボ倍率バグの修正】このウェーブで見つかったグループは、
+       全部を数え終えてから一括で消去し、落下も1回だけにする。
+       旧実装はグループを1つずつ消して落としていたため、2つ目以降の
+       グループのマス位置が先の落下でずれ、別の色のオーブを巻き添えで
+       消したり、マッチしたオーブが盤面に残ってばらけたりして、
+       その色にはコンボ倍率（ダメージ）が乗らないことがあった */
     for(const g of groups){
       combo++;
       comboSE(combo);
       tags.push(showComboTag(g, combo));
+      const bonus=save().party.map(()=>0);
       // 攻撃の蓄積（この段階ではコンボ倍率なしの初期値をキャラに表示）
       if(g.type==="heal"){
         /* 旧フェアリーの回復+50%パッシブは廃止。回復はコンボ倍率のみ */
@@ -2803,26 +2817,32 @@ async function resolveBoard(){
           const raw=effAtk(c) * g.cells.length * 0.34 * lsCombo * leaderAttrMult(c.attr);
           B.accRaw[idx]+=raw;
           B.acc[idx]+=raw * comboMult(combo);
+          bonus[idx]+=raw * (comboMult(combo)-1);
         });
         B.accDisp=B.accRaw.slice(); // 初期値（倍率なし）を表示
       }
+      stepBonus.push(bonus);
       renderBattle(true);
-      const bd=$("board").children;
-      g.cells.forEach(ci=>{ if(bd[ci])bd[ci].classList.add("clearing"); });
-      await wait(fast()?0:300);
-      g.cells.forEach(ci=>B.board[ci]=null);
-      dropOrbs(); renderBoard();
-      /* オーブが着地するまで待ってから次の連鎖を見る（落下中に
-         次の消去が始まるとアニメーション同士が重なって見えるため） */
-      await wait(fast()?0:Math.max(130, B.fallMs||0));
+      /* ウェーブ内のコンボ表示は少しずつずらして出す（全部の
+         グループを数え終えるまで盤面は落とさない） */
+      if(groups.length>1) await wait(fast()?0:110);
     }
+    const waveCells=new Set();
+    groups.forEach(g=>g.cells.forEach(ci=>waveCells.add(ci)));
+    const bd=$("board").children;
+    waveCells.forEach(ci=>{ if(bd[ci])bd[ci].classList.add("clearing"); });
+    await wait(fast()?0:300);
+    waveCells.forEach(ci=>{ B.board[ci]=null; });
+    dropOrbs(); renderBoard();
+    /* オーブが着地するまで待ってから次の連鎖を見る（落下中に
+       次の消去が始まるとアニメーション同士が重なって見えるため） */
+    await wait(fast()?0:Math.max(130, B.fallMs||0));
   }
   /* スコアアタック：このターンのコンボ数が過去最大なら記録する
      （最大コンボボーナスは結果発表で コンボ数×100点 として加算） */
   if(B.scoreMode&&combo>B.maxCombo)B.maxCombo=combo;
   // コンボ終了：コンボ表示が1から順にシュンシュンと消えて、
   // そのたびに攻撃値がコンボ倍率ぶんバウンドしながら増えていく
-  const totalBonus=B.acc.map((v,i)=>v-B.accRaw[i]);
   if(tags.length){
     {
       await wait(320);
@@ -2836,7 +2856,15 @@ async function resolveBoard(){
         whooshSE(k);
         const tag=tags[k-1];
         if(tag){ tag.classList.add("vanish"); setTimeout(()=>tag.remove(),980); }
-        const targets=B.accRaw.map((raw,i)=>raw + totalBonus[i]*(k/tags.length));
+        /* そのコンボで得たボーナスだけを足していく：COMBO k の
+           タグが消える瞬間に増えるのは、そのコンボで消した色の
+           キャラの数字だけ（旧実装は全員のボーナス総額をコンボ数で
+           均等に割って毎回全員を増やしていたため、消していない色の
+           数字まで増え、消した色の増え方も倍率と合って見えなかった） */
+        const targets=B.accRaw.map((raw,i)=>{
+          let add=0; for(let j=0;j<k;j++) add+=stepBonus[j][i];
+          return raw+add;
+        });
         bumpAccLabels(targets);
         await tweenAcc(targets,stepDur);
         await wait(Math.round(stepDur*0.28));
