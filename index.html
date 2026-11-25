@@ -771,7 +771,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.66</div>
+    <div class="ver-line">ver 1.0.67</div>
   </div>
   <div id="pageArea">
 
@@ -2035,7 +2035,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.66";
+const APP_VER="1.0.67";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.score) return true; if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -2089,7 +2089,8 @@ function renderHome(){
 function renderZukan(){
   const body=$("zukanBody"); body.innerHTML="";
   [6,5,4,3,2,1].forEach(rank=>{
-    const list=CHARS.filter(c=>c.stars===rank);
+    /* ルシファーはスコアアタック専用の敵で なかまにはならないので図鑑には出さない */
+    const list=CHARS.filter(c=>c.stars===rank&&c.id!=="lucifer");
     if(!list.length)return;
     const t=document.createElement("div");
     t.className="rank-title"; t.textContent="★".repeat(rank)+" の なかま";
