@@ -278,22 +278,69 @@
   @keyframes bigPulse{from{box-shadow:0 0 0 rgba(255,95,77,0);}to{box-shadow:0 0 16px rgba(255,95,77,.85);}}
   /* 番人戦の属性シールド説明（敵HPバーの下に常時表示） */
   .shield-info{text-align:center;font-size:.74rem;font-weight:800;color:#bfe9ff;margin-top:.14rem;text-shadow:0 1px 5px rgba(0,0,0,.9);}
-  /* ===== ずかんの牧場：所持キャラが草原を ゆっくり歩き回る =====
-     アニメーションは transform のみ（GPU合成）で、キャラごとに
-     歩行・反転・跳ねの周期をずらしてある。動きを減らす設定では止める */
-  .pasture{position:relative;height:270px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(rgba(255,255,240,.05),rgba(24,64,28,.16)),url("bg-forest.jpg") center 68%/cover;margin-bottom:.4rem;}
-  .pasture-sign{position:absolute;top:8px;left:10px;z-index:6;background:rgba(22,44,20,.78);color:#eaffea;font-weight:900;font-size:.82rem;padding:.24rem .65rem;border-radius:999px;letter-spacing:.05em;}
-  .p-char{position:absolute;z-index:3;animation-name:pWalk;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate;will-change:transform;}
-  .p-flip{animation-name:pFlip;animation-timing-function:ease-in-out;animation-iteration-count:infinite;}
-  .p-hop{animation-name:pHop;animation-timing-function:ease-in-out;animation-iteration-count:infinite;}
-  .p-bob{animation-name:pBob;animation-timing-function:ease-in-out;animation-iteration-count:infinite;}
-  .p-art img,.p-art svg{width:100%;height:auto;display:block;filter:drop-shadow(0 3px 4px rgba(10,30,10,.35));}
-  .p-shadow{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);width:72%;height:10px;border-radius:50%;background:rgba(16,38,16,.30);z-index:-1;}
-  @keyframes pWalk{from{transform:translateX(0);}to{transform:translateX(var(--dist,60px));}}
-  @keyframes pFlip{0%,48%{transform:scaleX(1);}52%,97%{transform:scaleX(-1);}100%{transform:scaleX(1);}}
-  @keyframes pHop{0%,100%{transform:translateY(0);}22%{transform:translateY(-9px);}42%{transform:translateY(0);}58%{transform:translateY(-5px);}74%{transform:translateY(0);}}
-  @keyframes pBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
-  @media (prefers-reduced-motion: reduce){ .p-char,.p-flip,.p-hop,.p-bob{animation:none;} }
+  /* ===== ずかんのショーケース：全キャラをフィギュアとしてガラス棚に整列 =====
+     ・全キャラ分の固定スロットを棚に並べ、全員おなじ大きさで飾る
+     ・フィギュア感は「円形の台座（金色の円盤＋円筒の側面）」「台座の上の
+       柔らかい影」「下の名札プレート」「ガラス棚板と天井照明のツヤ」で出す
+     ・未所持のスロットは台座だけを残して空ける（絵もシルエットも出さない）
+     ・フィギュア自体は動かさない（棚に飾った造形物として静止させる） */
+  .showcase{position:relative;border-radius:16px;overflow:hidden;margin-bottom:.4rem;
+    border:3px solid #4a3a20;
+    box-shadow:inset 0 0 0 2px rgba(255,214,120,.28), inset 0 0 34px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.35);
+    background:
+      radial-gradient(130% 60px at 50% 0%, rgba(255,238,190,.30), rgba(255,238,190,0) 70%),
+      linear-gradient(180deg,#241f4d 0%,#1a173c 55%,#12102c 100%);}
+  /* 天井のLEDライト：ケース上端の細い光の帯 */
+  .showcase::before{content:"";position:absolute;top:0;left:6%;right:6%;height:5px;border-radius:0 0 6px 6px;z-index:4;
+    background:linear-gradient(90deg,rgba(255,244,200,0),#fff3c4 18%,#fffbe9 50%,#fff3c4 82%,rgba(255,244,200,0));
+    box-shadow:0 3px 14px 3px rgba(255,240,190,.45);}
+  /* ガラスの反射ツヤ：斜めの光の帯が ゆっくり流れる（飾りガラスの質感） */
+  .sc-glass{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;border-radius:13px;}
+  .sc-glass::before{content:"";position:absolute;top:-25%;bottom:-25%;left:-32%;width:34%;
+    background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.13) 45%,rgba(255,255,255,.20) 50%,rgba(255,255,255,.13) 55%,rgba(255,255,255,0) 100%);
+    transform:skewX(-14deg);animation:scSheen 7.5s ease-in-out infinite;}
+  .sc-glass::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(112deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 72%,rgba(255,255,255,.05) 100%);}
+  @keyframes scSheen{0%,55%{left:-32%;}92%,100%{left:112%;}}
+  @media (prefers-reduced-motion: reduce){ .sc-glass::before{animation:none;left:8%;} }
+  .sc-head{position:relative;z-index:3;display:flex;align-items:center;gap:.5rem;padding:.5rem .7rem .1rem;}
+  .sc-sign{background:linear-gradient(180deg,#5a4517,#3a2c0d);color:#ffe9a8;font-weight:900;font-size:.82rem;
+    padding:.24rem .65rem;border-radius:8px;letter-spacing:.05em;border:1px solid #a97f2f;
+    box-shadow:inset 0 1px 0 rgba(255,240,190,.5), 0 2px 5px rgba(0,0,0,.5);text-shadow:0 1px 2px rgba(0,0,0,.8);}
+  .sc-count{margin-left:auto;font-size:.74rem;font-weight:800;color:#d9d2ff;text-shadow:0 1px 3px rgba(0,0,0,.8);}
+  .sc-shelf{position:relative;z-index:2;padding:.35rem .45rem 0;}
+  /* 棚の背面に落ちるスポットライトの光だまり */
+  .sc-shelf::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(105% 78% at 50% 8%, rgba(255,240,196,.16), rgba(255,240,196,0) 62%);}
+  .sc-row{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;align-items:end;}
+  /* ガラス棚板：明るい上面のラインと、板の下に落ちる影で厚みを出す */
+  .sc-board{height:8px;margin-top:3px;border-radius:3px;position:relative;z-index:1;
+    background:linear-gradient(180deg,rgba(235,244,255,.62) 0%,rgba(178,200,238,.30) 45%,rgba(96,116,170,.34) 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(10,14,40,.5), 0 7px 9px rgba(0,0,0,.5);}
+  .sc-fig{text-align:center;min-width:0;}
+  /* フィギュア本体：台座の上に立つ立ち姿。絵の足元が台座の上面に
+     少し沈むよう margin で重ね、全員おなじ高さにそろえる */
+  .sc-art{height:62px;display:flex;align-items:flex-end;justify-content:center;position:relative;z-index:2;margin-bottom:-7px;}
+  .sc-art img,.sc-art svg{height:62px;width:auto;max-width:100%;object-fit:contain;display:block;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.35)) saturate(1.07) contrast(1.03);}
+  /* 台座の上面に落ちる柔らかい影（フィギュアの接地感） */
+  .sc-fshadow{width:58px;height:9px;margin:0 auto;border-radius:50%;background:rgba(20,10,0,.38);filter:blur(2.5px);position:relative;z-index:1;}
+  /* 円形の台座：金の円盤（上面）＋円筒の側面＋棚に落ちる影 */
+  .sc-ped{width:64px;max-width:88%;height:15px;margin:-5px auto 0;border-radius:50%;position:relative;z-index:2;
+    background:radial-gradient(ellipse at 50% 30%, #fff8dc 0%, #f6dc8e 42%, #d9ab4e 74%, #a87c2a 100%);
+    box-shadow:0 4px 0 -1px #7c5a1c, 0 5px 0 -1px #5f4413, 0 10px 11px rgba(0,0,0,.55),
+      inset 0 -3px 5px rgba(96,64,8,.55), inset 0 2px 3px rgba(255,255,255,.8);}
+  /* 未所持：台座だけを残す。誰も乗っていないので少し地味な色にする */
+  .sc-fig.empty .sc-ped{background:radial-gradient(ellipse at 50% 30%, #e8e2cf 0%, #cbbd93 45%, #a08c58 78%, #77663c 100%);
+    box-shadow:0 4px 0 -1px #5d4f2a, 0 5px 0 -1px #493d20, 0 10px 11px rgba(0,0,0,.5),
+      inset 0 -3px 5px rgba(70,56,20,.5), inset 0 2px 3px rgba(255,255,255,.55);opacity:.85;}
+  /* 名札プレート：台座の下の小さな金属プレートに名前を刻んだ見た目 */
+  .sc-plate{display:inline-block;margin-top:7px;max-width:100%;padding:.1rem .34rem;border-radius:4px;
+    background:linear-gradient(180deg,#4d3d16,#2e2409);border:1px solid #a97f2f;
+    box-shadow:inset 0 1px 0 rgba(255,240,190,.45), 0 1px 3px rgba(0,0,0,.55);
+    color:#ffe9a8;font-size:.56rem;font-weight:800;line-height:1.25;letter-spacing:.01em;white-space:nowrap;
+    text-shadow:0 1px 1px rgba(0,0,0,.9);}
+  .sc-plate.blank{visibility:hidden;}
   .party-hp .hp-fill{background:linear-gradient(90deg,#57d95e,#b6f09a);}
   /* 上パディングは攻撃数値ラベル（.acc）が敵HPバーの下に収まる分だけ。
      以前より詰めて、その分 fitBoard が盤面を大きくできるようにした */
@@ -798,7 +845,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.70</div>
+    <div class="ver-line">ver 1.0.71</div>
   </div>
   <div id="pageArea">
 
@@ -2203,37 +2250,47 @@ function renderHome(){
     $("scoreBestBox").innerHTML='<div class="score-list"><div class="score-row"><span class="pos">最高</span><span class="pts">'+fmtNum(best)+' てん</span><span class="rk rk-'+scoreRank(best)+'">'+scoreRank(best)+'</span></div></div>';
   }
 }
-/* ずかん最上部の「牧場」：所持しているキャラだけが、草原（森と花畑の
-   背景）のなかを ゆっくり歩き回ったり跳ねたりする。未所持は出さない。
-   位置・歩く距離・周期はキャラの並び順から決める（開くたびに同じ
-   配置で、端末負荷は transform アニメーションのみ） */
-function renderPasture(body){
-  const owned=CHARS.filter(c=>save().owned.includes(c.id));
-  if(!owned.length)return;
-  const box=document.createElement("div");
-  box.className="pasture";
-  let h='<div class="pasture-sign">🌿 ぼくじょう</div>';
-  owned.forEach((c,i)=>{
-    const row=i%3; /* 0=奥・1=中ほど・2=手前（手前ほど大きい） */
-    const left=3+((i*37)%76);
-    const bottom=[56,33,9][row];
-    const size=[44,55,67][row];
-    const dist=30+((i*53)%56); /* 30〜85px ゆっくり往復 */
-    const walkDur=7+((i*29)%7); /* 7〜13秒 */
-    const hop=(i%2===0);
-    const hopDur=(1.15+((i*13)%5)*0.22).toFixed(2);
-    h+='<div class="p-char" style="left:'+left+'%;bottom:'+bottom+'%;width:'+size+'px;--dist:'+dist+'px;animation-duration:'+walkDur+'s;z-index:'+(3+row)+'">'
-      +'<div class="p-shadow"></div>'
-      +'<div class="p-flip" style="animation-duration:'+(walkDur*2)+'s"><div class="'+(hop?'p-hop':'p-bob')+'" style="animation-duration:'+hopDur+'s"><div class="p-art">'+c.art()+'</div></div></div>'
-      +'</div>';
+/* ずかん最上部の「ショーケース」：全キャラ分の固定スロットをガラス棚に
+   整列させ、所持キャラをフィギュアとして飾る。並び順は下の☆一覧と
+   おなじ（☆の高い順→CHARS順）。全員おなじ大きさで、未所持のスロットは
+   台座だけを残して空ける（絵・シルエット・名前は出さない）。
+   ルシファーは なかまにならないので、ここにも出さない（一覧と統一） */
+function renderShowcase(body){
+  const s=save();
+  const all=[];
+  [6,5,4,3,2,1].forEach(rank=>{
+    CHARS.filter(c=>c.stars===rank&&c.id!=="lucifer").forEach(c=>all.push(c));
   });
+  if(!all.length)return;
+  const ownedCount=all.filter(c=>s.owned.includes(c.id)).length;
+  const box=document.createElement("div");
+  box.className="showcase";
+  let h='<div class="sc-head"><span class="sc-sign">🏆 ショーケース</span>'
+    +'<span class="sc-count">あつめた なかま '+ownedCount+' / '+all.length+'</span></div>';
+  for(let i=0;i<all.length;i+=4){
+    h+='<div class="sc-shelf"><div class="sc-row">';
+    all.slice(i,i+4).forEach(c=>{
+      if(s.owned.includes(c.id)){
+        h+='<div class="sc-fig"><div class="sc-art">'+c.art()+'</div>'
+          +'<div class="sc-fshadow"></div><div class="sc-ped"></div>'
+          +'<div><span class="sc-plate">'+c.name+'</span></div></div>';
+      } else {
+        /* 未所持：台座だけ。名札ぶんの高さは空白プレートでそろえる */
+        h+='<div class="sc-fig empty"><div class="sc-art"></div>'
+          +'<div class="sc-fshadow"></div><div class="sc-ped"></div>'
+          +'<div><span class="sc-plate blank">・</span></div></div>';
+      }
+    });
+    h+='</div><div class="sc-board"></div></div>';
+  }
+  h+='<div class="sc-glass"></div>';
   box.innerHTML=h;
   body.appendChild(box);
 }
-/* ずかんは別ページ：最上部に牧場、その下に☆ランクごとの一覧 */
+/* ずかんは別ページ：最上部にショーケース、その下に☆ランクごとの一覧 */
 function renderZukan(){
   const body=$("zukanBody"); body.innerHTML="";
-  renderPasture(body);
+  renderShowcase(body);
   [6,5,4,3,2,1].forEach(rank=>{
     /* ルシファーはスコアアタック専用の敵で なかまにはならないので図鑑には出さない */
     const list=CHARS.filter(c=>c.stars===rank&&c.id!=="lucifer");
