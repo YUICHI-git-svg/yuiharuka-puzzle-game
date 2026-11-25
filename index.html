@@ -269,6 +269,15 @@
   .hp-num{font-size:.78rem;font-weight:800;white-space:nowrap;color:var(--ink);text-shadow:0 1px 5px rgba(0,0,0,.9);}
   /* ガード発動中のチップ（番人のスキル）：そのターンの敵攻撃が半減する間だけ出す */
   .guard-chip{display:inline-flex;align-items:center;background:rgba(16,42,86,.85);border:1.5px solid #7ee7ff;border-radius:999px;padding:.12rem .55rem;font-size:.72rem;font-weight:900;color:#dff4ff;white-space:nowrap;box-shadow:0 0 8px rgba(126,231,255,.35);}
+  /* 番人戦の大技予告バッジ（敵エリア左側）：残りターンが少ないと赤く脈打つ */
+  .bigmove-badge{position:absolute;left:.55rem;top:38%;transform:translateY(-50%);
+    background:#3d0f1e;border:2px solid #ff5f4d;border-radius:14px;
+    padding:.4rem .5rem;text-align:center;font-size:.68rem;font-weight:800;color:#ffb3a7;line-height:1.3;min-width:74px;}
+  .bigmove-badge .num{display:block;font-size:1.35rem;color:#ff8d84;line-height:1.1;}
+  .bigmove-badge.danger{background:#5c1220;animation:bigPulse .7s ease-in-out infinite alternate;}
+  @keyframes bigPulse{from{box-shadow:0 0 0 rgba(255,95,77,0);}to{box-shadow:0 0 16px rgba(255,95,77,.85);}}
+  /* 番人戦の属性シールド説明（敵HPバーの下に常時表示） */
+  .shield-info{text-align:center;font-size:.74rem;font-weight:800;color:#bfe9ff;margin-top:.14rem;text-shadow:0 1px 5px rgba(0,0,0,.9);}
   /* ===== ずかんの牧場：所持キャラが草原を ゆっくり歩き回る =====
      アニメーションは transform のみ（GPU合成）で、キャラごとに
      歩行・反転・跳ねの周期をずらしてある。動きを減らす設定では止める */
@@ -789,7 +798,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.69</div>
+    <div class="ver-line">ver 1.0.70</div>
   </div>
   <div id="pageArea">
 
@@ -802,7 +811,7 @@
 
     <p class="hint">ステージ9〜12は いつでも あそべる とくべつステージ。オーブの いろを かえる なかまが いるよ！<br>ステージ12の <b style="color:var(--light)">スーパーでんきドラゴン</b>は、リーダーにすると <b style="color:var(--light)">ひかりの こうげきが 2.5ばい</b>に なる リーダースキルを もっているよ！</p>
     <p class="hint">ステージに かならず <b style="color:#7ee7ff">💎 まほう石</b>が もらえるよ（はじめて クリアした ステージは ボーナスつきで 15こ！）。たおした てきは 50%で なかまに なるよ。もう なかまの てきが なかまに なると <b>凸（とつ）</b>が あがって つよくなるよ！</p>
-    <p class="hint">ステージ13〜17の <b>番人（ばんにん）</b>は とっても つよいよ！<b>サンタを リーダー</b>にして、ぞくせいの あう パーティで いどもう。たおすと 番人が なかまに なるよ（50%）。番人の スキルは「つかった ターンの てきの こうげきを はんぶんに する」まもりの わざだよ。</p>
+    <p class="hint">ステージ13〜17の <b>番人（ばんにん）</b>は とっても つよいよ！番人は <b>🛡️ たて</b>を もっていて、<b>じゃくてんの ぞくせい以外</b>の ダメージは <b>はんぶん</b>に なっちゃうよ。しかも たたかいが 長びくと <b>💥 大技</b>を うってくるよ（バトル画面に「あと ○ターンで 大技」と 出るよ）。<b>サンタを リーダー</b>にして、じゃくてんの ぞくせいで すばやく たおそう！たおすと 番人が なかまに なるよ（50%）。番人の スキルは「つかった ターンの てきの こうげきを はんぶんに する」まもりの わざだよ。</p>
   </section>
 
   <!-- ===== タブ：チャレンジステージ ===== -->
@@ -991,6 +1000,7 @@
     <div class="enemy-stage" id="enemyStage">
       <div id="enemyArt"></div>
       <div class="atk-badge" id="atkBadge">こうげきまで<span class="num" id="atkNum">3</span>ターン</div>
+      <div class="bigmove-badge hidden" id="bigMoveBadge">💥 大技まで あと<span class="num" id="bigMoveNum">13</span>ターン</div>
     </div>
     <div class="enemy-meta">
       <div class="enemy-name"><span id="enemyName"></span><span id="enemyStars"></span><span class="tag" id="enemyTag"></span></div>
@@ -998,6 +1008,7 @@
         <div class="hp-bar"><div class="hp-fill" id="enemyHpFill"></div></div>
         <div class="hp-num" id="enemyHpNum"></div>
       </div>
+      <div class="shield-info hidden" id="shieldInfo"></div>
     </div>
   </div>
   <div id="leaderBar" class="hidden"></div>
@@ -1256,15 +1267,26 @@ const ORB_BASE = ["fire","water","forest","heal"];
    6〜10ターン）、ボスの3・6・8ではHPが半分近くまで削られる場面が
    出る。限定ステージ（9〜12表示）は中盤級、ゼウス戦は約13ターン・
    サタン戦は育てた編成で約9割／初期の編成では約7割の勝率 */
+/* ===== 決着を短くする組み直し（ver 1.0.70） =====
+   1.0.68 の引き上げは HP を盛る方向だったため、勝てる相手でも
+   ターン数がかかりすぎた（実測：ステージ2 約14ターン、ゼウス戦
+   約23ターン）。そこで番人と同じ方針で通常ステージ側も組み直し：
+   長いステージは敵HPを下げ、そのぶん敵の攻撃を重くして、勝率は
+   概ね維持したまま決着を短くした（ステージ1は現状維持、序盤は
+   5歳でも詰まらないラインを残す）。実測（推奨編成・組み直し後）：
+   ステージ2 約8.4ターン／3（ボス）勝率約91%・約9.5ターン／
+   6（ボス）約9.4ターン／8（ボス）約9.7ターン／限定12 約9.8ターン／
+   ゼウス戦 勝率約94%・約12ターン／サタン戦 勝率約94%・約11.5ターン。
+   属性シールドと大技予告は番人専用のまま、通常ステージには入れない */
 const STAGES = [
  {n:1, enemy:"fairy_star", hp:1650, atk:90, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:2, enemy:"dragon_fire", hp:3200, atk:210, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:3, enemy:"dragon_forest", hp:4900, atk:260, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
- {n:4, enemy:"dragon_water", hp:5400, atk:300, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:5, enemy:"phoenix", hp:7800, atk:390, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:6, enemy:"fairy_flower", hp:10300, atk:420, cd:2, recruit:.5, orbs:[...ORB_BASE]},
- {n:7, enemy:"dragon_sea", hp:9500, atk:450, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:8, enemy:"phoenix", hp:15000, atk:560, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
+ {n:2, enemy:"dragon_fire", hp:1750, atk:260, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:3, enemy:"dragon_forest", hp:3600, atk:270, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
+ {n:4, enemy:"dragon_water", hp:4700, atk:330, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:5, enemy:"phoenix", hp:6800, atk:430, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:6, enemy:"fairy_flower", hp:8600, atk:470, cd:2, recruit:.5, orbs:[...ORB_BASE]},
+ {n:7, enemy:"dragon_sea", hp:8800, atk:480, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:8, enemy:"phoenix", hp:13500, atk:620, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
  {n:9, enemy:"dragon_change_forest", hp:10500, atk:390, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
  {n:10, enemy:"fairy_change_water", hp:11500, atk:420, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
  {n:11, enemy:"dragon_change_fire", hp:12500, atk:450, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
@@ -1275,50 +1297,66 @@ const STAGES = [
     番号を重ねるとゼウス戦と記録が混ざってしまう。ゼウスとサタンの
     ボタンは番号ではなく名前で出るので、プレイヤーから見える番号は
     1〜11 の続きで「12」になる。難易度は ver 1.0.68 の再調整で
-    限定ステージ最強の HP 19000・攻撃 540 に設定。
+    限定ステージ最強の HP 19000・攻撃 540 に設定し、ver 1.0.70 で
+    決着を短くするため HP 15000・攻撃 590 に組み直した。
     落ちるオーブは他の限定ステージと同じ基本4種（ひかりは落ちない）。
     仲間にした後のスキルで盤面全部を ひかりに変えられるのが売り */
- {n:14, disp:12, enemy:"dragon_light", hp:19000, atk:540, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
+ {n:14, disp:12, enemy:"dragon_light", hp:15000, atk:590, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
  /* チャレンジ：ゼウス。ver 1.0.68 の再調整で HP 48000・攻撃1050
-    （3ターンごと）。終盤のフル編成（総HP 約2500）でも、回復を回さ
-    なければ押し切られる最終試練。シミュレーションでは推奨編成で
-    約13ターン・勝率ほぼ100%だが HP が半分近くまで削られる展開。
+    （3ターンごと）としたが、決着までターン数がかかりすぎたため
+    ver 1.0.70 で HP 23000・攻撃1100 に組み直した（HPを半分以下に
+    して、そのぶん攻撃を重くした）。シミュレーションでは推奨編成で
+    勝率約94%・平均約12ターン（旧：約23ターン）。
     ドロップは毎回100%（winBattle の dropRate で challenge/satan を
     100%に上書きする。recruit の値は通常ステージ用の50%のまま）。
     ここも基本4種のみ（ひかり／やみオーブは落ちない）。仲間にした
     ゼウスが ひかりオーブで攻撃できるのはサタンのダンジョンだけ */
- {n:12, enemy:"zeus", hp:48000, atk:1050, cd:3, recruit:.5, boss:true, challenge:true, orbs:[...ORB_BASE]},
+ {n:12, enemy:"zeus", hp:23000, atk:1100, cd:3, recruit:.5, boss:true, challenge:true, orbs:[...ORB_BASE]},
  /* サタンのダンジョン：第1章の最終決戦。解放条件は「ゼウスを仲間に
     していること」（stageUnlocked で判定）。通常オーブ＋ひかりオーブが
     多めに落ちるので、ゼウスがオーブ攻撃でき、しかも ひかりは やみに
-    ×1.6 で刺さる。サタンは HP 54000・攻撃920を3ターンごと。
+    ×1.6 で刺さる。サタンは HP 40000・攻撃1000を3ターンごと
+    （ver 1.0.70 で HP 54000・攻撃920 から組み直し）。
     ゼウス入りのフル編成＋回復を回して、いい勝負になる最終ボス設定
     （シミュレーションでは育てた編成で勝率約9割、凸の浅い編成で約7割）。
+    ver 1.0.70 の組み直し後は育てた編成で勝率約94%・平均約11.5ターン。
     ドロップはゼウスと同じく毎回100%（winBattle の dropRate で上書き）。
     専用の「第1章ゲームクリア！」ダイアログが出る（winBattle で satan フラグを判定） */
- {n:13, enemy:"satan", hp:54000, atk:920, cd:3, recruit:.5, boss:true, satan:true, orbs:[...ORB_BASE,"light"], bonus:"light"},
+ {n:13, enemy:"satan", hp:40000, atk:1000, cd:3, recruit:.5, boss:true, satan:true, orbs:[...ORB_BASE,"light"], bonus:"light"},
  /* ===== 番人ステージ（表示13〜17／内部番号16〜20） =====
     サンタをリーダーにした編成でなければ歯が立たない、通常ステージの
     最奥に置く門番たち。解放条件なしで最初から挑戦できる。
     内部番号は 16〜20：12=ゼウス戦・13=サタン戦・14=限定ステージ12・
     15=スコアアタックが使用済みで、クリア記録（cleared）は内部番号で
     管理するため重ねられない。画面の番号は disp（13〜17）。
-    難易度は盤面シミュレーション（各1000回）で「対応するサンタを
-    リーダーにした属性寄せ編成では全ステージ70〜90%、サンタ無しの
-    最強編成（ゼウス／サタン／でんきドラゴン＋回復役・凸1〜2）では
-    明確に難しい水準（20%以下）」になるよう HP・攻撃を設定した
-    （ver 1.0.69 で再調整。実測：サンタ編成 74〜85%／サンタ無し
-    3〜14%。初版値は表示16でサンタ無し14〜20%、表示17でサンタ
-    編成63〜73%と帯域を外れていた）。サンタのシマシマ変換（6ターン
-    周期）＋リーダーの属性×2＋属性相性×1.6 の複合が鍵になるライン。
-    後ろほど厳しい。
+    ver 1.0.70 で「おすすめセット」に組み直した。旧仕様は HP を
+    盛って難しくしていたため勝てても 20〜30ターンかかり、長くて
+    大変だった。組み直しの3点セット：
+    ① HP は 21万〜26万級 → 6万〜8万級へ大幅に下げ、代わりに
+       攻撃を 2ターンごとに重くした（短いターンで決着する）。
+    ② ターン制限（limit）：13〜14ターンを超えると即死級の
+       大技を撃つ。バトル画面に「💥 大技まで あと○ターン」の
+       予告バッジを常時出し、残り3ターンで赤く脈打つ。
+    ③ 属性シールド（shield）：弱点属性以外のダメージが半減する。
+       森の番人は「ひ」、火の番人は「みず」、水の番人は「もり」が
+       弱点。闇の番人と最後の番人は サンタの3色（ひ・みず・もり）
+       が弱点で、ひかり・やみが半減する（どのサンタでも挑める）。
+       シールドはオーブ攻撃・スキルダメージの両方に効く
+       （shieldMultFor が一元管理）。バトル画面とステージ選択に
+       弱点を表示する。
+    難易度は盤面シミュレーションで「対応するサンタをリーダーに
+    した属性寄せ編成では全ステージ勝率70〜90%・平均クリア
+    8〜10ターン、サンタ無しの最強編成（ゼウス／サタン／でんき
+    ドラゴン＋回復役）では20%以下」を確認して決めた。サンタの
+    シマシマ変換（6ターン周期）＋リーダーの属性×2＋属性相性
+    ×1.6 の複合が鍵になるライン。後ろほど厳しい。
     ドロップは通常ステージと同じ毎回50%（recruit:.5）。倒した番人は
     ☆5の仲間になり、ガチャの金プールにも入る */
- {n:16, disp:13, enemy:"guardian_forest", hp:240000, atk:1280, cd:3, recruit:.5, boss:true, guardian:true, orbs:[...ORB_BASE]},
- {n:17, disp:14, enemy:"guardian_fire", hp:260000, atk:1280, cd:3, recruit:.5, boss:true, guardian:true, orbs:[...ORB_BASE]},
- {n:18, disp:15, enemy:"guardian_water", hp:215000, atk:1550, cd:3, recruit:.5, boss:true, guardian:true, orbs:[...ORB_BASE]},
- {n:19, disp:16, enemy:"guardian_dark", hp:215000, atk:1240, cd:3, recruit:.5, boss:true, guardian:true, orbs:[...ORB_BASE]},
- {n:20, disp:17, enemy:"guardian_last", hp:265000, atk:1195, cd:3, recruit:.5, boss:true, guardian:true, orbs:[...ORB_BASE]},
+ {n:16, disp:13, enemy:"guardian_forest", hp:78000, atk:1050, cd:2, recruit:.5, boss:true, guardian:true, shield:["fire"], limit:13, orbs:[...ORB_BASE]},
+ {n:17, disp:14, enemy:"guardian_fire", hp:80000, atk:900, cd:2, recruit:.5, boss:true, guardian:true, shield:["water"], limit:13, orbs:[...ORB_BASE]},
+ {n:18, disp:15, enemy:"guardian_water", hp:78000, atk:950, cd:2, recruit:.5, boss:true, guardian:true, shield:["forest"], limit:13, orbs:[...ORB_BASE]},
+ {n:19, disp:16, enemy:"guardian_dark", hp:62000, atk:1000, cd:2, recruit:.5, boss:true, guardian:true, shield:["fire","water","forest"], limit:14, orbs:[...ORB_BASE]},
+ {n:20, disp:17, enemy:"guardian_last", hp:58000, atk:1050, cd:2, recruit:.5, boss:true, guardian:true, shield:["fire","water","forest"], limit:14, orbs:[...ORB_BASE]},
  /* スコアアタック（特別ダンジョン）：ルシファー戦。10ターンで
     あたえたダメージの合計＋最大コンボボーナスがスコアになる。
     ルシファーは たおせない（HPは実質無限）し、こうげきもしない
@@ -1329,6 +1367,13 @@ const STAGES = [
     使用中）。クリア扱いにはせず、記録は scores（TOP5）に残す */
  {n:15, enemy:"lucifer", hp:999999999, atk:0, cd:99, recruit:0, boss:true, score:true, orbs:["fire","water","forest","light","dark"]},
 ];
+/* 番人専用「属性シールド」：ステージの shield（弱点属性の配列）に
+   含まれない属性のダメージは半減する。オーブ攻撃（resolveBoard）と
+   スキルダメージ（useSkill）の両方が必ずここを通る。shield を
+   持たないステージでは常に1（通常ステージにはシールドは無い） */
+function shieldMultFor(st, attr){ if(!st||!st.shield||!st.shield.length) return 1; return st.shield.includes(attr)?1:0.5; }
+/* シールドの弱点を子供向けに伝える文（バトル画面・ステージ選択で共用） */
+function shieldInfoText(st){ if(!st||!st.shield||!st.shield.length) return ""; return "🛡️ たて："+st.shield.map(a=>ATTR[a].name).join("・")+" の こうげきは つよい！（ほかは はんぶん）"; }
 /* ステージのオーブ種（重複なし）と、抽選プール（bonusぶん重み付き） */
 function stageOrbTypes(st){ return (st && st.orbs && st.orbs.length) ? st.orbs.slice() : ORB_BASE.slice(); }
 function stageDropPool(st){ const p=stageOrbTypes(st); if(st && st.bonus && p.includes(st.bonus)) p.push(st.bonus); return p; }
@@ -2106,7 +2151,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.69";
+const APP_VER="1.0.70";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.score) return true; if(st.extra) return true; if(st.guardian) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -2140,7 +2185,9 @@ function renderHome(){
     } else if(st.challenge){
       b.innerHTML=thumbHtml+'<span class="crown">⚡</span><span class="stage-info"><span class="stage-name">'+(un?"ゼウス":"？？？")+'</span><small>'+(un?"ひかり・HP "+st.hp+"・さいきょうの神":"ステージ8 クリアで 出現")+'</small><span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml+'</span>';
     } else {
-      b.innerHTML=thumbHtml+'<span class="stage-info"><span class="stage-name">ステージ'+(st.disp||st.n)+'</span><small>'+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+'</small><span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml+'</span>';
+      /* 番人ステージは弱点（シールド）と大技のターン制限もボタンに出す */
+      const guardHtml=st.guardian?'<small>🛡️ '+st.shield.map(a=>ATTR[a].name).join("・")+' が つよい（ほか はんぶん）／💥 '+st.limit+'ターンで 大技</small>':"";
+      b.innerHTML=thumbHtml+'<span class="stage-info"><span class="stage-name">ステージ'+(st.disp||st.n)+'</span><small>'+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+'</small>'+guardHtml+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml+'</span>';
     }
     b.disabled=!un; b.onclick=()=>startBattle(st);
     $(st.score?"scoreGrid":st.satan?"satanGrid":st.challenge?"challengeGrid":"stageGrid").appendChild(b);
@@ -2341,7 +2388,7 @@ function startBattle(st){
   const enemy=charById(st.enemy);
   const dropPool=stageDropPool(st);
   B={ stage:st, enemy, enemyHp:st.hp, partyHp:partyMaxHp(), maxHp:partyMaxHp(), cd:st.cd, board:newBoard(dropPool), dropPool:dropPool, orbTypes:stageOrbTypes(st),
-      charges:save().party.map(()=>0), acc:save().party.map(()=>0), accRaw:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false, guardHalf:false,
+      charges:save().party.map(()=>0), acc:save().party.map(()=>0), accRaw:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false, guardHalf:false, turnCount:0, loseMsg:null,
       scoreMode:!!st.score, score:0, turnsLeft:SCORE_TURNS, maxCombo:0, luciLvl:0 };
   $("comboLayer").innerHTML="";
   $("bgLayer").innerHTML=BG_SCENES[STAGE_BG[st.n]||"temple"];
@@ -2362,6 +2409,9 @@ function startBattle(st){
   $("atkBadge").style.display=st.score?"none":"";
   $("partyHpRow").classList.toggle("hidden",!!st.score);
   $("scoreHud").classList.toggle("hidden",!st.score);
+  /* 番人戦だけ：大技予告バッジと属性シールドの説明を出す（それ以外は隠す） */
+  $("bigMoveBadge").classList.toggle("hidden",!st.limit);
+  { const si=$("shieldInfo"); const txt=shieldInfoText(st); si.textContent=txt; si.classList.toggle("hidden",!txt); }
   $("stageTitle").textContent=st.score?"🏆 スコアアタック":st.satan?"👿 サタンのダンジョン":st.challenge?"⚡ チャレンジステージ":"ステージ "+(st.disp||st.n);
   $("enemyArt").innerHTML=enemy.art();
   $("enemyArt").firstChild.classList.toggle("boss",!!st.boss);
@@ -2462,6 +2512,8 @@ function renderBattle(skipBoard){
   { const gc=$("guardChip"); if(gc)gc.classList.toggle("hidden",!B.guardHalf); }
   $("atkNum").textContent=B.cd;
   $("atkBadge").classList.toggle("danger",B.cd<=1);
+  /* 大技予告：残りターン数を数え、3ターン以下で赤く脈打たせる */
+  if(st.limit){ const left=Math.max(0,st.limit-(B.turnCount||0)); $("bigMoveNum").textContent=left; $("bigMoveBadge").classList.toggle("danger",left<=3); }
   save().party.forEach((id,i)=>{
     const c=charById(id), el=$("chg"+i); if(el)el.style.width=Math.min(100,B.charges[i]/skillTurns(c)*100)+"%";
     const m=document.querySelector('.member[data-i="'+i+'"]'); if(m)m.classList.toggle("ready",B.charges[i]>=skillTurns(c));
@@ -2740,7 +2792,7 @@ async function resolveBoard(){
   const total=B.acc.reduce((a,b)=>a+b,0);
   if(total>0){
     await wait(150);
-    let dmg=0; save().party.forEach((id,idx)=>{ const c=charById(id); const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1; dmg+=B.acc[idx]*m; });
+    let dmg=0; save().party.forEach((id,idx)=>{ const c=charById(id); const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1; dmg+=B.acc[idx]*m*shieldMultFor(B.stage,c.attr); });
     /* スコアアタック：属性相性まで含めた最終ダメージをそのままスコアに加算 */
     if(B.scoreMode)B.score+=Math.round(dmg);
     const attackers=[];
@@ -2994,6 +3046,15 @@ function endTurn(){
     if(B.turnsLeft<=0){ B.turnsLeft=0; renderBattle(); finishScoreAttack(); return; }
     B.busy=false; renderBattle(); return;
   }
+  /* 番人戦のターン制限：制限ターンを終えても敵が生きていたら、
+     通常攻撃の代わりに即死級の大技を撃ってくる */
+  B.turnCount++;
+  if(B.stage.limit && B.turnCount>=B.stage.limit){
+    B.partyHp=0; B.guardHalf=false;
+    B.loseMsg="💥 番人の <b>大技</b>を くらった…！<br>"+B.stage.limit+"ターンまでに たおしきれなかったよ。<br>じゃくてんの ぞくせいで すばやく こうげきしよう！";
+    enemyAttackFX(B.maxHp);
+    renderBattle(); loseBattle(); B.busy=false; return;
+  }
   B.cd--;
   if(B.cd<=0){
     /* ガード発動中は このターンの敵の攻撃を半減（切り上げ） */
@@ -3073,7 +3134,7 @@ function useSkill(i){
        へんげ自体ではコンボは始まらず、次の入れかえで始まる */
     B.charges[i]=0; skillSE();
     const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1;
-    const dmg=Math.round(sk.power*m*leaderAttrMult(c.attr));
+    const dmg=Math.round(sk.power*m*leaderAttrMult(c.attr)*shieldMultFor(B.stage,c.attr));
     B.enemyHp-=dmg;
     /* スコアアタック：スキルのダメージもスコアに加算する */
     if(B.scoreMode)B.score+=dmg;
@@ -3092,7 +3153,7 @@ function useSkill(i){
        属性相性を適用し、自分の属性のエフェクトとダメージ表示を出す。
        以前は属性なしの固定ダメージで、攻撃の属性が見えなかった */
     const m=(ATTR_MULT[c.attr]&&ATTR_MULT[c.attr][B.enemy.attr])||1;
-    const dmg=Math.round(sk.power*m*leaderAttrMult(c.attr));
+    const dmg=Math.round(sk.power*m*leaderAttrMult(c.attr)*shieldMultFor(B.stage,c.attr));
     B.enemyHp-=dmg;
     /* スコアアタック：スキルのダメージもスコアに加算する */
     if(B.scoreMode)B.score+=dmg;
@@ -3184,7 +3245,9 @@ function winBattle(){
 }
 function loseBattle(){
   if(!B||B.over)return; B.over=true; B.busy=false;
-  showSheet('<h2>💦 まけちゃった…</h2><p>パーティを つよくして、もう一度 チャレンジしよう！<br>なかまを あつめると つよくなれるよ。</p><button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
+  /* 大技で倒れたときは専用の敗因メッセージ（B.loseMsg）を出す */
+  const msg=B.loseMsg?('<p>'+B.loseMsg+'</p>'):'<p>パーティを つよくして、もう一度 チャレンジしよう！<br>なかまを あつめると つよくなれるよ。</p>';
+  showSheet('<h2>💦 まけちゃった…</h2>'+msg+'<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
 }
 /* スコアアタックの結果発表：内訳（ダメージ＋最大コンボボーナス）・
    ランク・この端末のTOP5を出す。記録はセーブの scores に上位5件だけ
