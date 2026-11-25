@@ -55,6 +55,18 @@
 
   /* ---------- 共通 ---------- */
   .topbar{display:flex;align-items:center;gap:.5rem;padding:max(.55rem, env(safe-area-inset-top)) .8rem .55rem;}
+  /* まほう石カウンター（全ページ共通・右上に常時表示）：
+     ホームとずかんのトップバーは sticky にして、スクロールしても
+     右上のカウンターが常に見えるようにする。バトル画面では
+     .b-top 内の小さめチップ（.stone-chip.small）で邪魔にならない
+     大きさで出す。数値は updateStoneUI() が .stoneCount を一括更新する */
+  .stone-chip{display:inline-flex;align-items:center;gap:.25rem;background:rgba(10,8,28,.78);border:2px solid #7ee7ff;border-radius:999px;padding:.3rem .68rem;font-weight:900;font-size:.88rem;color:#eaf9ff;box-shadow:0 0 10px rgba(126,231,255,.32);white-space:nowrap;line-height:1.2;flex:0 0 auto;}
+  .stone-chip b{color:#7ee7ff;font-size:1.04rem;}
+  .stone-chip.small{padding:.2rem .52rem;font-size:.78rem;border-width:1.5px;box-shadow:0 0 7px rgba(126,231,255,.25);}
+  .stone-chip.small b{font-size:.9rem;}
+  #home .topbar{position:sticky;top:0;z-index:55;background:linear-gradient(180deg,rgba(13,11,34,.95),rgba(13,11,34,.85));border-bottom:1px solid rgba(61,56,128,.55);}
+  #zukan .topbar{position:sticky;top:0;z-index:55;background:rgba(13,11,34,.94);border-bottom:1px solid rgba(61,56,128,.55);}
+  .b-top-right{display:flex;align-items:center;gap:.35rem;flex:0 0 auto;}
   .icon-btn{background:var(--panel);color:var(--ink);border:1px solid var(--line);
     border-radius:999px;padding:.35rem .8rem;font-size:.85rem;font-weight:700;}
   .icon-btn.on{background:var(--gold);color:#3a2c00;border-color:var(--gold);}
@@ -716,7 +728,7 @@
     background:radial-gradient(ellipse, rgba(0,0,0,.55), transparent 70%);transform:translate(-50%,-50%);pointer-events:none;}
   .g-dust{position:absolute;z-index:13;width:18px;height:18px;border-radius:50%;
     background:radial-gradient(circle, rgba(255,255,255,.9), rgba(255,255,255,0) 70%);pointer-events:none;}
-  /* ---- パラメータUP画面（被り専用） ---- */
+  /* ---- パラメータUP画面（ガチャ被り／ステージドロップの凸アップ共通） ---- */
   .g-param-screen{position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;display:none;align-items:center;justify-content:center;
     padding:max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom));overflow-y:auto;background:rgba(5,8,30,.74);}
   .g-param-screen.show{display:flex;}
@@ -755,10 +767,11 @@
     <span style="flex:1"></span>
     <button class="icon-btn" id="bgmBtn">🎵 おんがく OFF</button>
     <button class="icon-btn on" id="seBtn">🔔 おと ON</button>
+    <span class="stone-chip" title="まほう石">💎 <b class="stoneCount">0</b></span>
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.65</div>
+    <div class="ver-line">ver 1.0.66</div>
   </div>
   <div id="pageArea">
 
@@ -922,7 +935,6 @@
     <div class="g-controls">
       <button class="g-btn-pull" id="gPullBtn" type="button">🥚 ガチャを ひく<span class="sub" id="gPullSub">まほう石 5こ</span></button>
     </div>
-    <div class="g-param-screen" id="gParamScreen"></div>
   </section>
   </div><!-- /pageArea -->
 
@@ -940,6 +952,7 @@
   <div class="topbar">
     <button class="icon-btn" id="zukanBack">← もどる</button>
     <span style="flex:1"></span>
+    <span class="stone-chip" title="まほう石">💎 <b class="stoneCount">0</b></span>
   </div>
   <div class="page-scroll"><div class="wrap">
     <h1>ずかん ― スキルいちらん</h1>
@@ -953,7 +966,7 @@
   <div class="b-top">
     <button class="icon-btn" id="quitBtn">← もどる</button>
     <span class="ttl" id="stageTitle"></span>
-    <button class="icon-btn" id="bgmBtn2">🎵 OFF</button>
+    <span class="b-top-right"><span class="stone-chip small" title="まほう石">💎 <b class="stoneCount">0</b></span><button class="icon-btn" id="bgmBtn2">🎵 OFF</button></span>
   </div>
   <div class="enemy-zone">
     <div class="enemy-stage" id="enemyStage">
@@ -987,6 +1000,13 @@
 
 <!-- ============ モーダル ============ -->
 <div class="overlay hidden" id="overlay"><div class="sheet" id="sheet"></div></div>
+
+<!-- ============ パラメータUP画面（ガチャ被り／ステージドロップの凸アップ共通） ============
+     position:fixed の全画面ダイアログ。ガチャページの中に置くと、
+     ガチャタブ以外（バトルの結果画面など）では親ページが非表示で
+     出せなくなるため、body 直下に置いて全画面から使えるようにする。
+     中身は gShowParamScreen() が差し込む -->
+<div class="g-param-screen" id="gParamScreen"></div>
 
 <!-- ============ 横向き案内（縦固定） ============ -->
 <div id="rotateNotice" role="alert"><div>
@@ -2015,7 +2035,7 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.65";
+const APP_VER="1.0.66";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
 function stageUnlocked(st){ if(st.score) return true; if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
@@ -2164,10 +2184,13 @@ $("tabParty").onclick=()=>showTab("party");
 $("tabStage").onclick=()=>showTab("stage");
 $("tabChallenge").onclick=()=>showTab("challenge");
 $("tabGacha").onclick=()=>showTab("gacha");
-/* まほう石の所持数表示（ガチャ画面のチップと引くボタンの有効/無効） */
+/* まほう石の所持数表示：ガチャ画面のチップに加えて、全ページ共通の
+   右上カウンター（ホーム／ずかん／バトルの .stoneCount）を一括で
+   更新する。あわせて引くボタンの有効/無効も切り替える */
 function updateStoneUI(){
   const n=save().stones||0;
   const chip=$("gachaStones"); if(chip)chip.textContent=n;
+  document.querySelectorAll(".stoneCount").forEach(el=>{ el.textContent=n; });
   const btn=$("gPullBtn");
   if(btn&&!gBusy){
     btn.disabled=n<GACHA_COST;
@@ -2223,6 +2246,7 @@ function startBattle(st){
   $("comboLayer").innerHTML="";
   $("bgLayer").innerHTML=BG_SCENES[STAGE_BG[st.n]||"temple"];
   $("home").classList.add("hidden"); $("battle").classList.remove("hidden");
+  updateStoneUI();
   lockBattleScreen();
   $("battle").classList.toggle("challenge",!!st.challenge);
   $("battle").classList.toggle("satan",!!st.satan);
@@ -2994,13 +3018,18 @@ function winBattle(){
   const ec=charById(st.enemy);
   const dropRate=(st.challenge||st.satan)?1:(st.recruit||0);
   let recruitMsg="";
+  /* 凸アップしたときは、結果シートの表示後にガチャ被りと同じ
+     「パラメータUP！」ダイアログ（gShowParamScreen）を出す。
+     そのための情報（キャラ・新凸数・旧凸数）をここで控えておく */
+  let dropLbInfo=null;
   if(Math.random()<dropRate){
     const before=lbOf(ec.id);
     const res=applyGet(ec.id);
     if(res.kind==="new"){
       recruitMsg='<p>🎉 <b>'+ec.name+'</b> が なかまに なったよ！</p>';
     } else if(res.kind==="lb"){
-      recruitMsg='<p>⬆ <b>'+ec.name+'</b> が <b>'+res.lb+'凸</b>に パワーアップ！<br><span class="sub">こうげき '+effAtkAt(ec,before)+' → '+effAtkAt(ec,res.lb)+'／HP '+effHpAt(ec,before)+' → '+effHpAt(ec,res.lb)+(skillTurnsAt(ec,before)!==skillTurnsAt(ec,res.lb)?'／スキル '+skillTurnsAt(ec,before)+' → '+skillTurnsAt(ec,res.lb)+'ターン':'')+'</span></p>';
+      dropLbInfo={ch:ec, lb:res.lb, prevLb:before};
+      recruitMsg='<p>🎉 <b>'+ec.name+'</b> が また なかまに なったよ！<br><span class="sub">凸が あがって パワーアップ！</span></p>';
     } else {
       recruitMsg='<p class="sub">'+ec.name+' は もう 5凸 MAXだよ！</p>';
     }
@@ -3021,6 +3050,19 @@ function winBattle(){
      '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
   }
   try{ winSE(); }catch(e){}
+  updateStoneUI();
+  /* ドロップで凸が上がったときは、ガチャの被り時とまったく同じ
+     「パラメータUP！」ダイアログを結果シートの上に重ねて出す
+     （攻撃力・HPの before→after カウントアップ表示、スキルターン
+     短縮があればそれも表示。閉じ方は OK ボタン／外側タップで、
+     ガチャ側と共通）。結果シートを閉じた後には出さない */
+  if(dropLbInfo){
+    const info=dropLbInfo;
+    setTimeout(()=>{
+      if(!sheetWanted)return;
+      try{ gSfxPowerUp(); gShowParamScreen(info.ch, info.lb, info.prevLb); }catch(e){}
+    }, 650);
+  }
 }
 function loseBattle(){
   if(!B||B.over)return; B.over=true; B.busy=false;
@@ -3051,6 +3093,7 @@ function finishScoreAttack(){
   const rankReward=rank==="S"?10:rank==="A"?5:rank==="B"?3:0;
   if(rankReward>0)s.stones=(s.stones||0)+rankReward;
   persistSave();
+  updateStoneUI();
   const stoneMsg=rankReward>0?'<p>💎 '+rank+'ランク報酬 まほう石 <b>+'+rankReward+'</b> こ ゲット！<br><span class="sub">いま '+s.stones+' こ もっているよ</span></p>':"";
   const rows=s.scores.map((v,i)=>'<div class="score-row'+(v===total?" new":"")+'"><span class="pos">'+(i+1)+'い</span><span class="pts">'+fmtNum(v)+' てん</span><span class="rk rk-'+scoreRank(v)+'">'+scoreRank(v)+'</span></div>').join("");
   showSheet('<h2>🏆 スコアアタック 結果</h2>'+
@@ -3130,6 +3173,9 @@ function closeSheet(){
   if(sheetVerifyTimer){ clearTimeout(sheetVerifyTimer); sheetVerifyTimer=null; }
   const ov=$("overlay"); ov.classList.add("hidden"); ov.style.display="";
   hideResultPanel();
+  /* パラメータUPダイアログが出たまま結果シートだけ閉じることが
+     ないよう、シートを閉じるときはダイアログも一緒に閉じる */
+  try{ const gp=$("gParamScreen"); if(gp&&gp.classList.contains("show")){ gp.classList.remove("show"); gp.innerHTML=""; } }catch(e){}
 }
 function backHome(){ closeSheet(); B=null; { const ob=$("enemyStage").querySelector(".luci-bubble"); if(ob)ob.remove(); } $("battle").classList.add("hidden"); $("home").classList.remove("hidden"); unlockBattleScreen(); renderHome(); if(bgmOn)startBGM(); /* ホームに戻ったらタイトル曲へ */ }
 $("quitBtn").onclick=backHome;
