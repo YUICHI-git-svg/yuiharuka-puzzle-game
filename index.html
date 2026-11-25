@@ -845,7 +845,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.72</div>
+    <div class="ver-line">ver 1.0.73</div>
   </div>
   <div id="pageArea">
 
@@ -2759,7 +2759,12 @@ function tapOrb(i){
 }
 /* コンボ倍率：コンボが進むほど加速して伸びるカーブ（爽快感重視）。
    前回よりさらに引き上げ：1コンボ×1.0 → 3コンボ×2.64 → 5コンボ×5.56
-   → 8コンボ×12.34 → 10コンボ×18.46 */
+   → 8コンボ×12.34 → 10コンボ×18.46
+   【適用ルール】倍率は「そのターンの最終コンボ数」から決まる1つの値を、
+   そのターンに消えた全ての色のダメージと回復へ一律に適用する
+   （コンボ1で消えた色もコンボ3で消えた色も同じ最終倍率が乗る。
+   コンボ倍率はコンボ全体への倍率であって、色ごと・消えた順の
+   倍率ではない、という仕様） */
 function comboMult(n){ const k=Math.max(0,n-1); return 1 + 0.50*k + 0.16*k*k; }
 /* 属性ブーストは旧「いつもスキル」からリーダースキルへ移行した：
    倍率は leaderAttrMult(attr)（キャラ定義側のヘルパー）が一元管理し、
@@ -2785,10 +2790,10 @@ async function resolveBoard(){
   B.acc=B.acc.map(()=>0);
   B.accRaw=B.accRaw.map(()=>0);
   B.accDisp=B.accDisp.map(()=>0);
-  /* コンボごとのボーナス内訳（メンバー別）：集計フェーズで
-     COMBO k のタグが消える瞬間に、そのコンボで得たボーナスぶん
-     だけ各キャラの数字が増えるようにするための記録 */
-  const stepBonus=[];
+  /* 連鎖中は倍率なしの素の値（accRaw）と回復の素の量（healBase）だけを
+     積み上げる。コンボ倍率は連鎖が終わって最終コンボ数が確定してから、
+     全色へ一律に掛ける（ループ後に finalMult を適用する） */
+  let healBase=0;
   while(true){
     /* 万一連鎖が止まらなくなっても画面が固まらないための上限 */
     if(++guard>80)break;
@@ -2804,11 +2809,12 @@ async function resolveBoard(){
       combo++;
       comboSE(combo);
       tags.push(showComboTag(g, combo));
-      const bonus=save().party.map(()=>0);
-      // 攻撃の蓄積（この段階ではコンボ倍率なしの初期値をキャラに表示）
+      // 攻撃の蓄積（コンボ倍率はまだ掛けない。表示も倍率なしの素の値）
       if(g.type==="heal"){
-        /* 旧フェアリーの回復+50%パッシブは廃止。回復はコンボ倍率のみ */
-        B.partyHp=Math.min(B.maxHp, B.partyHp + g.cells.length*12*comboMult(combo));
+        /* 旧フェアリーの回復+50%パッシブは廃止。回復はコンボ倍率のみ。
+           倍率は最終コンボ数で一律に決まるため、ここでは素の量だけ記録し、
+           実際の回復は連鎖終了後に finalMult を掛けてまとめて行う */
+        healBase+=g.cells.length*12;
       } else {
         save().party.forEach((id,idx)=>{
           const c=charById(id); if(c.attr!==g.type)return;
@@ -2816,12 +2822,9 @@ async function resolveBoard(){
              属性型（サタン／でんきドラゴン）は一致する属性にだけ */
           const raw=effAtk(c) * g.cells.length * 0.34 * lsCombo * leaderAttrMult(c.attr);
           B.accRaw[idx]+=raw;
-          B.acc[idx]+=raw * comboMult(combo);
-          bonus[idx]+=raw * (comboMult(combo)-1);
         });
         B.accDisp=B.accRaw.slice(); // 初期値（倍率なし）を表示
       }
-      stepBonus.push(bonus);
       renderBattle(true);
       /* ウェーブ内のコンボ表示は少しずつずらして出す（全部の
          グループを数え終えるまで盤面は落とさない） */
@@ -2838,6 +2841,18 @@ async function resolveBoard(){
        次の消去が始まるとアニメーション同士が重なって見えるため） */
     await wait(fast()?0:Math.max(130, B.fallMs||0));
   }
+  /* 連鎖終了：最終コンボ数から決まる倍率を、そのターンに消えた
+     全ての色のダメージと回復へ一律に適用する。コンボ1で消えた色も
+     最後のコンボで消えた色も、同じ finalMult が乗る */
+  const finalMult=comboMult(combo);
+  B.acc=B.accRaw.map(raw=>raw*finalMult);
+  if(healBase>0){
+    B.partyHp=Math.min(B.maxHp, B.partyHp + healBase*finalMult);
+    renderBattle(true);
+  }
+  /* コンボタグにも最終倍率を全タグ同じ表示で付け直す（連鎖中は
+     最終コンボ数が未確定なので、タグは倍率なしで出している） */
+  if(finalMult>1) tags.forEach((tag,i)=>{ if(tag) tag.textContent="COMBO "+(i+1)+" ×"+finalMult.toFixed(1); });
   /* スコアアタック：このターンのコンボ数が過去最大なら記録する
      （最大コンボボーナスは結果発表で コンボ数×100点 として加算） */
   if(B.scoreMode&&combo>B.maxCombo)B.maxCombo=combo;
@@ -2856,15 +2871,11 @@ async function resolveBoard(){
         whooshSE(k);
         const tag=tags[k-1];
         if(tag){ tag.classList.add("vanish"); setTimeout(()=>tag.remove(),980); }
-        /* そのコンボで得たボーナスだけを足していく：COMBO k の
-           タグが消える瞬間に増えるのは、そのコンボで消した色の
-           キャラの数字だけ（旧実装は全員のボーナス総額をコンボ数で
-           均等に割って毎回全員を増やしていたため、消していない色の
-           数字まで増え、消した色の増え方も倍率と合って見えなかった） */
-        const targets=B.accRaw.map((raw,i)=>{
-          let add=0; for(let j=0;j<k;j++) add+=stepBonus[j][i];
-          return raw+add;
-        });
+        /* 集計の数字の増え方も最終倍率の計算と一致させる：全員の数字が
+           素の値（accRaw）から最終値（acc＝素×最終倍率）へ、タグが
+           1つ消えるごとに同じ割合ずつ均等に増えていく。どの色も
+           同じ最終倍率が乗るので、増え方も全色そろえる */
+        const targets=B.accRaw.map((raw,i)=> raw + (B.acc[i]-raw)*(k/tags.length));
         bumpAccLabels(targets);
         await tweenAcc(targets,stepDur);
         await wait(Math.round(stepDur*0.28));
@@ -2901,7 +2912,10 @@ function showComboTag(g, combo){
   let r=0,c=0; g.cells.forEach(ci=>{ r+=Math.floor(ci/N); c+=ci%N; });
   r/=g.cells.length; c/=g.cells.length;
   const el=document.createElement("div");
-  el.className="combo-tag"; el.textContent="COMBO "+combo+(combo>1?" ×"+comboMult(combo).toFixed(1):"");
+  /* 倍率は最終コンボ数で決まり全色一律なので、連鎖中のタグには
+     まだ付けない。連鎖終了後に resolveBoard が全タグへ最終倍率を
+     同じ表示で付け直す */
+  el.className="combo-tag"; el.textContent="COMBO "+combo;
   el.style.left=((c+0.5)/N*100)+"%"; el.style.top=((r+0.5)/N*100)+"%";
   layer.appendChild(el);
   return el;
