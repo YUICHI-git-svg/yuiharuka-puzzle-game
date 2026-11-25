@@ -267,6 +267,24 @@
   .hp-bar{flex:1;height:11px;border-radius:999px;background:#0d0b22;border:1px solid var(--line);overflow:hidden;}
   .hp-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#ff7a52,#ffb35c);transition:width .45s ease;}
   .hp-num{font-size:.78rem;font-weight:800;white-space:nowrap;color:var(--ink);text-shadow:0 1px 5px rgba(0,0,0,.9);}
+  /* ガード発動中のチップ（番人のスキル）：そのターンの敵攻撃が半減する間だけ出す */
+  .guard-chip{display:inline-flex;align-items:center;background:rgba(16,42,86,.85);border:1.5px solid #7ee7ff;border-radius:999px;padding:.12rem .55rem;font-size:.72rem;font-weight:900;color:#dff4ff;white-space:nowrap;box-shadow:0 0 8px rgba(126,231,255,.35);}
+  /* ===== ずかんの牧場：所持キャラが草原を ゆっくり歩き回る =====
+     アニメーションは transform のみ（GPU合成）で、キャラごとに
+     歩行・反転・跳ねの周期をずらしてある。動きを減らす設定では止める */
+  .pasture{position:relative;height:270px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(rgba(255,255,240,.05),rgba(24,64,28,.16)),url("bg-forest.jpg") center 68%/cover;margin-bottom:.4rem;}
+  .pasture-sign{position:absolute;top:8px;left:10px;z-index:6;background:rgba(22,44,20,.78);color:#eaffea;font-weight:900;font-size:.82rem;padding:.24rem .65rem;border-radius:999px;letter-spacing:.05em;}
+  .p-char{position:absolute;z-index:3;animation-name:pWalk;animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate;will-change:transform;}
+  .p-flip{animation-name:pFlip;animation-timing-function:ease-in-out;animation-iteration-count:infinite;}
+  .p-hop{animation-name:pHop;animation-timing-function:ease-in-out;animation-iteration-count:infinite;}
+  .p-bob{animation-name:pBob;animation-timing-function:ease-in-out;animation-iteration-count:infinite;}
+  .p-art img,.p-art svg{width:100%;height:auto;display:block;filter:drop-shadow(0 3px 4px rgba(10,30,10,.35));}
+  .p-shadow{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);width:72%;height:10px;border-radius:50%;background:rgba(16,38,16,.30);z-index:-1;}
+  @keyframes pWalk{from{transform:translateX(0);}to{transform:translateX(var(--dist,60px));}}
+  @keyframes pFlip{0%,48%{transform:scaleX(1);}52%,97%{transform:scaleX(-1);}100%{transform:scaleX(1);}}
+  @keyframes pHop{0%,100%{transform:translateY(0);}22%{transform:translateY(-9px);}42%{transform:translateY(0);}58%{transform:translateY(-5px);}74%{transform:translateY(0);}}
+  @keyframes pBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
+  @media (prefers-reduced-motion: reduce){ .p-char,.p-flip,.p-hop,.p-bob{animation:none;} }
   .party-hp .hp-fill{background:linear-gradient(90deg,#57d95e,#b6f09a);}
   /* 上パディングは攻撃数値ラベル（.acc）が敵HPバーの下に収まる分だけ。
      以前より詰めて、その分 fitBoard が盤面を大きくできるようにした */
@@ -771,7 +789,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.67</div>
+    <div class="ver-line">ver 1.0.69</div>
   </div>
   <div id="pageArea">
 
@@ -784,6 +802,7 @@
 
     <p class="hint">ステージ9〜12は いつでも あそべる とくべつステージ。オーブの いろを かえる なかまが いるよ！<br>ステージ12の <b style="color:var(--light)">スーパーでんきドラゴン</b>は、リーダーにすると <b style="color:var(--light)">ひかりの こうげきが 2.5ばい</b>に なる リーダースキルを もっているよ！</p>
     <p class="hint">ステージに かならず <b style="color:#7ee7ff">💎 まほう石</b>が もらえるよ（はじめて クリアした ステージは ボーナスつきで 15こ！）。たおした てきは 50%で なかまに なるよ。もう なかまの てきが なかまに なると <b>凸（とつ）</b>が あがって つよくなるよ！</p>
+    <p class="hint">ステージ13〜17の <b>番人（ばんにん）</b>は とっても つよいよ！<b>サンタを リーダー</b>にして、ぞくせいの あう パーティで いどもう。たおすと 番人が なかまに なるよ（50%）。番人の スキルは「つかった ターンの てきの こうげきを はんぶんに する」まもりの わざだよ。</p>
   </section>
 
   <!-- ===== タブ：チャレンジステージ ===== -->
@@ -987,6 +1006,7 @@
     <div class="hp-row">
       <div class="hp-bar"><div class="hp-fill" id="partyHpFill"></div></div>
       <div class="hp-num" id="partyHpNum"></div>
+      <span id="guardChip" class="guard-chip hidden">🛡️ ガード中：てきの こうげき はんげん</span>
     </div>
   </div>
   <div id="scoreHud" class="hidden">
@@ -1107,10 +1127,23 @@ const CHARS = [
     属性の攻撃×2（リーダー枠のみ）。通常スキルは「シマシマへんげ」：
     盤面の下の行から1行おき（最下段・その2つ上・さらに2つ上・最上段の
     4行）を自分の色に変換する stripe 型。盤面の半分近くを自分の色に
-    できる強力な変換なので、たまるまでは長めの8ターン */
- {id:"santa_red", name:"あかサンタ", attr:"fire", atk:58, hp:540, art:()=>imgArt("santa-red.webp"), leaderSkill:{type:"attr", attr:"fire", mult:2, text:"ひの こうげき 2ばい"}, skill:{name:"シマシマへんげ・あか", desc:"下から 1行おきの 4行を あか（ひ）に かえる", turns:8, type:"stripe", to:"fire"}},
- {id:"santa_blue", name:"あおサンタ", attr:"water", atk:58, hp:540, art:()=>imgArt("santa-blue.webp"), leaderSkill:{type:"attr", attr:"water", mult:2, text:"みずの こうげき 2ばい"}, skill:{name:"シマシマへんげ・あお", desc:"下から 1行おきの 4行を あお（みず）に かえる", turns:8, type:"stripe", to:"water"}},
- {id:"santa_green", name:"みどりサンタ", attr:"forest", atk:58, hp:540, art:()=>imgArt("santa-green.webp"), leaderSkill:{type:"attr", attr:"forest", mult:2, text:"もりの こうげき 2ばい"}, skill:{name:"シマシマへんげ・みどり", desc:"下から 1行おきの 4行を みどり（もり）に かえる", turns:8, type:"stripe", to:"forest"}},
+    できる強力な変換なので、たまるまでは長めにしていたが、
+    ver 1.0.68 で初期値（0凸時）6ターンに短縮した（番人ステージの
+    想定リーダーとして、6ターン周期で撃てることが前提のバランス）。
+    凸による短縮は従来通り1凸・5凸で各−1（最大で4ターン） */
+ {id:"santa_red", name:"あかサンタ", attr:"fire", atk:58, hp:540, art:()=>imgArt("santa-red.webp"), leaderSkill:{type:"attr", attr:"fire", mult:2, text:"ひの こうげき 2ばい"}, skill:{name:"シマシマへんげ・あか", desc:"下から 1行おきの 4行を あか（ひ）に かえる", turns:6, type:"stripe", to:"fire"}},
+ {id:"santa_blue", name:"あおサンタ", attr:"water", atk:58, hp:540, art:()=>imgArt("santa-blue.webp"), leaderSkill:{type:"attr", attr:"water", mult:2, text:"みずの こうげき 2ばい"}, skill:{name:"シマシマへんげ・あお", desc:"下から 1行おきの 4行を あお（みず）に かえる", turns:6, type:"stripe", to:"water"}},
+ {id:"santa_green", name:"みどりサンタ", attr:"forest", atk:58, hp:540, art:()=>imgArt("santa-green.webp"), leaderSkill:{type:"attr", attr:"forest", mult:2, text:"もりの こうげき 2ばい"}, skill:{name:"シマシマへんげ・みどり", desc:"下から 1行おきの 4行を みどり（もり）に かえる", turns:6, type:"stripe", to:"forest"}},
+ /* 番人5人（☆5）：通常ステージ13〜17（表示）の門番たち。全員スキルは
+    共通の「ガード」型（guard）：発動したターンに受ける敵の攻撃を
+    半減する。味付け（名前・説明）だけ属性ごとに変えてある。
+    ステータスは☆5相応（フェニックス48/430・エンシェント52/460 と
+    同水準〜やや上）。ガチャの金（☆5）プールにも入る */
+ {id:"guardian_forest", name:"森の番人", attr:"forest", atk:50, hp:480, art:()=>imgArt("guardian-forest.png"), skill:{name:"もりの まもり", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
+ {id:"guardian_fire", name:"火の番人", attr:"fire", atk:55, hp:450, art:()=>imgArt("guardian-fire.png"), skill:{name:"かえんの たて", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
+ {id:"guardian_water", name:"水の番人", attr:"water", atk:52, hp:470, art:()=>imgArt("guardian-water.png"), skill:{name:"みずの かべ", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
+ {id:"guardian_dark", name:"闇の番人", attr:"dark", atk:57, hp:460, art:()=>imgArt("guardian-dark.png"), skill:{name:"やみの ベール", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
+ {id:"guardian_last", name:"最後の番人", attr:"dark", atk:58, hp:500, art:()=>imgArt("guardian-last.png"), skill:{name:"しゅごの けっかい", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
  /* ルシファー：スコアアタック（特別ダンジョン）専用の敵。堕天使で
     やみ属性・☆6。たおすことはできず（HPは実質無限）、こうげきも
     してこない。なかまにはならないので、atk/hp は図鑑表示用の目安値
@@ -1171,7 +1204,8 @@ const STAR_RANK = { slime_fire:1, slime_water:1, slime_forest:1,
   dragon_fire:3, dragon_water:3, dragon_forest:3,
   dragon_change_forest:4, fairy_change_water:4, dragon_change_fire:4,
   phoenix:5, dragon_sea:5, dragon_light:6, zeus:6, satan:6, lucifer:6,
-  santa_red:6, santa_blue:6, santa_green:6 };
+  santa_red:6, santa_blue:6, santa_green:6,
+  guardian_forest:5, guardian_fire:5, guardian_water:5, guardian_dark:5, guardian_last:5 };
 CHARS.forEach(c=>{ c.stars = STAR_RANK[c.id] || 1; });
 function starHTML(c){ let s='<span class="stars">'; const slots=Math.max(5,c.stars); for(let i=0;i<slots;i++) s+='<span class="'+(i<c.stars?"on":"off")+'">'+(i<c.stars?"★":"☆")+'</span>'; return s+'</span>'; }
 /* 盤面を 7×7 にしたぶん 1ターンの火力が下がるので、敵HPは
@@ -1212,47 +1246,79 @@ function starHTML(c){ let s='<span class="stars">'; const slots=Math.max(5,c.sta
    敵の攻撃力は据え置き：戦闘が短くなる分、被弾回数と回復需要が
    減り、回復パッシブ廃止の影響を相殺する */
 const ORB_BASE = ["fire","water","forest","heal"];
+/* ===== 難易度の再調整（ver 1.0.68） =====
+   「簡単すぎる」との声を受けて、ステージ1以外を全体的に引き上げた。
+   数値は盤面シミュレーション（ゲーム本体と同じ消去・落下・コンボ倍率・
+   属性相性・リーダースキル・凸の計算で、各ステージ時点の推奨編成を
+   相手に数百回対戦）で、クリア率と所要ターンを測って決めた。
+   ステージ1は現状維持（所要 約9ターン）。2以降は後半ほど長く苦しい
+   カーブ：序盤〜中盤は推奨編成でほぼ詰まらず（クリア率ほぼ100%・
+   6〜10ターン）、ボスの3・6・8ではHPが半分近くまで削られる場面が
+   出る。限定ステージ（9〜12表示）は中盤級、ゼウス戦は約13ターン・
+   サタン戦は育てた編成で約9割／初期の編成では約7割の勝率 */
 const STAGES = [
  {n:1, enemy:"fairy_star", hp:1650, atk:90, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:2, enemy:"dragon_fire", hp:2300, atk:120, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:3, enemy:"dragon_forest", hp:3200, atk:170, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
- {n:4, enemy:"dragon_water", hp:3750, atk:200, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:5, enemy:"phoenix", hp:4300, atk:240, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:6, enemy:"fairy_flower", hp:5100, atk:280, cd:2, recruit:.5, orbs:[...ORB_BASE]},
- {n:7, enemy:"dragon_sea", hp:6050, atk:320, cd:3, recruit:.5, orbs:[...ORB_BASE]},
- {n:8, enemy:"phoenix", hp:7400, atk:380, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
- {n:9, enemy:"dragon_change_forest", hp:2600, atk:150, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
- {n:10, enemy:"fairy_change_water", hp:2850, atk:160, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
- {n:11, enemy:"dragon_change_fire", hp:3150, atk:175, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
+ {n:2, enemy:"dragon_fire", hp:3200, atk:210, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:3, enemy:"dragon_forest", hp:4900, atk:260, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
+ {n:4, enemy:"dragon_water", hp:5400, atk:300, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:5, enemy:"phoenix", hp:7800, atk:390, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:6, enemy:"fairy_flower", hp:10300, atk:420, cd:2, recruit:.5, orbs:[...ORB_BASE]},
+ {n:7, enemy:"dragon_sea", hp:9500, atk:450, cd:3, recruit:.5, orbs:[...ORB_BASE]},
+ {n:8, enemy:"phoenix", hp:15000, atk:560, cd:2, recruit:.5, boss:true, orbs:[...ORB_BASE]},
+ {n:9, enemy:"dragon_change_forest", hp:10500, atk:390, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
+ {n:10, enemy:"fairy_change_water", hp:11500, atk:420, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
+ {n:11, enemy:"dragon_change_fire", hp:12500, atk:450, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
  /* 限定ステージ12（娘のリクエスト）：ひかり属性のスーパーでんきドラゴン。
     画面に出る番号は disp:12。内部番号 n は 14 にしてある：12は
     チャレンジステージ（ゼウス）、13はサタンのダンジョンがすでに
     使っていて、クリア記録（cleared）は内部番号で管理しているため、
     番号を重ねるとゼウス戦と記録が混ざってしまう。ゼウスとサタンの
     ボタンは番号ではなく名前で出るので、プレイヤーから見える番号は
-    1〜11 の続きで「12」になる。限定ステージの並び（HP 3040→3360→
-    3680、攻撃 56→60→64）の続きとして HP 4000・攻撃 68 に設定。
+    1〜11 の続きで「12」になる。難易度は ver 1.0.68 の再調整で
+    限定ステージ最強の HP 19000・攻撃 540 に設定。
     落ちるオーブは他の限定ステージと同じ基本4種（ひかりは落ちない）。
     仲間にした後のスキルで盤面全部を ひかりに変えられるのが売り */
- {n:14, disp:12, enemy:"dragon_light", hp:3400, atk:190, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
- /* チャレンジ：ゼウス。最終ボス（ステージ8：HP8800/攻130/2ターン）の
-    約2.2倍のHP 16200、攻撃520を3ターンごとに放つ。パーティ総HP制に
-    なったので、終盤のフル編成（総HP 約2000）でも約4発で落とされる
-    最終試練のまま。フル編成＋回復を回せばいい勝負になる。
+ {n:14, disp:12, enemy:"dragon_light", hp:19000, atk:540, cd:3, recruit:.5, extra:true, orbs:[...ORB_BASE]},
+ /* チャレンジ：ゼウス。ver 1.0.68 の再調整で HP 48000・攻撃1050
+    （3ターンごと）。終盤のフル編成（総HP 約2500）でも、回復を回さ
+    なければ押し切られる最終試練。シミュレーションでは推奨編成で
+    約13ターン・勝率ほぼ100%だが HP が半分近くまで削られる展開。
     ドロップは毎回100%（winBattle の dropRate で challenge/satan を
     100%に上書きする。recruit の値は通常ステージ用の50%のまま）。
     ここも基本4種のみ（ひかり／やみオーブは落ちない）。仲間にした
     ゼウスが ひかりオーブで攻撃できるのはサタンのダンジョンだけ */
- {n:12, enemy:"zeus", hp:16200, atk:520, cd:3, recruit:.5, boss:true, challenge:true, orbs:[...ORB_BASE]},
+ {n:12, enemy:"zeus", hp:48000, atk:1050, cd:3, recruit:.5, boss:true, challenge:true, orbs:[...ORB_BASE]},
  /* サタンのダンジョン：第1章の最終決戦。解放条件は「ゼウスを仲間に
     していること」（stageUnlocked で判定）。通常オーブ＋ひかりオーブが
     多めに落ちるので、ゼウスがオーブ攻撃でき、しかも ひかりは やみに
-    ×1.6 で刺さる。サタンは HP 19800（ゼウスの約1.2倍）・攻撃580
-    （ゼウス入りのフル編成＝総HP 約2300 でも約4発で落とされる）を3ターンごと。
-    ゼウス入りのフル編成＋回復を回して、いい勝負になる最終ボス設定。
+    ×1.6 で刺さる。サタンは HP 54000・攻撃920を3ターンごと。
+    ゼウス入りのフル編成＋回復を回して、いい勝負になる最終ボス設定
+    （シミュレーションでは育てた編成で勝率約9割、凸の浅い編成で約7割）。
     ドロップはゼウスと同じく毎回100%（winBattle の dropRate で上書き）。
     専用の「第1章ゲームクリア！」ダイアログが出る（winBattle で satan フラグを判定） */
- {n:13, enemy:"satan", hp:19800, atk:580, cd:3, recruit:.5, boss:true, satan:true, orbs:[...ORB_BASE,"light"], bonus:"light"},
+ {n:13, enemy:"satan", hp:54000, atk:920, cd:3, recruit:.5, boss:true, satan:true, orbs:[...ORB_BASE,"light"], bonus:"light"},
+ /* ===== 番人ステージ（表示13〜17／内部番号16〜20） =====
+    サンタをリーダーにした編成でなければ歯が立たない、通常ステージの
+    最奥に置く門番たち。解放条件なしで最初から挑戦できる。
+    内部番号は 16〜20：12=ゼウス戦・13=サタン戦・14=限定ステージ12・
+    15=スコアアタックが使用済みで、クリア記録（cleared）は内部番号で
+    管理するため重ねられない。画面の番号は disp（13〜17）。
+    難易度は盤面シミュレーション（各1000回）で「対応するサンタを
+    リーダーにした属性寄せ編成では全ステージ70〜90%、サンタ無しの
+    最強編成（ゼウス／サタン／でんきドラゴン＋回復役・凸1〜2）では
+    明確に難しい水準（20%以下）」になるよう HP・攻撃を設定した
+    （ver 1.0.69 で再調整。実測：サンタ編成 74〜85%／サンタ無し
+    3〜14%。初版値は表示16でサンタ無し14〜20%、表示17でサンタ
+    編成63〜73%と帯域を外れていた）。サンタのシマシマ変換（6ターン
+    周期）＋リーダーの属性×2＋属性相性×1.6 の複合が鍵になるライン。
+    後ろほど厳しい。
+    ドロップは通常ステージと同じ毎回50%（recruit:.5）。倒した番人は
+    ☆5の仲間になり、ガチャの金プールにも入る */
+ {n:16, disp:13, enemy:"guardian_forest", hp:240000, atk:1280, cd:3, recruit:.5, boss:true, guardian:true, orbs:[...ORB_BASE]},
+ {n:17, disp:14, enemy:"guardian_fire", hp:260000, atk:1280, cd:3, recruit:.5, boss:true, guardian:true, orbs:[...ORB_BASE]},
+ {n:18, disp:15, enemy:"guardian_water", hp:215000, atk:1550, cd:3, recruit:.5, boss:true, guardian:true, orbs:[...ORB_BASE]},
+ {n:19, disp:16, enemy:"guardian_dark", hp:215000, atk:1240, cd:3, recruit:.5, boss:true, guardian:true, orbs:[...ORB_BASE]},
+ {n:20, disp:17, enemy:"guardian_last", hp:265000, atk:1195, cd:3, recruit:.5, boss:true, guardian:true, orbs:[...ORB_BASE]},
  /* スコアアタック（特別ダンジョン）：ルシファー戦。10ターンで
     あたえたダメージの合計＋最大コンボボーナスがスコアになる。
     ルシファーは たおせない（HPは実質無限）し、こうげきもしない
@@ -1307,7 +1373,7 @@ const BG_SCENES = {
    スターフェアリーは星空の宇宙、ゼウスは天界、サタンは魔界。
    以前は森ドラゴンが荒野、フェアリーが神殿、フェニックス（ボス）が
    宇宙など、キャラと合わない組み合わせが多かったので揃えた */
-const STAGE_BG = {1:"space",2:"volcano",3:"forest",4:"sea",5:"volcano",6:"forest",7:"sea",8:"volcano",9:"forest",10:"sea",11:"volcano",12:"heaven",13:"demon",14:"heaven",15:"fallen"};
+const STAGE_BG = {1:"space",2:"volcano",3:"forest",4:"sea",5:"volcano",6:"forest",7:"sea",8:"volcano",9:"forest",10:"sea",11:"volcano",12:"heaven",13:"demon",14:"heaven",15:"fallen",16:"forest",17:"volcano",18:"sea",19:"demon",20:"fallen"};
 /* シーン名→背景ファイル名（ホームのステージボタンのサムネイル用） */
 const SCENE_FILE = {temple:"bg-temple.jpg",wasteland:"bg-wasteland.jpg",volcano:"bg-volcano.jpg",ice:"bg-ice.jpg",sea:"bg-sea.jpg",space:"bg-space.jpg",heaven:"bg-heaven.jpg",demon:"bg-demon.jpg",forest:"bg-forest.jpg",fallen:"bg-fallen.jpg"};
 
@@ -1337,7 +1403,12 @@ function sanitizeSave(p){
   let party=Array.isArray(p.party)?p.party.filter(id=>own.indexOf(id)>=0):[];
   party=party.filter((id,i)=>party.indexOf(id)===i).slice(0,5);
   if(!party.length) party=own.slice(0,3);
-  const cleared=Array.isArray(p.cleared)?p.cleared.filter(n=>typeof n==="number"&&n>=1&&n<=14):[];
+  /* クリア記録は「実在するステージの内部番号」だけを残す。以前は
+     1〜14 の固定範囲だったため、新ステージ（番人＝内部番号16〜20）を
+     足すと そのクリア記録が読み込み時に消えてしまう。STAGES から
+     有効番号を作ることで、今後ステージを足しても壊れない */
+  const stageNums={}; STAGES.forEach(s=>{ stageNums[s.n]=true; });
+  const cleared=Array.isArray(p.cleared)?p.cleared.filter(n=>typeof n==="number"&&stageNums[n]):[];
   /* スコアアタックの記録：正の数だけを残し、高い順に上位5件まで。
      同じ点数の重複は1件にまとめる（過去の不具合で増殖した記録も
      ここで自動的に直る） */
@@ -1864,7 +1935,7 @@ const TRACKS=[
 const curTrack=0; /* ホーム（タイトル）の曲は TRACKS[0]「そよかぜのこもりうた」 */
 /* ステージ番号→曲（TRACKSの番号）。背景シーンと対応させている：
    宇宙=6、火山=2、森=3（笛の曲が森の空気に合う）、深海=4、天界=7、魔界=8 */
-const STAGE_TRACK={1:6,2:2,3:3,4:4,5:2,6:3,7:4,8:2,9:3,10:4,11:2,12:7,13:8,14:7,15:8};
+const STAGE_TRACK={1:6,2:2,3:3,4:4,5:2,6:3,7:4,8:2,9:3,10:4,11:2,12:7,13:8,14:7,15:8,16:3,17:2,18:4,19:8,20:8};
 function startBGM(){ stopBGM(); if(!bgmOn)return; bgmStep=0;
   const shifts=[0,2,-3,5,0,3,-2,5,0,2,-3], shift=shifts[(curStage-1)%shifts.length]||0;
   const isBoss=(curStage===3||curStage===8||curStage===12||curStage===13||curStage===15);
@@ -2035,10 +2106,10 @@ document.getElementById("seBtn").onclick=e=>{ seOn=!seOn; e.target.textContent="
 const $=id=>document.getElementById(id);
 /* バージョン：ホーム画面に小さく常時表示。公開のたびに末尾を+1する
    （1.0.31 → 1.0.32 → ...） */
-const APP_VER="1.0.67";
+const APP_VER="1.0.69";
 /* 限定ステージ（extra）は解放条件なしで最初から選べる。
    チャレンジステージは最終ボス（ステージ8）クリアで出現する */
-function stageUnlocked(st){ if(st.score) return true; if(st.extra) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
+function stageUnlocked(st){ if(st.score) return true; if(st.extra) return true; if(st.guardian) return true; if(st.satan) return save().owned.includes("zeus"); if(st.challenge) return save().cleared.includes(8); if(st.n===1)return true; return save().cleared.includes(st.n-1)||save().cleared.includes(st.n); }
 /* スコアアタック：10ターン制。スコア＝与ダメージ合計＋最大コンボ×100。
    ランクは S/A/B/C/D の5段階（強い仲間を集めるほど上のランクに届く） */
 const SCORE_TURNS=10;
@@ -2085,9 +2156,37 @@ function renderHome(){
     $("scoreBestBox").innerHTML='<div class="score-list"><div class="score-row"><span class="pos">最高</span><span class="pts">'+fmtNum(best)+' てん</span><span class="rk rk-'+scoreRank(best)+'">'+scoreRank(best)+'</span></div></div>';
   }
 }
-/* ずかんは別ページ：☆ランクごとにグループ分けして表示する */
+/* ずかん最上部の「牧場」：所持しているキャラだけが、草原（森と花畑の
+   背景）のなかを ゆっくり歩き回ったり跳ねたりする。未所持は出さない。
+   位置・歩く距離・周期はキャラの並び順から決める（開くたびに同じ
+   配置で、端末負荷は transform アニメーションのみ） */
+function renderPasture(body){
+  const owned=CHARS.filter(c=>save().owned.includes(c.id));
+  if(!owned.length)return;
+  const box=document.createElement("div");
+  box.className="pasture";
+  let h='<div class="pasture-sign">🌿 ぼくじょう</div>';
+  owned.forEach((c,i)=>{
+    const row=i%3; /* 0=奥・1=中ほど・2=手前（手前ほど大きい） */
+    const left=3+((i*37)%76);
+    const bottom=[56,33,9][row];
+    const size=[44,55,67][row];
+    const dist=30+((i*53)%56); /* 30〜85px ゆっくり往復 */
+    const walkDur=7+((i*29)%7); /* 7〜13秒 */
+    const hop=(i%2===0);
+    const hopDur=(1.15+((i*13)%5)*0.22).toFixed(2);
+    h+='<div class="p-char" style="left:'+left+'%;bottom:'+bottom+'%;width:'+size+'px;--dist:'+dist+'px;animation-duration:'+walkDur+'s;z-index:'+(3+row)+'">'
+      +'<div class="p-shadow"></div>'
+      +'<div class="p-flip" style="animation-duration:'+(walkDur*2)+'s"><div class="'+(hop?'p-hop':'p-bob')+'" style="animation-duration:'+hopDur+'s"><div class="p-art">'+c.art()+'</div></div></div>'
+      +'</div>';
+  });
+  box.innerHTML=h;
+  body.appendChild(box);
+}
+/* ずかんは別ページ：最上部に牧場、その下に☆ランクごとの一覧 */
 function renderZukan(){
   const body=$("zukanBody"); body.innerHTML="";
+  renderPasture(body);
   [6,5,4,3,2,1].forEach(rank=>{
     /* ルシファーはスコアアタック専用の敵で なかまにはならないので図鑑には出さない */
     const list=CHARS.filter(c=>c.stars===rank&&c.id!=="lucifer");
@@ -2242,7 +2341,7 @@ function startBattle(st){
   const enemy=charById(st.enemy);
   const dropPool=stageDropPool(st);
   B={ stage:st, enemy, enemyHp:st.hp, partyHp:partyMaxHp(), maxHp:partyMaxHp(), cd:st.cd, board:newBoard(dropPool), dropPool:dropPool, orbTypes:stageOrbTypes(st),
-      charges:save().party.map(()=>0), acc:save().party.map(()=>0), accRaw:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false,
+      charges:save().party.map(()=>0), acc:save().party.map(()=>0), accRaw:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false, guardHalf:false,
       scoreMode:!!st.score, score:0, turnsLeft:SCORE_TURNS, maxCombo:0, luciLvl:0 };
   $("comboLayer").innerHTML="";
   $("bgLayer").innerHTML=BG_SCENES[STAGE_BG[st.n]||"temple"];
@@ -2294,6 +2393,7 @@ function shortSkill(c){
   if(sk.type==="stripe"){ return "シマシマ→"+(ORB_COLOR_NAME[sk.to]||sk.to)+" へんげ"; }
   if(sk.type==="changeAll"){ return "全部→"+(ORB_COLOR_NAME[sk.to]||sk.to)+" へんげ"; }
   if(sk.type==="dmgChangeAll"){ return an+"ダメ"+sk.power+"+全部→"+(ORB_COLOR_NAME[sk.to]||sk.to); }
+  if(sk.type==="guard"){ return "てきの こうげき はんげん"; }
   return sk.desc;
 }
 /* スキルがたまった時にキャラの周りへ出すエネルギーのキラキラ */
@@ -2359,6 +2459,7 @@ function renderBattle(skipBoard){
   }
   $("partyHpFill").style.width=Math.max(0,B.partyHp/B.maxHp*100)+"%";
   $("partyHpNum").textContent="パーティ HP "+Math.max(0,Math.ceil(B.partyHp))+" / "+B.maxHp;
+  { const gc=$("guardChip"); if(gc)gc.classList.toggle("hidden",!B.guardHalf); }
   $("atkNum").textContent=B.cd;
   $("atkBadge").classList.toggle("danger",B.cd<=1);
   save().party.forEach((id,i)=>{
@@ -2818,7 +2919,7 @@ function showDmgPop(dmg){
 /* 敵の攻撃エフェクト：敵がこちらへ突っ込み、自分の属性の弾
    （炎なら炎、水なら水滴、森なら葉）をパーティへ放つ。
    弾が届いた所で爆発してパーティが揺れ、ダメージ数字が出る */
-function enemyAttackFX(){
+function enemyAttackFX(dmgOverride){
   if(!B)return;
   const attr=B.enemy.attr;
   boomSE(attr);
@@ -2834,7 +2935,7 @@ function enemyAttackFX(){
   proj.style.setProperty("--dy",dy+"px");
   proj.innerHTML='<span class="core" style="background:'+FX_GRAD[attr]+'"></span>'+FX_ICON[attr];
   stage.appendChild(proj);
-  const dmg=B.stage.atk;
+  const dmg=(typeof dmgOverride==="number")?dmgOverride:B.stage.atk;
   setTimeout(()=>{ proj.remove(); partyBurst(attr, dmg); },480);
 }
 function partyBurst(attr, dmg){
@@ -2888,16 +2989,21 @@ function endTurn(){
   if(B.scoreMode){
     /* スコアアタック：敵は攻撃しない。のこりターンだけ数えて、
        0になったら結果発表へ進む */
+    B.guardHalf=false;
     B.turnsLeft--;
     if(B.turnsLeft<=0){ B.turnsLeft=0; renderBattle(); finishScoreAttack(); return; }
     B.busy=false; renderBattle(); return;
   }
   B.cd--;
   if(B.cd<=0){
-    B.partyHp-=B.stage.atk; B.cd=B.stage.cd;
-    enemyAttackFX();
-    if(B.partyHp<=0){ B.partyHp=0; renderBattle(); loseBattle(); B.busy=false; return; }
+    /* ガード発動中は このターンの敵の攻撃を半減（切り上げ） */
+    const dmg=B.guardHalf?Math.ceil(B.stage.atk/2):B.stage.atk;
+    B.partyHp-=dmg; B.cd=B.stage.cd;
+    enemyAttackFX(dmg);
+    if(B.partyHp<=0){ B.partyHp=0; B.guardHalf=false; renderBattle(); loseBattle(); B.busy=false; return; }
   }
+  /* ガードは発動したターン限り：攻撃が無かったターンでも解除する */
+  B.guardHalf=false;
   B.busy=false; renderBattle();
 }
 function tapMember(i){
@@ -2908,6 +3014,17 @@ function tapMember(i){
 }
 function useSkill(i){
   const c=charById(save().party[i]), sk=c.skill;
+  if(sk.type==="guard"){
+    /* 番人の「ガード」：発動したターンに受ける敵の攻撃を半減する。
+       効果は そのターンの endTurn まで（B.guardHalf）。すでに
+       ガード中なら消費しない。敵の攻撃が無いターンに使っても
+       そのターン限りで切れる（endTurn で必ず解除される） */
+    if(B.guardHalf){ showSheet('<h2>もう ガード中だよ</h2><p>このターンの てきの こうげきは もう はんぶんに なるよ。<br>スキルは そのまま たまっているよ。</p><button class="btn primary" onclick="closeSheet()">とじる</button>'); return; }
+    B.charges[i]=0; skillSE();
+    B.guardHalf=true;
+    renderBattle();
+    return;
+  }
   if(sk.type==="stripe"){
     /* サンタの「シマシマへんげ」：盤面の下の行から1行おきの4行
        （最下段・その2つ上・さらに2つ上・最上段）を自分の色に変える。
@@ -3196,7 +3313,7 @@ function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 const GACHA_COST=5;
 const GACHA_POOL={
  6:[{id:"santa_red",w:2},{id:"santa_blue",w:2},{id:"santa_green",w:2},{id:"dragon_light",w:1}],
- 5:[{id:"phoenix"},{id:"dragon_sea"}],
+ 5:[{id:"phoenix"},{id:"dragon_sea"},{id:"guardian_forest"},{id:"guardian_fire"},{id:"guardian_water"},{id:"guardian_dark"},{id:"guardian_last"}],
  4:[{id:"dragon_change_forest"},{id:"fairy_change_water"},{id:"dragon_change_fire"}],
  3:[{id:"dragon_fire"},{id:"dragon_water"},{id:"dragon_forest"}],
  2:[{id:"fairy_flower"},{id:"fairy_star"}],
