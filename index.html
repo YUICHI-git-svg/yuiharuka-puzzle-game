@@ -281,9 +281,10 @@
   /* ===== ずかんのショーケース：全キャラをフィギュアとしてガラス棚に整列 =====
      ・全キャラ分の固定スロットを棚に並べ、全員おなじ大きさで飾る
      ・フィギュア感は「円形の台座（金色の円盤＋円筒の側面）」「台座の上の
-       柔らかい影」「下の名札プレート」「ガラス棚板と天井照明のツヤ」で出す
+       柔らかい影」「ガラス棚板と天井照明のツヤ」で出す（名札は付けない）
      ・未所持のスロットは台座だけを残して空ける（絵もシルエットも出さない）
-     ・フィギュア自体は動かさない（棚に飾った造形物として静止させる） */
+     ・所持フィギュアはドラッグ＆ドロップで入れ替えでき、並び順は
+       セーブに保存される（実装は renderShowcase 側のコメント参照） */
   .showcase{position:relative;border-radius:16px;overflow:hidden;margin-bottom:.4rem;
     border:3px solid #4a3a20;
     box-shadow:inset 0 0 0 2px rgba(255,214,120,.28), inset 0 0 34px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.35);
@@ -334,13 +335,20 @@
   .sc-fig.empty .sc-ped{background:radial-gradient(ellipse at 50% 30%, #e8e2cf 0%, #cbbd93 45%, #a08c58 78%, #77663c 100%);
     box-shadow:0 4px 0 -1px #5d4f2a, 0 5px 0 -1px #493d20, 0 10px 11px rgba(0,0,0,.5),
       inset 0 -3px 5px rgba(70,56,20,.5), inset 0 2px 3px rgba(255,255,255,.55);opacity:.85;}
-  /* 名札プレート：台座の下の小さな金属プレートに名前を刻んだ見た目 */
-  .sc-plate{display:inline-block;margin-top:7px;max-width:100%;padding:.1rem .34rem;border-radius:4px;
-    background:linear-gradient(180deg,#4d3d16,#2e2409);border:1px solid #a97f2f;
-    box-shadow:inset 0 1px 0 rgba(255,240,190,.45), 0 1px 3px rgba(0,0,0,.55);
-    color:#ffe9a8;font-size:.56rem;font-weight:800;line-height:1.25;letter-spacing:.01em;white-space:nowrap;
-    text-shadow:0 1px 1px rgba(0,0,0,.9);}
-  .sc-plate.blank{visibility:hidden;}
+  /* ドラッグ入れ替えの操作ヒント（看板の下の小さな1行） */
+  .sc-hint{position:relative;z-index:3;padding:.18rem .7rem 0;font-size:.68rem;font-weight:700;color:#a99fd6;text-shadow:0 1px 3px rgba(0,0,0,.8);}
+  /* ドラッグ中の見た目：持ち上げた元の場所は半透明に残し、重なった先の
+     スロットは台座が金色に光って「ここに入る」ことを示す */
+  .sc-fig{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  .sc-fig:not(.empty){cursor:grab;}
+  .sc-art img{-webkit-user-drag:none;}
+  .sc-fig.drag-src{opacity:.35;}
+  .sc-fig.drop-hi .sc-ped{box-shadow:0 0 0 3px #ffe066,0 4px 0 -1px #7c5a1c,0 5px 0 -1px #5f4413,0 10px 11px rgba(0,0,0,.55),0 0 20px rgba(255,224,102,.9),inset 0 -3px 5px rgba(96,64,8,.55),inset 0 2px 3px rgba(255,255,255,.8);}
+  /* 指についてくるフィギュアのゴースト：指で隠れないよう少し上に浮かせる */
+  .sc-drag-ghost{position:fixed;left:0;top:0;width:76px;margin:-58px 0 0 -38px;z-index:999;pointer-events:none;
+    filter:drop-shadow(0 12px 9px rgba(0,0,0,.55));animation:scPick .16s ease-out;}
+  @keyframes scPick{from{transform:scale(.8);}to{transform:scale(1.1);}}
+  @media (prefers-reduced-motion: reduce){ .sc-drag-ghost{animation:none;} }
   .party-hp .hp-fill{background:linear-gradient(90deg,#57d95e,#b6f09a);}
   /* 上パディングは攻撃数値ラベル（.acc）が敵HPバーの下に収まる分だけ。
      以前より詰めて、その分 fitBoard が盤面を大きくできるようにした */
@@ -845,7 +853,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.75</div>
+    <div class="ver-line">ver 1.0.76</div>
   </div>
   <div id="pageArea">
 
@@ -1484,7 +1492,7 @@ const SCENE_FILE = {temple:"bg-temple.jpg",wasteland:"bg-wasteland.jpg",volcano:
 const SAVE_KEY="yuiharuka-puzzle-save-v2";
 const SAVE_BAK_KEY="yuiharuka-puzzle-save-v2.bak";
 const LEGACY_SAVE_KEYS=["yuiharuka-puzzle-save-v1","yuiharuka-puzzle-save"];
-function newSave(){ return { owned:["slime_fire","slime_water","slime_forest"], party:["slime_fire","slime_water","slime_forest"], cleared:[], scores:[], stones:0, lb:{}, retro:false }; }
+function newSave(){ return { owned:["slime_fire","slime_water","slime_forest"], party:["slime_fire","slime_water","slime_forest"], cleared:[], scores:[], stones:0, lb:{}, retro:false, showcase:[] }; }
 const singleSave = newSave();
 const save = () => singleSave;
 function sanitizeSave(p){
@@ -1515,7 +1523,12 @@ function sanitizeSave(p){
   if(p.lb&&typeof p.lb==="object"){ Object.keys(p.lb).forEach(id=>{ if(!ids[id])return; const v=p.lb[id]; if(typeof v==="number"&&isFinite(v)&&v>0) lb[id]=Math.min(5,Math.floor(v)); }); }
   /* 遡り配布フラグ：true の記録がどれか1つでもあれば配布済み扱い */
   const retro=p.retro===true;
-  return { owned:own, party:party, cleared:cleared, scores:scores, stones:stones, lb:lb, retro:retro };
+  /* ショーケースの並び順：実在するキャラIDだけを残して重複を除き、
+     足りない分は既定順（☆の高い順→CHARS順）で後ろに補う。
+     sanitizeShowcaseOrder は ずかん側で定義するが、関数宣言なので
+     ここからも呼べる */
+  const showcase=sanitizeShowcaseOrder(p.showcase);
+  return { owned:own, party:party, cleared:cleared, scores:scores, stones:stones, lb:lb, retro:retro, showcase:showcase };
 }
 function saveScore(s){ return s.owned.length*100+s.cleared.length*10+s.party.length; }
 function loadStoredSave(){
@@ -1540,7 +1553,7 @@ function loadStoredSave(){
       }catch(e){}
     });
   }catch(e){}
-  if(best){ singleSave.owned=best.owned; singleSave.party=best.party; singleSave.cleared=best.cleared; singleSave.stones=best.stones; singleSave.lb=best.lb; }
+  if(best){ singleSave.owned=best.owned; singleSave.party=best.party; singleSave.cleared=best.cleared; singleSave.stones=best.stones; singleSave.lb=best.lb; singleSave.showcase=best.showcase; }
   /* 遡り配布フラグは「どれか1つの記録でも配布済みなら配布済み」。
      バックアップ側だけ古い（未配布）記録でも二重配布しないため */
   singleSave.retro=anyRetro;
@@ -1581,7 +1594,7 @@ addEventListener("beforeunload",persistSave);
 function resetSave(){
   const f=newSave();
   singleSave.owned=f.owned; singleSave.party=f.party; singleSave.cleared=f.cleared; singleSave.scores=f.scores;
-  singleSave.stones=f.stones; singleSave.lb=f.lb; singleSave.retro=f.retro;
+  singleSave.stones=f.stones; singleSave.lb=f.lb; singleSave.retro=f.retro; singleSave.showcase=f.showcase;
   try{ [SAVE_KEY,SAVE_BAK_KEY].concat(LEGACY_SAVE_KEYS).forEach(k=>localStorage.removeItem(k)); }catch(e){}
   persistSave();
 }
@@ -2251,42 +2264,159 @@ function renderHome(){
   }
 }
 /* ずかん最上部の「ショーケース」：全キャラ分の固定スロットをガラス棚に
-   整列させ、所持キャラをフィギュアとして飾る。並び順は下の☆一覧と
-   おなじ（☆の高い順→CHARS順）。全員おなじ大きさで、未所持のスロットは
-   台座だけを残して空ける（絵・シルエット・名前は出さない）。
+   整列させ、所持キャラをフィギュアとして飾る。並び順はセーブの
+   showcase（キャラIDの配列）に持ち、無い・足りない分は既定順
+   （☆の高い順→CHARS順）で補う。全員おなじ大きさで、未所持のスロットは
+   台座だけを残して空ける。フィギュアに名札は付けない（名前は下の
+   ☆別一覧で見る）。
    ルシファーは なかまにならないので、ここにも出さない（一覧と統一） */
-function renderShowcase(body){
-  const s=save();
-  const all=[];
+/* ショーケースの既定の並び順（☆の高い順→CHARS順、全キャラ分） */
+function defaultShowcaseOrder(){
+  const ids=[];
   [6,5,4,3,2,1].forEach(rank=>{
-    CHARS.filter(c=>c.stars===rank&&c.id!=="lucifer").forEach(c=>all.push(c));
+    CHARS.filter(c=>c.stars===rank&&c.id!=="lucifer").forEach(c=>ids.push(c.id));
   });
-  if(!all.length)return;
-  const ownedCount=all.filter(c=>s.owned.includes(c.id)).length;
+  return ids;
+}
+/* 並び順を「実在するキャラだけ・重複なし・足りない分は既定順で後ろに
+   補う」形に整える（セーブ読み込み時の sanitizeSave と共用） */
+function sanitizeShowcaseOrder(p){
+  const def=defaultShowcaseOrder(), valid={};
+  def.forEach(id=>{ valid[id]=true; });
+  const out=[];
+  if(Array.isArray(p)) p.forEach(id=>{ if(valid[id]&&out.indexOf(id)<0) out.push(id); });
+  def.forEach(id=>{ if(out.indexOf(id)<0) out.push(id); });
+  return out;
+}
+function buildShowcaseEl(){
+  const s=save();
+  const byId={}; CHARS.forEach(c=>{ byId[c.id]=c; });
+  const order=sanitizeShowcaseOrder(s.showcase).map(id=>byId[id]).filter(Boolean);
+  if(!order.length)return null;
+  const ownedCount=order.filter(c=>s.owned.includes(c.id)).length;
   const box=document.createElement("div");
   box.className="showcase";
   let h='<div class="sc-head"><span class="sc-sign">🏆 ショーケース</span>'
-    +'<span class="sc-count">あつめた なかま '+ownedCount+' / '+all.length+'</span></div>';
-  for(let i=0;i<all.length;i+=4){
+    +'<span class="sc-count">あつめた なかま '+ownedCount+' / '+order.length+'</span></div>'
+    +'<div class="sc-hint">フィギュアは ながおしドラッグで いれかえできるよ</div>';
+  for(let i=0;i<order.length;i+=4){
     h+='<div class="sc-shelf"><div class="sc-row">';
-    all.slice(i,i+4).forEach(c=>{
+    order.slice(i,i+4).forEach((c,j)=>{
+      const slot=i+j;
       if(s.owned.includes(c.id)){
-        h+='<div class="sc-fig"><div class="sc-art">'+c.art()+'</div>'
-          +'<div class="sc-fshadow"></div><div class="sc-ped"></div>'
-          +'<div><span class="sc-plate">'+c.name+'</span></div></div>';
+        h+='<div class="sc-fig" data-slot="'+slot+'" data-id="'+c.id+'"><div class="sc-art">'+c.art()+'</div>'
+          +'<div class="sc-fshadow"></div><div class="sc-ped"></div></div>';
       } else {
-        /* 未所持：台座だけ。名札ぶんの高さは空白プレートでそろえる */
-        h+='<div class="sc-fig empty"><div class="sc-art"></div>'
-          +'<div class="sc-fshadow"></div><div class="sc-ped"></div>'
-          +'<div><span class="sc-plate blank">・</span></div></div>';
+        /* 未所持：台座だけを残して空ける（絵もシルエットも出さない） */
+        h+='<div class="sc-fig empty" data-slot="'+slot+'"><div class="sc-art"></div>'
+          +'<div class="sc-fshadow"></div><div class="sc-ped"></div></div>';
       }
     });
     h+='</div><div class="sc-board"></div></div>';
   }
   h+='<div class="sc-glass"></div>';
   box.innerHTML=h;
-  body.appendChild(box);
+  /* 画像のネイティブドラッグと、長押し時のメニューはドラッグ操作の
+     邪魔になるので止める */
+  box.addEventListener("dragstart",e=>{ e.preventDefault(); });
+  box.addEventListener("contextmenu",e=>{ if(e.target.closest&&e.target.closest(".sc-fig")) e.preventDefault(); });
+  box.addEventListener("pointerdown",scFigPointerDown);
+  return box;
 }
+function renderShowcase(body){
+  const box=buildShowcaseEl();
+  if(box) body.appendChild(box);
+}
+/* ===== ショーケースのドラッグ＆ドロップ入れ替え =====
+   所持フィギュアを持ち上げて別のスロットに重ね、離すと2つが
+   入れ替わる。並び順はその場でセーブに保存するので、次に開いても
+   そのまま残る。空きスロット（台座だけの場所）にも重ねられ、
+   その場合はフィギュアがそちらへ移る（入れ替えとして扱う）。
+   ・タッチ：ページのスクロールと区別するため、約0.3秒の長押しで
+     持ち上げる。持ち上げた後は、ドラッグ中だけ touchmove を止めて
+     ページが一緒にスクロールしないようにする
+   ・マウス：少し（6px超）動かした時点で持ち上げる。ただのクリック
+     では何も起きない */
+let scDrag=null;
+function scSlotElAt(x,y){
+  const el=document.elementFromPoint(x,y);
+  const fig=el&&el.closest?el.closest(".sc-fig"):null;
+  return (fig&&fig.closest(".showcase"))?fig:null;
+}
+function scClearHi(){
+  document.querySelectorAll(".sc-fig.drop-hi").forEach(el=>el.classList.remove("drop-hi"));
+}
+function scFigPointerDown(e){
+  if(scDrag)return;
+  const fig=e.target.closest?e.target.closest(".sc-fig"):null;
+  if(!fig||fig.classList.contains("empty")||!fig.getAttribute("data-id"))return;
+  scDrag={ id:fig.getAttribute("data-id"),
+    fromSlot:parseInt(fig.getAttribute("data-slot"),10),
+    srcEl:fig, pointerId:e.pointerId, pointerType:e.pointerType,
+    startX:e.clientX, startY:e.clientY, active:false, ghost:null, timer:null };
+  if(e.pointerType!=="mouse"){
+    scDrag.timer=setTimeout(()=>{ scBeginDrag(e.clientX,e.clientY); },300);
+  }
+}
+function scBeginDrag(x,y){
+  if(!scDrag||scDrag.active)return;
+  const c=charById(scDrag.id); if(!c){ scDrag=null; return; }
+  scDrag.active=true;
+  const g=document.createElement("div");
+  g.className="sc-drag-ghost";
+  g.innerHTML='<div class="sc-art">'+c.art()+'</div><div class="sc-fshadow"></div><div class="sc-ped"></div>';
+  document.body.appendChild(g);
+  scDrag.ghost=g;
+  scDrag.srcEl.classList.add("drag-src");
+  try{ scDrag.srcEl.setPointerCapture(scDrag.pointerId); }catch(err){}
+  if(navigator.vibrate){ try{ navigator.vibrate(15); }catch(err){} }
+  scMoveGhost(x,y);
+}
+function scMoveGhost(x,y){
+  if(scDrag&&scDrag.ghost){ scDrag.ghost.style.left=x+"px"; scDrag.ghost.style.top=y+"px"; }
+}
+function scEndDrag(x,y){
+  if(!scDrag)return;
+  const d=scDrag; scDrag=null;
+  if(d.timer)clearTimeout(d.timer);
+  if(d.ghost)d.ghost.remove();
+  d.srcEl.classList.remove("drag-src");
+  scClearHi();
+  if(!d.active||x==null)return;
+  const target=scSlotElAt(x,y);
+  if(!target||target===d.srcEl)return;
+  const toSlot=parseInt(target.getAttribute("data-slot"),10);
+  if(isNaN(toSlot)||toSlot===d.fromSlot)return;
+  const s=save();
+  const order=sanitizeShowcaseOrder(s.showcase);
+  const tmp=order[d.fromSlot]; order[d.fromSlot]=order[toSlot]; order[toSlot]=tmp;
+  s.showcase=order; persistSave();
+  /* 棚だけを作り直して新しい並びを反映する */
+  const old=d.srcEl.closest(".showcase");
+  if(old){ const nb=buildShowcaseEl(); if(nb) old.replaceWith(nb); }
+}
+window.addEventListener("pointermove",e=>{
+  if(!scDrag)return;
+  const dx=e.clientX-scDrag.startX, dy=e.clientY-scDrag.startY;
+  if(!scDrag.active){
+    if(scDrag.pointerType==="mouse"){
+      if(dx*dx+dy*dy>36) scBeginDrag(e.clientX,e.clientY);
+    } else if(dx*dx+dy*dy>100){
+      /* 長押しが終わる前に大きく動いたら、スクロールとみなしてやめる */
+      if(scDrag.timer)clearTimeout(scDrag.timer);
+      scDrag=null;
+    }
+    return;
+  }
+  scMoveGhost(e.clientX,e.clientY);
+  const t=scSlotElAt(e.clientX,e.clientY);
+  scClearHi();
+  if(t&&t!==scDrag.srcEl) t.classList.add("drop-hi");
+},{passive:true});
+window.addEventListener("pointerup",e=>{ scEndDrag(e.clientX,e.clientY); });
+window.addEventListener("pointercancel",()=>{ scEndDrag(null,null); });
+/* ドラッグ中はページがスクロールしないよう、タッチの移動だけ止める */
+document.addEventListener("touchmove",e=>{ if(scDrag&&scDrag.active) e.preventDefault(); },{passive:false});
 /* ずかんは別ページ：最上部にショーケース、その下に☆ランクごとの一覧 */
 function renderZukan(){
   const body=$("zukanBody"); body.innerHTML="";
