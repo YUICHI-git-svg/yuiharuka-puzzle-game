@@ -481,6 +481,10 @@
   .dmg-pop{position:absolute;left:50%;top:28%;transform:translate(-50%,-50%);font-family:"Arial Black",sans-serif;font-size:2.6rem;font-weight:900;color:#fff;letter-spacing:.02em;
     -webkit-text-stroke:2px #200a00;text-shadow:0 0 14px rgba(255,90,20,.95),0 0 28px rgba(255,60,0,.7),3px 3px 0 #000,-2px 2px 0 #000,0 5px 0 rgba(0,0,0,.85);pointer-events:none;z-index:10;animation:dmgpop .95s ease-out forwards;}
   @keyframes dmgpop{0%{opacity:0;transform:translate(-50%,-20%) scale(.4) rotate(-3deg);}22%{opacity:1;transform:translate(-50%,-58%) scale(1.35) rotate(2deg);}42%{transform:translate(-50%,-62%) scale(1);}100%{opacity:0;transform:translate(-50%,-125%) scale(1.05);}}
+  /* 無効ポップ（ステージ16のひかり・やみ）：グレーで沈ませて「効いてない」を伝える */
+  .dmg-pop.null-pop{font-size:1.9rem;color:#cfd4e6;-webkit-text-stroke:2px #14142a;text-shadow:0 0 10px rgba(160,170,220,.8),3px 3px 0 #000,0 5px 0 rgba(0,0,0,.85);}
+  /* 防御ダウンのポップ（ステージ17）：水色の盾色で長めに出す */
+  .dmg-pop.def-pop{font-size:1.55rem;color:#bfe9ff;-webkit-text-stroke:2px #0a2438;text-shadow:0 0 12px rgba(126,231,255,.9),3px 3px 0 #000,0 5px 0 rgba(0,0,0,.85);animation-duration:1.22s;white-space:nowrap;}
   .board-wrap{position:relative;display:flex;justify-content:center;padding:.1rem .12rem .12rem;flex:1 1 auto;min-height:0;align-items:flex-start;}
   /* JS（fitBoard）が効く前でも画面幅に収まる既定サイズを持たせる */
   #board{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:rgba(13,11,34,.88);
@@ -895,7 +899,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.77</div>
+    <div class="ver-line">ver 1.0.78</div>
   </div>
   <div id="pageArea">
 
@@ -908,7 +912,7 @@
 
     <p class="hint">ステージ9〜12は いつでも あそべる とくべつステージ。オーブの いろを かえる なかまが いるよ！<br>ステージ12の <b style="color:var(--light)">スーパーでんきドラゴン</b>は、リーダーにすると <b style="color:var(--light)">ひかりの こうげきが 2.5ばい</b>に なる リーダースキルを もっているよ！</p>
     <p class="hint">ステージに かならず <b style="color:#7ee7ff">💎 まほう石</b>が もらえるよ（はじめて クリアした ステージは ボーナスつきで 15こ！）。たおした てきは 50%で なかまに なるよ。もう なかまの てきが なかまに なると <b>凸（とつ）</b>が あがって つよくなるよ！</p>
-    <p class="hint">ステージ13〜17の <b>番人（ばんにん）</b>は とっても つよいよ！番人は <b>🛡️ たて</b>を もっていて、<b>じゃくてんの ぞくせい以外</b>の ダメージは <b>はんぶん</b>に なっちゃうよ。しかも たたかいが 長びくと <b>💥 大技</b>を うってくるよ（バトル画面に「あと ○ターンで 大技」と 出るよ）。<b>サンタを リーダー</b>にして、じゃくてんの ぞくせいで すばやく たおそう！たおすと 番人が なかまに なるよ（50%）。番人の スキルは「つかった ターンの てきの こうげきを はんぶんに する」まもりの わざだよ。</p>
+    <p class="hint">ステージ13〜17の <b>番人（ばんにん）</b>は とっても つよいよ！番人は <b>🛡️ たて</b>を もっていて、<b>じゃくてんの ぞくせい以外</b>の ダメージは <b>はんぶん</b>に なっちゃうよ。しかも たたかいが 長びくと <b>💥 大技</b>を うってくるよ（バトル画面に「あと ○ターンで 大技」と 出るよ）。<b>サンタを リーダー</b>にして、じゃくてんの ぞくせいで すばやく たおそう！たおすと 番人が なかまに なるよ（50%）。番人の スキルは「つかった ターンの てきの こうげきを はんぶんに する」まもりの わざだよ。<br>ステージ16の <b>3しょくの番人</b>は、<b style="color:var(--fire)">ひ</b>・<b style="color:var(--water)">みず</b>・<b style="color:var(--forest)">もり</b>の 3色が じゃくてんで、<b style="color:var(--light)">ひかり</b>と<b style="color:var(--dark)">やみ</b>は <b>むこう（0ダメージ）</b>だよ。<br>ステージ17の <b>最後の番人</b>は 大技は つかわないけど、たてが とっても かたくて ダメージが すこししか 通らないよ。でも てきの こうげきを <b>何回か たえる</b>と たてが だんだん よわくなるよ。<b>番人を たくさん つれて</b>、スキルで ガードを まわしながら たたかおう！</p>
   </section>
 
   <!-- ===== タブ：チャレンジステージ ===== -->
@@ -1246,11 +1250,16 @@ const CHARS = [
     共通の「ガード」型（guard）：発動したターンに受ける敵の攻撃を
     半減する。味付け（名前・説明）だけ属性ごとに変えてある。
     ステータスは☆5相応（フェニックス48/430・エンシェント52/460 と
-    同水準〜やや上）。ガチャの金（☆5）プールにも入る */
+    同水準〜やや上）。ガチャの金（☆5）プールにも入る。
+    ※ guardian_dark は ver 1.0.78 で「闇の番人」から「3しょくの番人」に
+    作り替えた（ひ・みず・もりの3色クリスタルの番人）。ID はセーブ
+    互換のため guardian_dark のまま（所持・凸はそのまま引き継がれる）。
+    本人の攻撃属性は やみのまま据え置きで、ステージ16の盾（3色が通り、
+    ひかり・やみ無効）はステージ側の定義で決まる */
  {id:"guardian_forest", name:"森の番人", attr:"forest", atk:50, hp:480, art:()=>imgArt("guardian-forest.png"), skill:{name:"もりの まもり", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
  {id:"guardian_fire", name:"火の番人", attr:"fire", atk:55, hp:450, art:()=>imgArt("guardian-fire.png"), skill:{name:"かえんの たて", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
  {id:"guardian_water", name:"水の番人", attr:"water", atk:52, hp:470, art:()=>imgArt("guardian-water.png"), skill:{name:"みずの かべ", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
- {id:"guardian_dark", name:"闇の番人", attr:"dark", atk:57, hp:460, art:()=>imgArt("guardian-dark.png"), skill:{name:"やみの ベール", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
+ {id:"guardian_dark", name:"3しょくの番人", attr:"dark", atk:57, hp:460, art:()=>imgArt("guardian-tri.png"), skill:{name:"3しょくの たて", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
  {id:"guardian_last", name:"最後の番人", attr:"dark", atk:58, hp:500, art:()=>imgArt("guardian-last.png"), skill:{name:"しゅごの けっかい", desc:"つかった ターンの てきの こうげきを はんぶんに する", turns:5, type:"guard"}},
  /* ルシファー：スコアアタック（特別ダンジョン）専用の敵。堕天使で
     やみ属性・☆6。たおすことはできず（HPは実質無限）、こうげきも
@@ -1436,11 +1445,23 @@ const STAGES = [
        予告バッジを常時出し、残り3ターンで赤く脈打つ。
     ③ 属性シールド（shield）：弱点属性以外のダメージが半減する。
        森の番人は「ひ」、火の番人は「みず」、水の番人は「もり」が
-       弱点。闇の番人と最後の番人は サンタの3色（ひ・みず・もり）
-       が弱点で、ひかり・やみが半減する（どのサンタでも挑める）。
-       シールドはオーブ攻撃・スキルダメージの両方に効く
-       （shieldMultFor が一元管理）。バトル画面とステージ選択に
-       弱点を表示する。
+       弱点（3すくみのルール通り）。シールドはオーブ攻撃・スキル
+       ダメージの両方に効く（shieldMultFor が一元管理）。バトル画面と
+       ステージ選択に弱点を表示する。
+    ver 1.0.78 でステージ16・17を作り替えた：
+    ・16は「闇の番人」をやめて「3しょくの番人」にした。闇属性の敵に
+      3色が弱点なのは弱点ルール（ひかり↔やみ）から逸脱するため。
+      3色（ひ・みず・もり）は通常どおり通り、ひかり・やみは
+      nullify で完全に無効（0ダメージ、「むこう！」表示）。大技の
+      ターン制限は従来通り（limit:14）。
+    ・17（最後の番人）は耐久戦に作り替えた。大技（limit）は廃止。
+      代わりに endure（段階式の防御）：最初はダメージが 1/4 しか
+      通らないが、敵の攻撃を 3発 耐えるごとに防御が一段下がり
+      （1/4 → 0.55 → 1.0）、通るダメージが増えていく。敵の攻撃は
+      720／2ターン：ガード無しでは手痛いが、番人を複数編成して
+      ガードを回し続ければ耐えきれるライン（ガード時 360）。
+      HP 52000 は、防御が下がりきる頃（攻撃を6発＝約12ターン
+      耐えた頃）に決着がつく量に置いた。
     難易度は盤面シミュレーションで「対応するサンタをリーダーに
     した属性寄せ編成では全ステージ勝率70〜90%・平均クリア
     8〜10ターン、サンタ無しの最強編成（ゼウス／サタン／でんき
@@ -1452,8 +1473,8 @@ const STAGES = [
  {n:16, disp:13, enemy:"guardian_forest", hp:78000, atk:1050, cd:2, recruit:.5, boss:true, guardian:true, shield:["fire"], limit:13, orbs:[...ORB_BASE]},
  {n:17, disp:14, enemy:"guardian_fire", hp:80000, atk:900, cd:2, recruit:.5, boss:true, guardian:true, shield:["water"], limit:13, orbs:[...ORB_BASE]},
  {n:18, disp:15, enemy:"guardian_water", hp:78000, atk:950, cd:2, recruit:.5, boss:true, guardian:true, shield:["forest"], limit:13, orbs:[...ORB_BASE]},
- {n:19, disp:16, enemy:"guardian_dark", hp:62000, atk:1000, cd:2, recruit:.5, boss:true, guardian:true, shield:["fire","water","forest"], limit:14, orbs:[...ORB_BASE]},
- {n:20, disp:17, enemy:"guardian_last", hp:58000, atk:1050, cd:2, recruit:.5, boss:true, guardian:true, shield:["fire","water","forest"], limit:14, orbs:[...ORB_BASE]},
+ {n:19, disp:16, enemy:"guardian_dark", hp:62000, atk:1000, cd:2, recruit:.5, boss:true, guardian:true, shield:["fire","water","forest"], nullify:["light","dark"], limit:14, orbs:[...ORB_BASE]},
+ {n:20, disp:17, enemy:"guardian_last", hp:52000, atk:720, cd:2, recruit:.5, boss:true, guardian:true, endure:{per:3, mults:[0.25,0.55,1]}, orbs:[...ORB_BASE]},
  /* スコアアタック（特別ダンジョン）：ルシファー戦。10ターンで
     あたえたダメージの合計＋最大コンボボーナスがスコアになる。
     ルシファーは たおせない（HPは実質無限）し、こうげきもしない
@@ -1467,10 +1488,44 @@ const STAGES = [
 /* 番人専用「属性シールド」：ステージの shield（弱点属性の配列）に
    含まれない属性のダメージは半減する。オーブ攻撃（resolveBoard）と
    スキルダメージ（useSkill）の両方が必ずここを通る。shield を
-   持たないステージでは常に1（通常ステージにはシールドは無い） */
-function shieldMultFor(st, attr){ if(!st||!st.shield||!st.shield.length) return 1; return st.shield.includes(attr)?1:0.5; }
+   持たないステージでは常に1（通常ステージにはシールドは無い）。
+   nullify（ステージ16）：その属性のダメージは半減ではなく 0（無効）。
+   shield 判定より先に見る。オーブ攻撃・スキルの両方に効く。
+   endure（ステージ17）：属性ではなく防御そのものの段階倍率。
+   B.defStage（何段下がったか）に応じて mults から引く。バトル外
+   （B が無い／別ステージ）では初期段（mults[0]）を返す */
+function defMultFor(st){
+  if(!st||!st.endure) return 1;
+  const ms=st.endure.mults;
+  if(!B||B.stage!==st) return ms[0];
+  return ms[Math.min(B.defStage||0, ms.length-1)];
+}
+function shieldMultFor(st, attr){
+  if(st&&st.nullify&&st.nullify.includes(attr)) return 0;
+  let m=1;
+  if(st&&st.shield&&st.shield.length) m=st.shield.includes(attr)?1:0.5;
+  return m*defMultFor(st);
+}
 /* シールドの弱点を子供向けに伝える文（バトル画面・ステージ選択で共用） */
-function shieldInfoText(st){ if(!st||!st.shield||!st.shield.length) return ""; return "🛡️ たて："+st.shield.map(a=>ATTR[a].name).join("・")+" の こうげきは つよい！（ほかは はんぶん）"; }
+function shieldInfoText(st){
+  if(!st) return "";
+  if(st.endure){
+    /* ステージ17：防御の段階を今の状態で伝える（バトル中は B の
+       進行に合わせて renderBattle が毎回呼び直す） */
+    const per=st.endure.per, ms=st.endure.mults;
+    const stage=(B&&B.stage===st)?(B.defStage||0):0;
+    const endured=(B&&B.stage===st)?(B.endured||0):0;
+    if(stage>=ms.length-1) return "🛡️ たては くだけた！ダメージが ふつうに 通るよ！";
+    const multTxt=ms[stage]===0.25?"1/4":String(ms[stage]);
+    const left=per-(endured%per);
+    return "🛡️ かたい たて：ダメージは "+multTxt+" だけ 通るよ。てきの こうげきを あと "+left+"回 たえると たてが よわるよ！";
+  }
+  if(!st.shield||!st.shield.length) return "";
+  let t="🛡️ たて："+st.shield.map(a=>ATTR[a].name).join("・")+" の こうげきは つよい！";
+  if(st.nullify&&st.nullify.length) t+="／"+st.nullify.map(a=>ATTR[a].name).join("・")+" は むこう（0ダメージ）";
+  else t+="（ほかは はんぶん）";
+  return t;
+}
 /* ステージのオーブ種（重複なし）と、抽選プール（bonusぶん重み付き） */
 function stageOrbTypes(st){ return (st && st.orbs && st.orbs.length) ? st.orbs.slice() : ORB_BASE.slice(); }
 function stageDropPool(st){ const p=stageOrbTypes(st); if(st && st.bonus && p.includes(st.bonus)) p.push(st.bonus); return p; }
@@ -2287,8 +2342,15 @@ function renderHome(){
     } else if(st.challenge){
       b.innerHTML=thumbHtml+'<span class="crown">⚡</span><span class="stage-info"><span class="stage-name">'+(un?"ゼウス":"？？？")+'</span><small>'+(un?"ひかり・HP "+st.hp+"・さいきょうの神":"ステージ8 クリアで 出現")+'</small><span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml+'</span>';
     } else {
-      /* 番人ステージは弱点（シールド）と大技のターン制限もボタンに出す */
-      const guardHtml=st.guardian?'<small>🛡️ '+st.shield.map(a=>ATTR[a].name).join("・")+' が つよい（ほか はんぶん）／💥 '+st.limit+'ターンで 大技</small>':"";
+      /* 番人ステージは弱点（シールド）や大技のターン制限もボタンに出す。
+         ステージ17は耐久戦（endure）なので、防御が段階で下がる仕組みを
+         伝える文に切り替える。ステージ16は無効属性も併記する */
+      let guardHtml="";
+      if(st.guardian&&st.endure){
+        guardHtml='<small>🛡️ かたい たて：ダメージは すこしだけ 通る。てきの こうげきを 何回か たえると たてが よわるよ！番人を たくさん つれていこう</small>';
+      } else if(st.guardian){
+        guardHtml='<small>🛡️ '+st.shield.map(a=>ATTR[a].name).join("・")+' が つよい'+(st.nullify? '／'+st.nullify.map(a=>ATTR[a].name).join("・")+' は むこう':'（ほか はんぶん）')+(st.limit?'／💥 '+st.limit+'ターンで 大技':'')+'</small>';
+      }
       b.innerHTML=thumbHtml+'<span class="stage-info"><span class="stage-name">ステージ'+(st.disp||st.n)+'</span><small>'+(un?ATTR[e.attr].name+"・"+e.name:"？？？")+'</small>'+guardHtml+'<span class="orb-drops">'+orbDotsHTML(st)+'</span>'+recruitHtml+'</span>';
     }
     b.disabled=!un; b.onclick=()=>startBattle(st);
@@ -2617,7 +2679,7 @@ function startBattle(st){
   const enemy=charById(st.enemy);
   const dropPool=stageDropPool(st);
   B={ stage:st, enemy, enemyHp:st.hp, partyHp:partyMaxHp(), maxHp:partyMaxHp(), cd:st.cd, board:newBoard(dropPool), dropPool:dropPool, orbTypes:stageOrbTypes(st),
-      charges:save().party.map(()=>0), acc:save().party.map(()=>0), accRaw:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false, guardHalf:false, turnCount:0, loseMsg:null,
+      charges:save().party.map(()=>0), acc:save().party.map(()=>0), accRaw:save().party.map(()=>0), accDisp:save().party.map(()=>0), sel:null, busy:false, over:false, guardHalf:false, turnCount:0, loseMsg:null, endured:0, defStage:0,
       scoreMode:!!st.score, score:0, turnsLeft:SCORE_TURNS, maxCombo:0, luciLvl:0 };
   $("comboLayer").innerHTML="";
   $("bgLayer").innerHTML=BG_SCENES[STAGE_BG[st.n]||"temple"];
@@ -2739,6 +2801,10 @@ function renderBattle(skipBoard){
   $("partyHpFill").style.width=Math.max(0,B.partyHp/B.maxHp*100)+"%";
   $("partyHpNum").textContent="パーティ HP "+Math.max(0,Math.ceil(B.partyHp))+" / "+B.maxHp;
   { const gc=$("guardChip"); if(gc)gc.classList.toggle("hidden",!B.guardHalf); }
+  /* ステージ17の防御段階は戦況で文が変わるので、描画のたびに
+     シールド説明を更新する（他のステージでは文は固定だが、
+     同じ処理を通しても表示は変わらない） */
+  { const si=$("shieldInfo"); if(si){ const txt=shieldInfoText(st); si.textContent=txt; si.classList.toggle("hidden",!txt); } }
   $("atkNum").textContent=B.cd;
   $("atkBadge").classList.toggle("danger",B.cd<=1);
   /* 大技予告：残りターン数を数え、3ターン以下で赤く脈打たせる */
@@ -3080,7 +3146,7 @@ async function resolveBoard(){
       if(j<attackers.length-1) await wait(fast()?0:280);
     }
     B.enemyHp-=dmg;
-    showDmgPop(dmg);
+    if(dmg>0)showDmgPop(dmg); else showNullPop();
     renderBattle();
     /* 倒したときは結果画面までを短くして、固まった印象を与えない */
     await wait(B.enemyHp<=0?480:720);
@@ -3263,6 +3329,24 @@ function showDmgPop(dmg){
   stage.appendChild(el);
   setTimeout(()=>el.remove(),980);
 }
+/* 無効（nullify）の属性で攻撃したときの専用ポップ：「0」ではなく
+   「むこう！」と出して、効いていないことが一目で分かるようにする */
+function showNullPop(){
+  const stage=$("enemyStage"); if(!stage)return;
+  const el=document.createElement("div");
+  el.className="dmg-pop null-pop"; el.textContent="むこう！";
+  stage.appendChild(el);
+  setTimeout(()=>el.remove(),980);
+}
+/* ステージ17：防御が一段下がった瞬間のポップ（最後の段では
+   「くだけた！」と文を変える） */
+function showDefBreakPop(broken){
+  const stage=$("enemyStage"); if(!stage)return;
+  const el=document.createElement("div");
+  el.className="dmg-pop def-pop"; el.textContent=broken?"🛡️ たてが くだけた！":"🛡️ たてに ヒビ！";
+  stage.appendChild(el);
+  setTimeout(()=>el.remove(),1250);
+}
 /* 敵の攻撃エフェクト：敵がこちらへ突っ込み、自分の属性の弾
    （炎なら炎、水なら水滴、森なら葉）をパーティへ放つ。
    弾が届いた所で爆発してパーティが揺れ、ダメージ数字が出る */
@@ -3357,6 +3441,18 @@ function endTurn(){
     B.partyHp-=dmg; B.cd=B.stage.cd;
     enemyAttackFX(dmg);
     if(B.partyHp<=0){ B.partyHp=0; B.guardHalf=false; renderBattle(); loseBattle(); B.busy=false; return; }
+    /* ステージ17（耐久戦）：敵の攻撃を耐えきるたびに数え、
+       per 回ごとに防御が一段下がる（defStage）。下がった瞬間は
+       ポップと音で伝える。renderBattle がシールド説明文も
+       新しい段階の文に更新する */
+    if(B.stage.endure){
+      B.endured=(B.endured||0)+1;
+      const ns=Math.min(Math.floor(B.endured/B.stage.endure.per), B.stage.endure.mults.length-1);
+      if(ns>(B.defStage||0)){
+        B.defStage=ns;
+        setTimeout(()=>{ showDefBreakPop(ns>=B.stage.endure.mults.length-1); try{ tone(180,.05,.16,"square",.14); tone(90,.22,.2,"square",.12); }catch(e){} },520);
+      }
+    }
   }
   /* ガードは発動したターン限り：攻撃が無かったターンでも解除する */
   B.guardHalf=false;
@@ -3434,7 +3530,7 @@ function useSkill(i){
     /* スコアアタック：スキルのダメージもスコアに加算する */
     if(B.scoreMode)B.score+=dmg;
     attackEffect(c.attr);
-    showDmgPop(dmg);
+    if(dmg>0)showDmgPop(dmg); else showNullPop();
     const changedAll=[];
     B.board=B.board.map((t,idx)=>{ if(t!==sk.to){changedAll.push(idx);return sk.to;} return t; });
     renderBoard(changedAll); renderBattle();
@@ -3453,7 +3549,7 @@ function useSkill(i){
     /* スコアアタック：スキルのダメージもスコアに加算する */
     if(B.scoreMode)B.score+=dmg;
     attackEffect(c.attr);
-    showDmgPop(dmg);
+    if(dmg>0)showDmgPop(dmg); else showNullPop();
   }
   if(sk.type==="heal"){ B.partyHp=Math.min(B.maxHp,B.partyHp+sk.power); }
   if(sk.type==="dmgheal"&&sk.heal){ B.partyHp=Math.min(B.maxHp,B.partyHp+sk.heal); }

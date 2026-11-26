@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yuiharuka-puzzle-v77';
+const CACHE_NAME = 'yuiharuka-puzzle-v78';
 const ASSETS = [
   './',
   'index.html',
@@ -27,7 +27,8 @@ const ASSETS = [
   'bg-space.jpg',
   'bg-heaven.jpg',
   'bg-demon.jpg',
-  'santa-red.webp','santa-blue.webp','santa-green.webp','guardian-forest.png','guardian-fire.png','guardian-water.png','guardian-dark.png','guardian-last.png','bg-forest.jpg',
+  'santa-red.webp','santa-blue.webp','santa-green.webp','guardian-forest.png','guardian-fire.png','guardian-water.png','guardian-dark.png','guardian-last.png','guardian-tri.png',
+  'bg-forest.jpg',
   'bg-fallen.jpg'
 ];
 
