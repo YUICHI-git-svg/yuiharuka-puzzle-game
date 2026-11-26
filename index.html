@@ -252,6 +252,48 @@
   #enemyArt img{display:block;height:100%;max-height:16.5vh;max-height:16.5dvh;width:auto;max-width:56vw;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45));}
   #enemyArt img.boss{max-width:68vw;}
   #enemyArt svg{display:block;height:100%;max-height:16.5vh;max-height:16.5dvh;width:auto;max-width:56vw;}
+  /* ドロップ時の卵演出：敵を倒してドロップ判定が当たったときだけ、
+     結果シートが出る前に、敵の位置あたりから小さい卵が落ちてきて
+     床で軽く跳ねる（約1秒）。卵の色は落ちたキャラの属性色。
+     当たらなかったときは卵を出さず、結果シートを今まで通り即表示する */
+  .drop-egg-wrap{position:absolute;left:50%;bottom:3px;width:44px;height:118px;transform:translateX(-50%);z-index:15;pointer-events:none;}
+  .drop-egg{position:absolute;left:50%;bottom:7px;width:34px;height:42px;margin-left:-17px;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));animation:dropEggFall 1s linear forwards;}
+  .drop-egg svg{display:block;width:100%;height:100%;}
+  @keyframes dropEggFall{
+    0%{transform:translateY(-102px) rotate(-8deg) scale(1,1);opacity:0;}
+    9%{opacity:1;animation-timing-function:cubic-bezier(.5,.05,.9,.65);}
+    40%{transform:translateY(0) rotate(0deg) scale(1,1);opacity:1;}
+    44%{transform:translateY(1px) rotate(0deg) scale(1.14,.8);animation-timing-function:cubic-bezier(.25,.6,.35,1);}
+    56%{transform:translateY(-25px) rotate(5deg) scale(1,1);animation-timing-function:cubic-bezier(.5,.05,.9,.65);}
+    68%{transform:translateY(0) scale(1,1);}
+    71%{transform:translateY(1px) scale(1.09,.86);animation-timing-function:cubic-bezier(.25,.6,.35,1);}
+    80%{transform:translateY(-8px) rotate(-3deg) scale(1,1);animation-timing-function:cubic-bezier(.5,.05,.9,.65);}
+    89%{transform:translateY(0) scale(1,1);}
+    92%{transform:translateY(0) scale(1.05,.93);}
+    100%{transform:translateY(0) rotate(0deg) scale(1,1);opacity:1;}
+  }
+  /* 卵の真下の影：落下に合わせて広がり、跳ねると縮む */
+  .drop-egg-shadow{position:absolute;left:50%;bottom:1px;width:36px;height:8px;margin-left:-18px;border-radius:50%;
+    background:rgba(0,0,0,.5);filter:blur(2px);animation:dropEggShadow 1s linear forwards;}
+  @keyframes dropEggShadow{
+    0%{transform:scale(.3);opacity:.12;}
+    40%,44%{transform:scale(1);opacity:.5;}
+    56%{transform:scale(.62);opacity:.3;}
+    68%,71%{transform:scale(1);opacity:.5;}
+    80%{transform:scale(.82);opacity:.4;}
+    89%,100%{transform:scale(1);opacity:.5;}
+  }
+  /* 着地の瞬間に両脇で光る小さな星 */
+  .drop-egg-spark{position:absolute;bottom:16px;width:13px;height:13px;background:#ffe066;opacity:0;
+    clip-path:polygon(50% 0,63% 37%,100% 50%,63% 63%,50% 100%,37% 63%,0 50%,37% 37%);animation:dropEggSpark 1s linear forwards;}
+  .drop-egg-spark.s1{left:0;}
+  .drop-egg-spark.s2{right:0;width:10px;height:10px;bottom:25px;animation-delay:.13s;}
+  @keyframes dropEggSpark{
+    0%,38%{opacity:0;transform:scale(.3) rotate(0deg);}
+    48%{opacity:1;transform:scale(1.15) rotate(40deg);}
+    62%,100%{opacity:0;transform:scale(.4) rotate(80deg);}
+  }
   .char-card .art img{height:74px;width:auto;max-width:100%;object-fit:contain;}
   .member .art img{height:50px;width:auto;max-width:100%;object-fit:contain;}
   .sheet .art img{height:110px;width:auto;max-width:100%;object-fit:contain;}
@@ -853,7 +895,7 @@
   </div>
   <div class="title-row">
     <h1>ゆいとはるかのパズルゲーム</h1>
-    <div class="ver-line">ver 1.0.76</div>
+    <div class="ver-line">ver 1.0.77</div>
   </div>
   <div id="pageArea">
 
@@ -3418,6 +3460,36 @@ function useSkill(i){
   renderBattle();
   if(B.enemyHp<=0) winBattle();
 }
+/* ドロップの卵（パズドラ風）：属性色の殻に白い水玉模様の小さい卵 */
+function dropEggSVG(attr){
+  const col=G_ATTR_COLOR[attr]||"#ffb74d";
+  return '<svg viewBox="0 0 40 46" xmlns="http://www.w3.org/2000/svg">'
+    +'<path d="M20 2.5C26.2 2.5 33.5 14.8 33.5 25.6C33.5 36 27.6 43.2 20 43.2C12.4 43.2 6.5 36 6.5 25.6C6.5 14.8 13.8 2.5 20 2.5Z" fill="'+col+'" stroke="rgba(60,30,0,.45)" stroke-width="1.6"/>'
+    +'<circle cx="14.5" cy="21" r="3.1" fill="#ffffff" opacity=".92"/>'
+    +'<circle cx="25.5" cy="28.5" r="3.8" fill="#ffffff" opacity=".92"/>'
+    +'<circle cx="15.5" cy="33.5" r="2.3" fill="#ffffff" opacity=".92"/>'
+    +'<ellipse cx="14" cy="11.5" rx="3.6" ry="5.6" transform="rotate(-18 14 11.5)" fill="#ffffff" opacity=".55"/>'
+    +'</svg>';
+}
+/* ドロップ成功時だけ、敵の位置あたりから卵が落ちて床で軽く跳ねる
+   演出（約1秒）を敵ステージに出し、演出の長さ（ms）を返す。
+   結果シートはこの時間だけ遅らせて出す。失敗時・例外時は何も
+   出さず 0 を返すので、結果表示は今まで通り即時になる */
+function playDropEgg(ec){
+  try{
+    const stage=$("enemyStage"); if(!stage||!ec)return 0;
+    stage.querySelectorAll(".drop-egg-wrap").forEach(el=>el.remove());
+    const w=document.createElement("div");
+    w.className="drop-egg-wrap";
+    w.innerHTML='<div class="drop-egg-shadow"></div><div class="drop-egg">'+dropEggSVG(ec.attr)+'</div>'
+      +'<span class="drop-egg-spark s1"></span><span class="drop-egg-spark s2"></span>';
+    stage.appendChild(w);
+    setTimeout(()=>{ try{ w.remove(); }catch(e){} },1500);
+    /* 着地（0.40s）と小さい跳ね（0.68s）に合わせて軽いポップ音 */
+    try{ tone(520,.40,.07,"sine",.12); tone(700,.68,.06,"sine",.09); }catch(e){}
+    return 1000;
+  }catch(e){ return 0; }
+}
 function winBattle(){
   if(!B||B.over)return; B.over=true; B.busy=false;
   /* 結果ダイアログを「必ず」出すための構造：
@@ -3454,7 +3526,9 @@ function winBattle(){
      「パラメータUP！」ダイアログ（gShowParamScreen）を出す。
      そのための情報（キャラ・新凸数・旧凸数）をここで控えておく */
   let dropLbInfo=null;
+  let dropHit=false;
   if(Math.random()<dropRate){
+    dropHit=true;
     const before=lbOf(ec.id);
     const res=applyGet(ec.id);
     if(res.kind==="new"){
@@ -3469,31 +3543,43 @@ function winBattle(){
     recruitMsg='<p class="sub">'+ec.name+' は なかまに ならなかった…また たたかってみよう。</p>';
   }
   persistSave();
+  let sheetHTML;
   if(st.satan){
     /* 第1章の最終ボス撃破専用ダイアログ：サタンは毎回100%ドロップ */
-    showSheet('<h2>🏆 第1章 ゲームクリア！</h2><p>魔王サタンを たおしたよ！<br>ゆいと はるかの 大ぼうけん 第1章、クリア！</p>'+stoneMsg+recruitMsg+
+    sheetHTML='<h2>🏆 第1章 ゲームクリア！</h2><p>魔王サタンを たおしたよ！<br>ゆいと はるかの 大ぼうけん 第1章、クリア！</p>'+stoneMsg+recruitMsg+
      '<p class="sub">サタンは さいきょうスキル「ダークノヴァ」（やみダメージ＋オーブ全部を やみに かえる）と、リーダーで やみの こうげき 2.5ばいの リーダースキルを もっているよ。<br>あつめた なかまたちと、また あそんでね！</p>'+
-     '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
+     '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>';
   } else if(st.challenge){
-    showSheet('<h2>🎉 クリア！</h2><p>ゼウスを たおしたよ！</p>'+stoneMsg+recruitMsg+
-     '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
+    sheetHTML='<h2>🎉 クリア！</h2><p>ゼウスを たおしたよ！</p>'+stoneMsg+recruitMsg+
+     '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>';
   } else {
-    showSheet('<h2>🎉 クリア！</h2><p>ステージ '+(st.disp||st.n)+' の '+ec.name+' を たおしたよ！</p>'+stoneMsg+recruitMsg+
-     '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>');
+    sheetHTML='<h2>🎉 クリア！</h2><p>ステージ '+(st.disp||st.n)+' の '+ec.name+' を たおしたよ！</p>'+stoneMsg+recruitMsg+
+     '<button class="btn primary" onclick="backHome()">ホームへ もどる</button>';
   }
-  try{ winSE(); }catch(e){}
+  /* ドロップが当たったときだけ、結果シートの前に卵が落ちる演出
+     （約1秒）を挟む。外れたときは eggDelay=0 で今まで通り即表示。
+     演出中に「もどる」でホームへ帰っていたらシートは出さない
+     （ドロップ結果は persistSave 済みなので記録は残る） */
+  const eggDelay=dropHit?playDropEgg(ec):0;
+  const showResult=()=>{ showSheet(sheetHTML); try{ winSE(); }catch(e){} };
+  if(eggDelay>0){
+    setTimeout(()=>{ if(!$("battle").classList.contains("hidden"))showResult(); }, eggDelay);
+  } else {
+    showResult();
+  }
   updateStoneUI();
   /* ドロップで凸が上がったときは、ガチャの被り時とまったく同じ
      「パラメータUP！」ダイアログを結果シートの上に重ねて出す
      （攻撃力・HPの before→after カウントアップ表示、スキルターン
      短縮があればそれも表示。閉じ方は OK ボタン／外側タップで、
-     ガチャ側と共通）。結果シートを閉じた後には出さない */
+     ガチャ側と共通）。結果シートを閉じた後には出さない。
+     卵演出を挟んだ場合は、そのぶん表示タイミングも後ろへずらす */
   if(dropLbInfo){
     const info=dropLbInfo;
     setTimeout(()=>{
       if(!sheetWanted)return;
       try{ gSfxPowerUp(); gShowParamScreen(info.ch, info.lb, info.prevLb); }catch(e){}
-    }, 650);
+    }, eggDelay+650);
   }
 }
 function loseBattle(){
